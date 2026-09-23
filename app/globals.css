@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  @apply bg-paper-50 text-rig-900 font-body;
+}
+
+/* Visible keyboard focus everywhere — job-site users are often on a phone
+   with a physical keyboard-like Bluetooth remote or accessibility tools. */
+:focus-visible {
+  outline: 2px solid theme("colors.amber.500");
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded bg-amber-500 px-5 py-3
+    font-display font-semibold text-rig-950 transition
+    hover:bg-amber-600 focus-visible:outline focus-visible:outline-2
+    focus-visible:outline-offset-2 focus-visible:outline-amber-600
+    disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded border border-rig-700/20
+    bg-white px-5 py-3 font-display font-semibold text-rig-900 transition
+    hover:bg-paper-100;
+}
+
+.field-label {
+  @apply mb-1 block font-display text-sm font-medium text-rig-800;
+}
+
+.field-input {
+  @apply w-full rounded border border-rig-700/20 bg-white px-3 py-2.5 text-rig-900
+    placeholder:text-rig-700/40 focus-visible:outline focus-visible:outline-2
+    focus-visible:outline-offset-2 focus-visible:outline-amber-600;
+}

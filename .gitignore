@@ -1,0 +1,12 @@
+node_modules
+.next
+.env.local
+.DS_Store
+
+.vercel
+
+# Scratch/generated files — not part of the app
+scratch/
+scratch_audio/
+tsconfig.tsbuildinfo
+supabase/.temp/

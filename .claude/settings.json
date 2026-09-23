@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build *)",
+      "Bash(npx vercel logs *)",
+      "Bash(netstat -ano *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\n\" --max-time 10 https://workroute-v3.vercel.app)",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__read_network_requests",
+      "mcp__Claude_Browser__tabs_context",
+      "mcp__terminal__read_terminal"
+    ]
+  }
+}

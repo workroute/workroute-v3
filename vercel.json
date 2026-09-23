@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/weather-check",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/recurring-renewals",
+      "schedule": "0 22 * * *"
+    },
+    {
+      "path": "/api/cron/invoice-chase",
+      "schedule": "0 23 * * *"
+    }
+  ]
+}
