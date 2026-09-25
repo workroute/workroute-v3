@@ -24,16 +24,11 @@ export default async function ProfilePage() {
   return (
     <main className="min-h-screen bg-paper-50">
       <div className="mx-auto max-w-lg px-4 py-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-rig-900">Business profile</h1>
-            <p className="mt-1 text-sm text-rig-700">
-              This is what shows up on quotes and invoices you send from WorkRoute.
-            </p>
-          </div>
-          <Link href="/app/jobs/new" className="btn-primary whitespace-nowrap">
-            Capture a job
-          </Link>
+        <div>
+          <h1 className="font-display text-2xl font-bold text-rig-900">Business profile</h1>
+          <p className="mt-1 text-sm text-rig-700">
+            This is what shows up on quotes and invoices you send from WorkRoute.
+          </p>
         </div>
 
         <div className="mt-6 rounded-lg bg-white p-6 shadow-sm">
