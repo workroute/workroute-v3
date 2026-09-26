@@ -72,7 +72,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("business_name, first_name, google_review_link, bank_details, zapier_webhook_url, next_invoice_number")
+    .select("business_name, first_name, google_review_link, bank_details, payment_link, zapier_webhook_url, next_invoice_number")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -117,6 +117,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
   // (Profile > Bank details) — shown exactly as given, never parsed or
   // validated, since WorkRoute never touches the actual payment.
   const bankLine = profile?.bank_details ? `\n\nPayment details:\n${profile.bank_details}` : "";
+  // §instant-payment-link — whatever the tradie already uses to get paid on
+  // the spot (Profile > Instant payment link), shown ahead of bank details
+  // since it's the faster option when they've set one.
+  const paymentLinkLine = profile?.payment_link ? `\n\nPay instantly: ${profile.payment_link}` : "";
   const invoiceLine = `Invoice #${invoiceNumber}`;
 
   if (sendSms) {
@@ -124,7 +128,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       job_id: job.id,
       business_id: user.id,
       sender: "tradie",
-      body: `${invoiceLine}\n\n${summary}\n\nTotal: $${total.toFixed(2)}${bankLine}${reviewLine}`,
+      body: `${invoiceLine}\n\n${summary}\n\nTotal: $${total.toFixed(2)}${paymentLinkLine}${bankLine}${reviewLine}`,
     });
 
     // §next-visit-on-completion (fix, found while testing that feature) —
@@ -162,7 +166,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       total,
       profile?.google_review_link || null,
       invoiceNumber,
-      profile?.bank_details || null
+      profile?.bank_details || null,
+      profile?.payment_link || null
     );
   }
 

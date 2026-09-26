@@ -13,6 +13,7 @@ type Profile = {
   city: string;
   google_review_link: string;
   bank_details: string;
+  payment_link: string;
 } | null;
 
 // Matches the trade-specific question sets defined in lib/trade-questions.ts (§8a).
@@ -35,6 +36,7 @@ export default function ProfileForm({
   const [city, setCity] = useState(initialProfile?.city ?? "");
   const [googleReviewLink, setGoogleReviewLink] = useState(initialProfile?.google_review_link ?? "");
   const [bankDetails, setBankDetails] = useState(initialProfile?.bank_details ?? "");
+  const [paymentLink, setPaymentLink] = useState(initialProfile?.payment_link ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -55,6 +57,7 @@ export default function ProfileForm({
       city,
       google_review_link: googleReviewLink || null,
       bank_details: bankDetails || null,
+      payment_link: paymentLink || null,
       updated_at: new Date().toISOString(),
     });
 
@@ -223,6 +226,23 @@ export default function ProfileForm({
         <p className="mt-1 text-xs text-rig-700/60">
           Shown to the customer on the completion message so they can pay by bank transfer — plain text,
           shown exactly as typed.
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="payment_link" className="field-label">
+          Instant payment link (optional)
+        </label>
+        <input
+          id="payment_link"
+          value={paymentLink}
+          onChange={(e) => setPaymentLink(e.target.value)}
+          className="field-input"
+          placeholder="e.g. your PayID, or a Stripe/Square/PayPal.me link"
+        />
+        <p className="mt-1 text-xs text-rig-700/60">
+          Whatever you already use to get paid instantly on the spot — WorkRoute doesn't process payments itself, it
+          just shows this to the customer alongside your bank details so they can pay you straight away.
         </p>
       </div>
 

@@ -35,12 +35,22 @@ function completionEmailHtml(
   total: number,
   googleReviewLink: string | null,
   invoiceNumber: number | null,
-  bankDetails: string | null
+  bankDetails: string | null,
+  paymentLink: string | null
 ): string {
   const reviewBlock = googleReviewLink
     ? `<p style="font-size: 14px; line-height: 1.6; margin-top: 16px;">
          If you were happy with the job, a quick
          <a href="${googleReviewLink}" style="color:#F2A900;">Google review</a> helps us out.
+       </p>`
+    : "";
+
+  // §instant-payment-link — shown ahead of bank details since it's the
+  // faster option when the tradie's set one (Profile > Instant payment
+  // link) — plain text/URL as typed, WorkRoute never processes it itself.
+  const paymentLinkBlock = paymentLink
+    ? `<p style="font-size: 14px; line-height: 1.6; margin-top: 16px;">
+         <strong>Pay instantly:</strong> <a href="${paymentLink}" style="color:#F2A900;">${paymentLink}</a>
        </p>`
     : "";
 
@@ -57,6 +67,7 @@ function completionEmailHtml(
       <p style="font-size: 15px; line-height: 1.6;">${summary}</p>
       <p style="font-size: 18px; font-weight: 600; margin: 20px 0;">Total: $${total.toFixed(2)}</p>
       <p style="font-size: 14px; line-height: 1.6; color: #3A4149;">Thanks for choosing ${businessName}.</p>
+      ${paymentLinkBlock}
       ${bankBlock}
       ${reviewBlock}
     </div>
@@ -71,7 +82,8 @@ export async function sendCompletionEmail(
   total: number,
   googleReviewLink: string | null = null,
   invoiceNumber: number | null = null,
-  bankDetails: string | null = null
+  bankDetails: string | null = null,
+  paymentLink: string | null = null
 ): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -85,7 +97,7 @@ export async function sendCompletionEmail(
       from: process.env.RESEND_FROM_EMAIL || "WorkRoute <onboarding@resend.dev>",
       to,
       subject: `${businessName}: your job is complete${invoiceNumber !== null ? ` (Invoice #${invoiceNumber})` : ""}`,
-      html: completionEmailHtml(customerName, businessName, summary, total, googleReviewLink, invoiceNumber, bankDetails),
+      html: completionEmailHtml(customerName, businessName, summary, total, googleReviewLink, invoiceNumber, bankDetails, paymentLink),
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true };

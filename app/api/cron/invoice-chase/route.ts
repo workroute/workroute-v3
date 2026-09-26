@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
   const { data: businesses } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, trade, first_name, service_area, bank_details, vapi_phone_number_id, ai_voice_id, ai_persona_name, pronunciation_overrides");
+    .select("user_id, business_name, trade, first_name, service_area, bank_details, payment_link, vapi_phone_number_id, ai_voice_id, ai_persona_name, pronunciation_overrides");
 
   let remindersSent = 0;
   let callsPlaced = 0;
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
         messengerLink,
         null,
         null,
-        { number: invoice.invoiceNumber, amount: invoice.amount, bankDetails: business.bank_details }
+        { number: invoice.invoiceNumber, amount: invoice.amount, bankDetails: business.bank_details, paymentLink: business.payment_link }
       );
 
       const result = await sendSms(invoice.customerPhone, message);

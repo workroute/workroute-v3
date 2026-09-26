@@ -49,7 +49,7 @@ export function messageFor(
   messengerLink: string,
   etaMinutes: number | null = null,
   renewalDateLabel: string | null = null,
-  invoiceDetail: { number: number; amount: number; bankDetails: string | null } | null = null,
+  invoiceDetail: { number: number; amount: number; bankDetails: string | null; paymentLink?: string | null } | null = null,
   appointmentLabel: string | null = null,
   quoteDetail: { amount: number; jobLabel: string | null } | null = null
 ): string {
@@ -74,8 +74,9 @@ export function messageFor(
     case "recurring_renewal":
       return `Hi ${customerName}, your regular service with ${businessName} is booked through to ${renewalDateLabel ?? "your next visit"}. Want your next 5 visits booked in too?${invite}`;
     case "invoice_reminder": {
+      const paymentLinkLine = invoiceDetail?.paymentLink ? `\n\nPay instantly: ${invoiceDetail.paymentLink}` : "";
       const bankLine = invoiceDetail?.bankDetails ? `\n\nPayment details:\n${invoiceDetail.bankDetails}` : "";
-      return `Hi ${customerName}, just a friendly reminder that invoice #${invoiceDetail?.number ?? ""} for $${invoiceDetail?.amount.toFixed(2) ?? ""} from ${businessName} is still outstanding.${bankLine}${invite}`;
+      return `Hi ${customerName}, just a friendly reminder that invoice #${invoiceDetail?.number ?? ""} for $${invoiceDetail?.amount.toFixed(2) ?? ""} from ${businessName} is still outstanding.${paymentLinkLine}${bankLine}${invite}`;
     }
     case "quote_given":
       return `Hi ${customerName}, here's your quote from ${tradieLabel(firstName, businessName)}: $${quoteDetail?.amount.toFixed(2) ?? ""}${
