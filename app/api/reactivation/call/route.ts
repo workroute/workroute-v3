@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       serviceArea: profile.service_area,
       voiceId: profile.ai_voice_id,
       personaName: profile.ai_persona_name,
+      startingPrice: null,
       vapiPhoneNumberId: profile.vapi_phone_number_id,
     },
     {

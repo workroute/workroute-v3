@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   buildAssistantConfig,
+  buildTrialExpiredAssistantConfig,
   handleUpdateJobDraft,
   handleFlagForAttention,
   handleCheckAvailability,
@@ -16,9 +17,10 @@ import {
   type PhoneBusinessContext,
 } from "@/lib/phone-ai";
 import { loadTradePricingConfig } from "@/lib/trade-pricing";
-import { notifyOwnerVoiceFailure } from "@/lib/push-notifications";
+import { notifyOwnerVoiceFailure, notifyAdminOfTrialLimit, notifyTradieApproachingTrialLimit } from "@/lib/push-notifications";
 import { checkAndAlertVip } from "@/lib/vip-alerts";
 import { findMatchingClient } from "@/lib/returning-client";
+import { resolveQuoteFollowupCallOutcome } from "@/lib/quote-followup";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // §25 — the single Server URL every event for the WorkRoute Vapi phone
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
 
   switch (message.type) {
     case "assistant-request":
-      return handleAssistantRequest(supabase, message);
+      return handleAssistantRequest(supabase, message, appOrigin);
     case "tool-calls":
       return handleToolCalls(supabase, message, appOrigin);
     case "end-of-call-report":
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleAssistantRequest(supabase: SupabaseClient, message: any) {
+async function handleAssistantRequest(supabase: SupabaseClient, message: any, appOrigin: string) {
   const call = message.call ?? {};
   const phoneNumberId: string | undefined = call.phoneNumberId;
   const callerNumber: string | undefined = call.customer?.number;
@@ -73,13 +75,71 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any) {
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, trade, first_name, service_area, ai_voice_id, ai_persona_name")
+    .select(
+      "user_id, business_name, trade, first_name, service_area, ai_voice_id, ai_persona_name, starting_price, created_at, is_paying, trial_limit_notified_at, trial_warning_sent_at"
+    )
     .eq("vapi_phone_number_id", phoneNumberId)
     .maybeSingle();
 
   if (!profile) {
     console.log("[vapi-webhook] no business matched phoneNumberId:", phoneNumberId);
     return NextResponse.json({ error: "This number isn't connected to a WorkRoute business yet." });
+  }
+
+  const business: PhoneBusinessContext = {
+    businessId: profile.user_id,
+    businessName: profile.business_name,
+    trade: profile.trade,
+    firstName: profile.first_name,
+    serviceArea: profile.service_area,
+    voiceId: profile.ai_voice_id,
+    personaName: profile.ai_persona_name,
+    startingPrice: profile.starting_price,
+  };
+
+  // §trial-limits — 14 days or 150 calls, whichever comes first, unless
+  // is_paying has been flipped manually (Owner Overview page — there's no
+  // automated payment webhook yet). Checked before any of the normal
+  // call-setup work below, since an over-limit business shouldn't pay the
+  // cost of a real findMatchingClient/checkAndAlertVip round trip either.
+  //
+  // A warning fires first, well before the hard cutoff — a tradie silently
+  // losing real calls with zero notice reflects badly on them and on
+  // WorkRoute (real feedback: "they might lose calls and we look bad").
+  if (!profile.is_paying) {
+    const TRIAL_DAYS = 14;
+    const TRIAL_CALL_CAP = 150;
+    const TRIAL_WARNING_DAYS_LEFT = 3;
+    const TRIAL_WARNING_CALLS_LEFT = 50;
+
+    const daysSinceSignup = (Date.now() - new Date(profile.created_at).getTime()) / 86400000;
+    const { count: callCount } = await supabase
+      .from("phone_call_captures")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", profile.user_id);
+    const callsUsed = callCount ?? 0;
+
+    if (daysSinceSignup > TRIAL_DAYS || callsUsed >= TRIAL_CALL_CAP) {
+      if (!profile.trial_limit_notified_at) {
+        await notifyAdminOfTrialLimit(supabase, profile.business_name, appOrigin);
+        await supabase
+          .from("business_profiles")
+          .update({ trial_limit_notified_at: new Date().toISOString() })
+          .eq("user_id", profile.user_id);
+      }
+      return NextResponse.json({ assistant: buildTrialExpiredAssistantConfig(business) });
+    }
+
+    const approachingLimit =
+      daysSinceSignup >= TRIAL_DAYS - TRIAL_WARNING_DAYS_LEFT || callsUsed >= TRIAL_CALL_CAP - TRIAL_WARNING_CALLS_LEFT;
+    if (approachingLimit && !profile.trial_warning_sent_at) {
+      const reason = daysSinceSignup >= TRIAL_DAYS - TRIAL_WARNING_DAYS_LEFT ? "days" : "calls";
+      await notifyTradieApproachingTrialLimit(supabase, profile.user_id, appOrigin, reason);
+      await supabase
+        .from("business_profiles")
+        .update({ trial_warning_sent_at: new Date().toISOString() })
+        .eq("user_id", profile.user_id);
+    }
   }
 
   // Best-effort — the call must still be answered by the AI even if the
@@ -110,16 +170,6 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any) {
   } catch (error) {
     console.error("[vapi-webhook] assistant-request setup failed —", error);
   }
-
-  const business: PhoneBusinessContext = {
-    businessId: profile.user_id,
-    businessName: profile.business_name,
-    trade: profile.trade,
-    firstName: profile.first_name,
-    serviceArea: profile.service_area,
-    voiceId: profile.ai_voice_id,
-    personaName: profile.ai_persona_name,
-  };
 
   // §phone-AI-depth — only the question ids this business actually has
   // wired into pricing get asked live on the call (see systemPrompt in
@@ -207,7 +257,7 @@ async function handleEndOfCallReport(supabase: SupabaseClient, message: any, app
 
   const { data: capture } = await supabase
     .from("phone_call_captures")
-    .select("business_id, job_id, status")
+    .select("business_id, job_id, status, call_purpose")
     .eq("vapi_call_id", vapiCallId)
     .maybeSingle();
   if (!capture) return;
@@ -239,6 +289,14 @@ async function handleEndOfCallReport(supabase: SupabaseClient, message: any, app
   }
 
   if (!capture.job_id) return;
+
+  // §quote-followup — a distinct post-call path: this job's price/status
+  // were already settled before this call was placed, so the generic
+  // "new phone enquiry" handling below doesn't apply.
+  if (capture.call_purpose === "quote_followup") {
+    await resolveQuoteFollowupCallOutcome(supabase, capture.job_id, capture.business_id, message.endedReason ?? null);
+    return;
+  }
 
   const { data: profile } = await supabase
     .from("business_profiles")

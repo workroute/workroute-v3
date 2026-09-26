@@ -13,7 +13,8 @@ export type NotificationEvent =
   | "running_late"
   | "completed"
   | "recurring_renewal"
-  | "invoice_reminder";
+  | "invoice_reminder"
+  | "quote_given";
 
 // Falls back to the business name alone if the tradie hasn't set a first
 // name yet — never broken grammar, and still never mentions WorkRoute.
@@ -49,7 +50,8 @@ export function messageFor(
   etaMinutes: number | null = null,
   renewalDateLabel: string | null = null,
   invoiceDetail: { number: number; amount: number; bankDetails: string | null } | null = null,
-  appointmentLabel: string | null = null
+  appointmentLabel: string | null = null,
+  quoteDetail: { amount: number; jobLabel: string | null } | null = null
 ): string {
   const invite = ` View details and message us here: ${messengerLink}`;
 
@@ -75,5 +77,9 @@ export function messageFor(
       const bankLine = invoiceDetail?.bankDetails ? `\n\nPayment details:\n${invoiceDetail.bankDetails}` : "";
       return `Hi ${customerName}, just a friendly reminder that invoice #${invoiceDetail?.number ?? ""} for $${invoiceDetail?.amount.toFixed(2) ?? ""} from ${businessName} is still outstanding.${bankLine}${invite}`;
     }
+    case "quote_given":
+      return `Hi ${customerName}, here's your quote from ${tradieLabel(firstName, businessName)}: $${quoteDetail?.amount.toFixed(2) ?? ""}${
+        quoteDetail?.jobLabel ? ` for ${quoteDetail.jobLabel}` : ""
+      }. We'll be in touch shortly to see if you'd like to go ahead.${invite}`;
   }
 }

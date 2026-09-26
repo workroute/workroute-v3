@@ -48,6 +48,11 @@ export type PhoneBusinessContext = {
   // Settings > Voice.
   voiceId: string | null;
   personaName: string | null;
+  // §staged-onboarding — a flat fallback number Sarah can mention before
+  // the full per-question pricing matrix exists. null means not set,
+  // same "not configured yet" meaning as an absent trade_pricing_configs
+  // row, not $0.
+  startingPrice: number | null;
 };
 
 // §phone-AI-depth (2026-09-10, reverted same day) — briefly switched to
@@ -139,7 +144,10 @@ Once you've covered these (or done what you reasonably can), call get_price_esti
 - If it comes back needing a quote instead (quoteRequired: true), that's completely normal — it just means this particular job needs ${tradieName}'s eyes on it in person. Tell the caller he'll confirm the price when he's out there, then move straight to offering a booking anyway — a quote visit is still a real booking, and still fills the diary.
 
 Never say a dollar figure that didn't come from get_price_estimate's actual result — never estimate, calculate, round, or guess one yourself, even roughly.`
-    : `
+    : business.startingPrice
+      ? `
+This business hasn't set up detailed pricing yet, but prices start at $${business.startingPrice}. Once you have a clear job description, you can mention that as a starting point — e.g. "prices start at around $${business.startingPrice}" — but always make clear the final price depends on the actual job, since you don't have enough detail to give a firm number. Then move straight to offering a booking (below). Never say any other dollar figure, and never imply $${business.startingPrice} is the confirmed price for this specific job.`
+      : `
 This business hasn't set up pricing yet, so don't try to work out a number — just get a clear job description and move straight to offering a booking (below). Never state a dollar figure yourself.`;
 
   return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${business.businessName} — you already introduced yourself as this in your opening line, so you don't need to repeat "I'm an AI" every sentence, but never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form — you work for ${business.businessName}, not for a platform.
@@ -688,6 +696,29 @@ export function buildAssistantConfig(
   };
 }
 
+// §trial-limits — a caller reaching a business past its free-trial cutoff
+// still deserves a real, clean-sounding call, not dead air or a raw error —
+// that's the tradie's actual customer, and a broken call reflects on them,
+// not just on WorkRoute. Deliberately no tools, no real conversation: says
+// one line, in the business's own chosen voice/persona if they've set one,
+// then hangs up via the same endCallPhrases mechanism buildAssistantConfig
+// uses (documented fix for Vapi truncating a tool-call-driven goodbye).
+export function buildTrialExpiredAssistantConfig(business: PhoneBusinessContext) {
+  const message = `Thanks for calling ${business.businessName}. We're not able to take your call automatically right now — please try again shortly, or reach out directly.`;
+  return {
+    firstMessage: message,
+    firstMessageMode: "assistant-speaks-first",
+    model: {
+      provider: "anthropic",
+      model: MODEL,
+      messages: [{ role: "system", content: `Say exactly this, word for word, then stop: "${message}"` }],
+    },
+    voice: resolveVoice(business),
+    endCallPhrases: [message],
+    endCallMessage: message,
+  };
+}
+
 // §38 — the outbound counterpart to buildAssistantConfig above, used when
 // WorkRoute is placing the call (lib/reactivation.ts) rather than
 // responding to one ringing in. Same shape, different opening line/prompt/
@@ -715,6 +746,58 @@ export function buildOutboundAssistantConfig(business: PhoneBusinessContext, cli
       // types/weekdays can (an unbounded set, not a small fixed list), so a
       // genuinely better base model is the real lever for that class of
       // error, not a keyword list.
+      model: "nova-3",
+      language: "en-AU",
+      smartFormat: true,
+      keywords: buildTranscriberKeywords(business.trade, business.serviceArea),
+    },
+  };
+}
+
+// §quote-followup — the outbound call that asks whether a customer wants to
+// go ahead with an on-site quote. Unlike the payment-chase call above (which
+// only ever confirms or flags), this one can actually book the real job —
+// reuses the full TOOLS set for exactly that reason.
+export type QuoteFollowupClient = {
+  name: string;
+  jobLabel: string | null;
+  quotedPrice: number;
+};
+
+function outboundQuoteFollowupPrompt(business: PhoneBusinessContext, client: QuoteFollowupClient): string {
+  const tradieName = business.firstName ?? "the tradie";
+  const jobDescription = client.jobLabel || `the ${business.trade} job`;
+
+  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${business.businessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
+
+Speak naturally and briefly, warm and low-key — this is a quick follow-up, not a sales pitch. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn.
+
+Today is ${todayForPrompt()}. Use this as the real current date when resolving a relative date they give you.
+
+YOU called THEM — ${tradieName} recently gave ${client.name} a quote of $${client.quotedPrice.toFixed(2)} for ${jobDescription}, and you're following up to see if they'd like to go ahead.
+
+- If yes: ask if they'd like to lock in a day/time now. If they give you one, call check_availability, then book_appointment if it's free. If it's not free, offer an alternative or tell them ${tradieName} will call back to sort out a time.
+- If they're still deciding: thank them for considering it, don't push, and call flag_for_attention with priority "low" and a short reason so ${tradieName} knows to check back with them himself.
+- If they say no, or raise a problem with the quote (too expensive, wrong scope, anything like that): don't negotiate on price yourself — call flag_for_attention with priority "medium" and a short reason, tell them ${tradieName} will be in touch, and end the call politely.
+
+Once the call has reached a natural conclusion either way, end with exactly this sentence, word for word, nothing after it: "${OUTBOUND_END_CALL_PHRASE}"`;
+}
+
+export function buildQuoteFollowupAssistantConfig(business: PhoneBusinessContext, client: QuoteFollowupClient) {
+  return {
+    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${business.businessName} — is this ${client.name}?`,
+    firstMessageMode: "assistant-speaks-first",
+    model: {
+      provider: "anthropic",
+      model: MODEL,
+      messages: [{ role: "system", content: outboundQuoteFollowupPrompt(business, client) }],
+      tools: TOOLS,
+    },
+    voice: resolveVoice(business),
+    endCallPhrases: [OUTBOUND_END_CALL_PHRASE],
+    endCallMessage: OUTBOUND_END_CALL_PHRASE,
+    transcriber: {
+      provider: "deepgram",
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,

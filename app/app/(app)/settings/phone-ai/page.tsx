@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PhoneAiForm from "./phone-ai-form";
+import AdminNumberProvisioner from "./admin-number-provisioner";
 
 // §25/§34a — connecting a Vapi number to this business (manual, one-time,
 // done from the Vapi dashboard first — see the field's own help text below)
@@ -18,7 +19,9 @@ export default async function PhoneAiSettingsPage() {
     redirect("/login");
   }
 
-  const [{ data: profile }, { data: vipContacts }] = await Promise.all([
+  const isAdmin = user.id === process.env.ADMIN_USER_ID;
+
+  const [{ data: profile }, { data: vipContacts }, { data: allBusinesses }] = await Promise.all([
     supabase
       .from("business_profiles")
       .select("vapi_phone_number_id, vapi_phone_number, trade")
@@ -29,6 +32,12 @@ export default async function PhoneAiSettingsPage() {
       .select("id, name, phone")
       .eq("business_id", user.id)
       .order("created_at", { ascending: true }),
+    isAdmin
+      ? supabase
+          .from("business_profiles")
+          .select("user_id, business_name, trade, city, vapi_phone_number")
+          .order("business_name", { ascending: true })
+      : Promise.resolve({ data: null }),
   ]);
 
   return (
@@ -48,6 +57,12 @@ export default async function PhoneAiSettingsPage() {
             The AI will still answer and capture job details for {profile?.trade ?? "your trade"} — it just can't
             calculate a live price yet, so calls land as "Quote required" until pricing is configured for this
             trade.
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="mt-6 rounded-lg bg-white p-6 shadow-sm">
+            <AdminNumberProvisioner businesses={allBusinesses ?? []} />
           </div>
         )}
 

@@ -253,6 +253,11 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
   ],
 };
 
+// Single source of truth for "which trades exist" — anywhere that needs a
+// dropdown of trades (profile setup, quick start) should read this rather
+// than hand-maintaining its own copy of the list.
+export const TRADE_NAMES = Object.keys(TRADE_QUESTIONS);
+
 export const SOURCE_OPTIONS: { value: string; label: string }[] = [
   { value: "call", label: "Call" },
   { value: "missed_call", label: "Missed call" },

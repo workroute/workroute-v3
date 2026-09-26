@@ -9,6 +9,7 @@ import RescheduleAction from "./reschedule-action";
 import MessengerThread from "./messenger-thread";
 import JobTabs from "./job-tabs";
 import CompletionRecap from "./completion-recap";
+import QuoteCompletionForm from "./quote-completion-form";
 import JobPhotos from "./job-photos";
 import InvoicePaidToggle from "./invoice-paid-toggle";
 
@@ -156,13 +157,17 @@ export default async function JobDetailPage({ params }: { params: { id: string }
 
         {job.status === "Completed" && (
           <div className="mt-4">
-            <CompletionRecap
-              jobId={job.id}
-              businessId={user.id}
-              initialSummary={job.completion_summary}
-              initialSentAt={job.completion_sent_at}
-              customerEmail={job.customer_email}
-            />
+            {job.quote_required && !job.quote_given_at ? (
+              <QuoteCompletionForm jobId={job.id} />
+            ) : (
+              <CompletionRecap
+                jobId={job.id}
+                businessId={user.id}
+                initialSummary={job.completion_summary}
+                initialSentAt={job.completion_sent_at}
+                customerEmail={job.customer_email}
+              />
+            )}
           </div>
         )}
 
@@ -179,11 +184,13 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                 <div>
                   <p className="text-xs uppercase tracking-wide text-rig-700/60">Price</p>
                   <p className="mt-0.5 text-rig-900">
-                    {job.quote_required
-                      ? "Quote required"
-                      : job.estimated_price !== null
-                        ? `$${Number(job.estimated_price).toFixed(2)}`
-                        : "—"}
+                    {job.quote_required && job.quoted_price !== null
+                      ? `$${Number(job.quoted_price).toFixed(2)} (quoted)`
+                      : job.quote_required
+                        ? "Quote required"
+                        : job.estimated_price !== null
+                          ? `$${Number(job.estimated_price).toFixed(2)}`
+                          : "—"}
                   </p>
                 </div>
                 <div>

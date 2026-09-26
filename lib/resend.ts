@@ -94,6 +94,53 @@ export async function sendCompletionEmail(
   }
 }
 
+function onboardingReminderEmailHtml(firstName: string | null): string {
+  const greeting = firstName ? `Hey ${firstName},` : "Hey,";
+  return `
+    <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1C1F26;">
+      <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute</p>
+      <h1 style="font-size: 22px; margin: 8px 0 16px;">${greeting} Sarah's ready — just needs your pricing.</h1>
+      <p style="font-size: 15px; line-height: 1.6;">
+        You got Sarah set up a couple of days ago, but she still can't quote a real price on a call yet — that's
+        the one thing left. Takes about 10 minutes to fill in for your trade.
+      </p>
+      <p style="margin: 24px 0;">
+        <a href="https://app.workroute.com.au/app/pricing" style="background:#F2A900; color:#14171C; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:600; display:inline-block;">
+          Set up your pricing
+        </a>
+      </p>
+      <p style="font-size: 15px; line-height: 1.6;">
+        Any questions, just reply to this email.
+      </p>
+    </div>
+  `;
+}
+
+export async function sendOnboardingReminderEmail(
+  to: string,
+  firstName: string | null
+): Promise<{ ok: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { ok: false, error: "Onboarding reminder isn't configured yet — missing RESEND_API_KEY." };
+  }
+
+  const resend = new Resend(apiKey);
+
+  try {
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "WorkRoute <onboarding@resend.dev>",
+      to,
+      subject: "Sarah's ready — just needs your pricing",
+      html: onboardingReminderEmailHtml(firstName),
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Couldn't reach Resend." };
+  }
+}
+
 export async function sendWelcomeEmail(
   to: string,
   firstName: string | null

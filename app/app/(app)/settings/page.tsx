@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { IconBuilding, IconBell, IconClock, IconPlug, IconPhone, IconMessages, IconHelp, IconReactivate, IconMic } from "../nav-icons";
+import { IconBuilding, IconBell, IconClock, IconPlug, IconPhone, IconMessages, IconHelp, IconReactivate, IconMic, IconOverview } from "../nav-icons";
 
 // §32e — Settings as its own hub, separate from just linking straight to
 // /app/profile. Business details still lives at /app/profile (untouched,
@@ -30,13 +30,26 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
+  const isAdmin = user.id === process.env.ADMIN_USER_ID;
+  const items = isAdmin
+    ? [
+        ...SETTINGS_ITEMS,
+        {
+          href: "/app/admin/overview",
+          label: "Owner overview",
+          description: "Every business, at a glance",
+          Icon: IconOverview,
+        },
+      ]
+    : SETTINGS_ITEMS;
+
   return (
     <main className="min-h-screen bg-paper-50 pb-16 md:pb-0">
       <div className="mx-auto max-w-lg px-4 py-10">
         <h1 className="font-display text-2xl font-bold text-rig-900">Settings</h1>
 
         <div className="mt-6 space-y-3">
-          {SETTINGS_ITEMS.map(({ href, label, description, Icon }) => (
+          {items.map(({ href, label, description, Icon }) => (
             <Link
               key={href}
               href={href}

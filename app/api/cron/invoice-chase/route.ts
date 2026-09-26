@@ -73,6 +73,7 @@ export async function GET(request: Request) {
           serviceArea: business.service_area,
           voiceId: business.ai_voice_id,
           personaName: business.ai_persona_name,
+          startingPrice: null,
           vapiPhoneNumberId: business.vapi_phone_number_id,
         },
         {

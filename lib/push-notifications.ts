@@ -117,6 +117,67 @@ export async function notifyOwnerVoiceFailure(supabase: SupabaseClient, business
   });
 }
 
+// §trial-limits — the heads-up BEFORE the hard cutoff, sent to the tradie
+// themselves (unlike notifyAdminOfTrialLimit below) — they're the one who
+// needs to act, and a warning-free "sorry, can't take your call" moment
+// would cost them real, live business with zero chance to prevent it.
+export async function notifyTradieApproachingTrialLimit(
+  supabase: SupabaseClient,
+  businessId: string,
+  appOrigin: string,
+  reason: "days" | "calls"
+): Promise<void> {
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", businessId);
+  if (!subs?.length) return;
+
+  // §payment-link — PAYMENT_LINK_URL is a plain env var, not hardcoded,
+  // specifically so it can be swapped without a code change if the payment
+  // provider ever changes (currently GoCardless). Falls back to Settings
+  // if it's not set yet, rather than sending a broken/undefined link.
+  const paymentLink = process.env.PAYMENT_LINK_URL;
+  const callToAction = paymentLink ? " Click here to continue." : " Get in touch to keep going.";
+  const body =
+    (reason === "days"
+      ? "Your free trial ends in a few days — Sarah will pause until you upgrade."
+      : "You're approaching your free trial's call limit — Sarah will pause until you upgrade.") + callToAction;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: "Your free trial is almost up",
+    body,
+    url: paymentLink || `${appOrigin}/app/settings`,
+  });
+}
+
+// §trial-limits — deliberately notifies the WorkRoute owner (ADMIN_USER_ID),
+// not the tradie whose trial just ran out. Same shape as
+// notifyOwnerVoiceFailure above, just pointed at a different business_id —
+// the owner's own push subscriptions, so he can personally follow up about
+// converting them, rather than the tradie finding out via a push of their
+// own.
+export async function notifyAdminOfTrialLimit(
+  supabase: SupabaseClient,
+  tradieBusinessName: string,
+  appOrigin: string
+): Promise<void> {
+  const adminId = process.env.ADMIN_USER_ID;
+  if (!adminId) return;
+
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", adminId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: "Trial limit reached",
+    body: `${tradieBusinessName} has hit their free trial limit — Sarah's paused for them until they convert.`,
+    url: `${appOrigin}/app/admin/overview`,
+  });
+}
+
 // §25 — fired instead of notifyOwnerNewPhoneEnquiry when book_appointment
 // actually locked in a time during the call, so the tradie knows there's
 // already something on the calendar rather than just a lead to call back.

@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthedUser, getBusinessProfile } from "@/lib/supabase/auth";
 import { getWeather } from "@/lib/weather";
 import { getRunSheetBuckets } from "@/lib/run-sheet-data";
+import { loadTradePricingConfig } from "@/lib/trade-pricing";
 import RunSheetBoard from "./run-sheet/run-sheet-board";
 import InstallPrompt from "./install-prompt";
 
@@ -33,10 +35,27 @@ export default async function HomePage() {
 
   const weather = await getWeather(profile?.city ?? null);
 
+  // §staged-onboarding — a business that stopped after the Quick Start
+  // screen (just name/business/trade) can still take calls, but Sarah
+  // can't quote anything until either the full pricing matrix or a
+  // starting_price fallback exists (lib/phone-ai.ts's three-way pricing
+  // branch). Gentle, dismissible-by-completing reminder, not an error.
+  const pricingConfig = profile ? await loadTradePricingConfig(supabase, user.id, profile.trade) : null;
+  const showPricingReminder = !!profile && !pricingConfig && !profile.starting_price;
+
   return (
     <main className="min-h-screen bg-paper-50">
       <div className="mx-auto max-w-6xl px-4 py-8">
         <InstallPrompt />
+
+        {showPricingReminder && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-rig-900">
+            <span>Sarah can't quote prices yet — add your pricing to get the most out of her.</span>
+            <Link href="/app/pricing" className="font-medium text-steel-500 hover:underline whitespace-nowrap">
+              Set up pricing →
+            </Link>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
