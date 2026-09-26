@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import VoiceForm from "./voice-form";
+import PronunciationForm from "./pronunciation-form";
 
 // §voice-picker — lets a tradie choose which of the pre-tested ElevenLabs
 // voices their AI uses, and what name it introduces itself as. Both columns
@@ -20,7 +21,7 @@ export default async function VoiceSettingsPage() {
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("ai_voice_id, ai_persona_name")
+    .select("ai_voice_id, ai_persona_name, pronunciation_overrides")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -42,6 +43,13 @@ export default async function VoiceSettingsPage() {
             initialVoiceId={profile?.ai_voice_id ?? null}
             initialPersonaName={profile?.ai_persona_name ?? null}
           />
+        </div>
+
+        <div className="mt-6 rounded-lg bg-white p-6 shadow-sm">
+          <p className="font-display font-semibold text-rig-900">Pronunciation fixes</p>
+          <div className="mt-3">
+            <PronunciationForm userId={user.id} initialOverrides={profile?.pronunciation_overrides ?? []} />
+          </div>
         </div>
       </div>
     </main>

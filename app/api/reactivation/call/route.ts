@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const [{ data: profile }, { data: client }] = await Promise.all([
     supabase
       .from("business_profiles")
-      .select("business_name, trade, first_name, vapi_phone_number_id, service_area, ai_voice_id, ai_persona_name")
+      .select("business_name, trade, first_name, vapi_phone_number_id, service_area, ai_voice_id, ai_persona_name, pronunciation_overrides")
       .eq("user_id", user.id)
       .maybeSingle(),
     // RLS already scopes this to clients belonging to the caller's own
@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       voiceId: profile.ai_voice_id,
       personaName: profile.ai_persona_name,
       startingPrice: null,
+      pronunciationOverrides: profile.pronunciation_overrides ?? [],
       vapiPhoneNumberId: profile.vapi_phone_number_id,
     },
     {

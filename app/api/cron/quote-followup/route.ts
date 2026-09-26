@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
   const { data: businesses } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, trade, first_name, service_area, vapi_phone_number_id, ai_voice_id, ai_persona_name");
+    .select("user_id, business_name, trade, first_name, service_area, vapi_phone_number_id, ai_voice_id, ai_persona_name, pronunciation_overrides");
 
   let callsPlaced = 0;
 
@@ -38,6 +38,7 @@ export async function GET(request: Request) {
           voiceId: business.ai_voice_id,
           personaName: business.ai_persona_name,
           startingPrice: null,
+          pronunciationOverrides: business.pronunciation_overrides ?? [],
           vapiPhoneNumberId: business.vapi_phone_number_id,
         },
         job

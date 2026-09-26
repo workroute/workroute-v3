@@ -53,7 +53,38 @@ export type PhoneBusinessContext = {
   // same "not configured yet" meaning as an absent trade_pricing_configs
   // row, not $0.
   startingPrice: number | null;
+  // §pronunciation-fixes — a business name, suburb, or trade term the
+  // text-to-speech engine mispronounces, paired with a phonetic respelling
+  // that comes out sounding right (e.g. "Woombye" → "Woom-bye"). Empty
+  // unless the tradie has actually caught and fixed a mispronunciation in
+  // Settings — this never applies to anything written down (SMS, invoices,
+  // emails), only to what Sarah actually says on a call.
+  pronunciationOverrides: { word: string; phonetic: string }[];
 };
+
+// Whole-word, case-insensitive — a business name or suburb could appear in
+// any capitalisation depending on how it was typed elsewhere. Applied only
+// to strings WorkRoute builds directly for Sarah to speak (greetings, the
+// trial-expired message); the system prompt gets its own separate
+// instruction (pronunciationInstructions below) so the model applies the
+// same fix to whatever it generates live during the conversation, since we
+// don't control that text directly.
+function applyPronunciationOverrides(text: string, overrides: { word: string; phonetic: string }[]): string {
+  return overrides.reduce((result, { word, phonetic }) => {
+    if (!word.trim()) return result;
+    const escaped = word.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return result.replace(new RegExp(`\\b${escaped}\\b`, "gi"), phonetic);
+  }, text);
+}
+
+// The model generates most of what it actually says live, so a fixed
+// substitution on our end can't reach that — this tells it to make the
+// same substitution itself whenever one of these words comes up.
+function pronunciationInstructions(overrides: { word: string; phonetic: string }[]): string {
+  if (overrides.length === 0) return "";
+  const list = overrides.map(({ word, phonetic }) => `"${word}" → say it as "${phonetic}"`).join("; ");
+  return `\n\nSome words don't come out sounding right from your voice engine. Whenever you need to say one of these, write it the corrected way instead — this is purely how you pronounce it out loud, never how you'd write it in a message: ${list}.`;
+}
 
 // §phone-AI-depth (2026-09-10, reverted same day) — briefly switched to
 // claude-sonnet-5 on the theory that the now-deeper conversation (deciding
@@ -115,6 +146,7 @@ function systemPrompt(
   pricingQuestionIds: string[]
 ): string {
   const tradieName = business.firstName ?? "the tradie";
+  const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const hasPricingQuestions = pricingQuestionIds.length > 0;
   const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds);
   const alwaysAskText = describeAlwaysAskQuestionsForPrompt(business.trade);
@@ -150,7 +182,7 @@ This business hasn't set up detailed pricing yet, but prices start at $${busines
       : `
 This business hasn't set up pricing yet, so don't try to work out a number — just get a clear job description and move straight to offering a booking (below). Never state a dollar figure yourself.`;
 
-  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${business.businessName} — you already introduced yourself as this in your opening line, so you don't need to repeat "I'm an AI" every sentence, but never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form — you work for ${business.businessName}, not for a platform.
+  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${spokenBusinessName} — you already introduced yourself as this in your opening line, so you don't need to repeat "I'm an AI" every sentence, but never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form — you work for ${spokenBusinessName}, not for a platform.
 
 Speak naturally, like a real phone conversation — warm, efficient, and brisk without feeling rushed. This call has real ground to cover (below), so keep momentum: don't linger, don't over-explain, ask one thing at a time and move on as soon as you have an answer.
 
@@ -184,7 +216,7 @@ Once you've either given a price or explained a quote visit is needed, ask if th
 
 Once you've either booked a time or told them ${tradieName} will call back, thank them, then end with exactly this sentence, word for word, nothing after it: "${END_CALL_PHRASE}" — the system hangs up automatically once you've said it, so say the whole thing naturally, don't shorten it.
 
-Call flag_for_attention (priority "low", "medium", or "high") any time something needs ${tradieName}'s judgement rather than yours — an unusual request, a complaint, anything time-sensitive, or the caller explicitly asking to speak to a person. Use "high" only for something genuinely urgent (an emergency, safety issue, or a caller who needs a human right now). Still finish the call warmly either way.`;
+Call flag_for_attention (priority "low", "medium", or "high") any time something needs ${tradieName}'s judgement rather than yours — an unusual request, a complaint, anything time-sensitive, or the caller explicitly asking to speak to a person. Use "high" only for something genuinely urgent (an emergency, safety issue, or a caller who needs a human right now). Still finish the call warmly either way.${pronunciationInstructions(business.pronunciationOverrides)}`;
 }
 
 // §38 — Sarah's outbound reactivation-calling script. This call always
@@ -201,9 +233,10 @@ type OutboundCallClient = {
 
 function outboundReactivationPrompt(business: PhoneBusinessContext, client: OutboundCallClient): string {
   const tradieName = business.firstName ?? "the tradie";
+  const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const knownAddress = [client.addressStreet, client.addressSuburb].filter(Boolean).join(", ") || "on file";
 
-  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${business.businessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
+  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${spokenBusinessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
 
 Speak naturally and briefly, like a real phone conversation — short sentences, warm and friendly. This is a check-in call, not a sales pitch — don't be pushy. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn (e.g. don't ask what they need done and what day/time in the same breath).
 
@@ -219,7 +252,7 @@ If at any point they ask not to be contacted again, or sound annoyed at being ca
 
 Once the call has reached a natural conclusion either way, end with exactly this sentence, word for word, nothing after it: "${OUTBOUND_END_CALL_PHRASE}"
 
-Call flag_for_attention (priority "low", "medium", or "high") if anything needs ${tradieName}'s judgement — a complaint, an unusual request, or if they want to speak to a person.`;
+Call flag_for_attention (priority "low", "medium", or "high") if anything needs ${tradieName}'s judgement — a complaint, an unusual request, or if they want to speak to a person.${pronunciationInstructions(business.pronunciationOverrides)}`;
 }
 
 const MARK_DO_NOT_CALL_TOOL: VapiTool = {
@@ -247,13 +280,14 @@ export type PaymentChaseClient = {
 
 function outboundPaymentChasePrompt(business: PhoneBusinessContext, client: PaymentChaseClient): string {
   const tradieName = business.firstName ?? "the tradie";
+  const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const bankLine = client.bankDetails
     ? ` If they'd like the payment details again, read them out exactly as given, naturally: ${client.bankDetails.replace(/\n/g, ", ")}.`
     : "";
 
-  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${business.businessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
+  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${spokenBusinessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
 
-Speak naturally and briefly, warm and low-key. This is a friendly payment reminder, never a debt-collection call — never threaten, never mention late fees, credit reporting, or legal action, none of that is something ${business.businessName} does. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn.
+Speak naturally and briefly, warm and low-key. This is a friendly payment reminder, never a debt-collection call — never threaten, never mention late fees, credit reporting, or legal action, none of that is something ${spokenBusinessName} does. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn.
 
 YOU called THEM — this is an outbound call to ${client.name} about invoice #${client.invoiceNumber} for $${client.amount.toFixed(2)}, sent a couple of weeks ago and still showing as unpaid.
 
@@ -262,7 +296,7 @@ Briefly mention the invoice number and amount, then ask if they've already paid 
 - If they haven't paid yet and it's just been an oversight: remind them warmly, no pressure.${bankLine} Call confirm_invoice_paid with paid false. End politely.
 - If they mention a real problem with the job itself (unhappy with the work, a dispute, anything like that): don't argue or try to resolve it yourself — call flag_for_attention with priority "medium" and a short reason, tell them ${tradieName} will be in touch, and end the call. Do not call confirm_invoice_paid in this case.
 
-Once the call has reached a natural conclusion, end with exactly this sentence, word for word, nothing after it: "${OUTBOUND_END_CALL_PHRASE}"`;
+Once the call has reached a natural conclusion, end with exactly this sentence, word for word, nothing after it: "${OUTBOUND_END_CALL_PHRASE}"${pronunciationInstructions(business.pronunciationOverrides)}`;
 }
 
 const CONFIRM_INVOICE_PAID_TOOL: VapiTool = {
@@ -656,7 +690,7 @@ export function buildAssistantConfig(
     // confirm-back check regardless, and — since the system prompt already
     // accepts info in whatever order a caller actually gives it — this only
     // changes what most callers are nudged to say first, not what's allowed.
-    firstMessage: `${timeOfDayGreeting()}, you've reached ${business.businessName}. I'm ${resolvePersonaName(business)}, the AI Office Manager. Can I start with your name?`,
+    firstMessage: `${timeOfDayGreeting()}, you've reached ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)}. I'm ${resolvePersonaName(business)}, the AI Office Manager. Can I start with your name?`,
     // Without this, Vapi defaults to waiting for the caller to speak first —
     // confirmed on a real test call where the business name was never once
     // spoken and the AI only responded after the caller prompted it.
@@ -704,7 +738,8 @@ export function buildAssistantConfig(
 // then hangs up via the same endCallPhrases mechanism buildAssistantConfig
 // uses (documented fix for Vapi truncating a tool-call-driven goodbye).
 export function buildTrialExpiredAssistantConfig(business: PhoneBusinessContext) {
-  const message = `Thanks for calling ${business.businessName}. We're not able to take your call automatically right now — please try again shortly, or reach out directly.`;
+  const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
+  const message = `Thanks for calling ${spokenBusinessName}. We're not able to take your call automatically right now — please try again shortly, or reach out directly.`;
   return {
     firstMessage: message,
     firstMessageMode: "assistant-speaks-first",
@@ -726,7 +761,7 @@ export function buildTrialExpiredAssistantConfig(business: PhoneBusinessContext)
 // matchedClient | null branch here the way the inbound version has.
 export function buildOutboundAssistantConfig(business: PhoneBusinessContext, client: OutboundCallClient) {
   return {
-    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${business.businessName} — is this ${client.name}?`,
+    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)} — is this ${client.name}?`,
     firstMessageMode: "assistant-speaks-first",
     model: {
       provider: "anthropic",
@@ -766,9 +801,10 @@ export type QuoteFollowupClient = {
 
 function outboundQuoteFollowupPrompt(business: PhoneBusinessContext, client: QuoteFollowupClient): string {
   const tradieName = business.firstName ?? "the tradie";
+  const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const jobDescription = client.jobLabel || `the ${business.trade} job`;
 
-  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${business.businessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
+  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${spokenBusinessName} — you already introduced yourself as this in your opening line. Never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form.
 
 Speak naturally and briefly, warm and low-key — this is a quick follow-up, not a sales pitch. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn.
 
@@ -780,12 +816,12 @@ YOU called THEM — ${tradieName} recently gave ${client.name} a quote of $${cli
 - If they're still deciding: thank them for considering it, don't push, and call flag_for_attention with priority "low" and a short reason so ${tradieName} knows to check back with them himself.
 - If they say no, or raise a problem with the quote (too expensive, wrong scope, anything like that): don't negotiate on price yourself — call flag_for_attention with priority "medium" and a short reason, tell them ${tradieName} will be in touch, and end the call politely.
 
-Once the call has reached a natural conclusion either way, end with exactly this sentence, word for word, nothing after it: "${OUTBOUND_END_CALL_PHRASE}"`;
+Once the call has reached a natural conclusion either way, end with exactly this sentence, word for word, nothing after it: "${OUTBOUND_END_CALL_PHRASE}"${pronunciationInstructions(business.pronunciationOverrides)}`;
 }
 
 export function buildQuoteFollowupAssistantConfig(business: PhoneBusinessContext, client: QuoteFollowupClient) {
   return {
-    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${business.businessName} — is this ${client.name}?`,
+    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)} — is this ${client.name}?`,
     firstMessageMode: "assistant-speaks-first",
     model: {
       provider: "anthropic",
@@ -808,7 +844,7 @@ export function buildQuoteFollowupAssistantConfig(business: PhoneBusinessContext
 
 export function buildPaymentChaseAssistantConfig(business: PhoneBusinessContext, client: PaymentChaseClient) {
   return {
-    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${business.businessName} — is this ${client.name}?`,
+    firstMessage: `${timeOfDayGreeting()}, this is ${resolvePersonaName(business)} from ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)} — is this ${client.name}?`,
     firstMessageMode: "assistant-speaks-first",
     model: {
       provider: "anthropic",
