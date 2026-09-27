@@ -177,3 +177,64 @@ export async function sendWelcomeEmail(
     return { ok: false, error: "Couldn't reach Resend." };
   }
 }
+
+// §WorkRoute sales chat — the full details of a visitor who asked, in the
+// chat on workroute.com.au, for the owner to follow up
+// (lib/workroute-sales-ai.ts). Visitor-typed text, so everything is escaped.
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+export async function sendSalesLeadEmail(
+  prospect: { name?: string; phone?: string; email?: string; business?: string; notes?: string },
+  transcript: { sender: "visitor" | "ai"; body: string }[]
+): Promise<{ ok: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { ok: false, error: "Email isn't configured yet — missing RESEND_API_KEY." };
+  }
+
+  const rows = (
+    [
+      ["Name", prospect.name],
+      ["Phone", prospect.phone],
+      ["Email", prospect.email],
+      ["Business", prospect.business],
+      ["Wants", prospect.notes],
+    ] as const
+  )
+    .filter(([, value]) => value?.trim())
+    .map(([label, value]) => `<p style="margin: 4px 0;"><strong>${label}:</strong> ${escapeHtml(value!.trim())}</p>`)
+    .join("");
+
+  const chat = transcript
+    .map(
+      (m) =>
+        `<p style="margin: 6px 0;"><strong>${m.sender === "visitor" ? "Visitor" : "Sarah"}:</strong> ${escapeHtml(m.body)}</p>`
+    )
+    .join("");
+
+  const resend = new Resend(apiKey);
+
+  try {
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "WorkRoute <onboarding@resend.dev>",
+      to: process.env.SALES_LEAD_EMAIL || "steve@workroute.com.au",
+      replyTo: prospect.email?.trim() || undefined,
+      subject: `New WorkRoute lead: ${prospect.name?.trim() || "website visitor"}`,
+      html: `
+        <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1C1F26;">
+          <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute website chat</p>
+          <h1 style="font-size: 20px; margin: 8px 0 16px;">Someone wants to hear from you</h1>
+          ${rows}
+          <h2 style="font-size: 15px; margin: 24px 0 8px;">The chat so far</h2>
+          <div style="font-size: 14px; line-height: 1.5; color: #3A4149;">${chat}</div>
+        </div>
+      `,
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Couldn't reach Resend." };
+  }
+}

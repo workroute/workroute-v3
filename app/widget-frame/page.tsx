@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { WORKROUTE_SALES_DISPLAY_NAME, WORKROUTE_SALES_WIDGET_KEY } from "@/lib/workroute-sales-ai";
 import WidgetChat from "./widget-chat";
 
 // §Website Widget — deliberately public, loaded inside an <iframe> on an
@@ -9,6 +10,13 @@ import WidgetChat from "./widget-chat";
 // identity boundary — see supabase/migrations/0016_website_widget.sql.
 export default async function WidgetFramePage({ searchParams }: { searchParams: { key?: string; preview?: string } }) {
   const widgetKey = searchParams.key;
+
+  // WorkRoute's own marketing-site chat — no tradie business behind it.
+  if (widgetKey === WORKROUTE_SALES_WIDGET_KEY) {
+    return (
+      <WidgetChat widgetKey={widgetKey} businessName={WORKROUTE_SALES_DISPLAY_NAME} defaultOpen={searchParams.preview === "1"} />
+    );
+  }
 
   const supabase = createServiceRoleClient();
   const { data: profile } = widgetKey

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { generateWidgetReply, type WidgetHistoryItem } from "@/lib/widget-ai";
+import { generateSalesReply, WORKROUTE_SALES_WIDGET_KEY } from "@/lib/workroute-sales-ai";
 
 // §Website Widget — the public endpoint an embedded chat widget on an
 // arbitrary third-party website calls. No auth possible here by design —
@@ -79,6 +80,10 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
 
   const supabase = createServiceRoleClient();
 
+  if (params.widgetKey === WORKROUTE_SALES_WIDGET_KEY) {
+    return handleSalesChat(supabase, sessionId, trimmed, new URL(request.url).origin);
+  }
+
   const { data: profile } = await supabase
     .from("business_profiles")
     .select("user_id, business_name, first_name, trade")
@@ -147,6 +152,67 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
       // related to attention priority, which is a separate concern (a
       // flagged conversation can still be mid-capture, or already captured).
       status: result.jobId ? "captured" : "in_progress",
+    })
+    .eq("session_id", sessionId);
+
+  return json({ ok: true, reply: result.reply });
+}
+
+// §WorkRoute sales chat — the chat on workroute.com.au itself (see
+// lib/workroute-sales-ai.ts). Same capture row + rate limiting as a tradie's
+// widget, filed under the owner's account (ADMIN_USER_ID) since there's no
+// tradie business behind it.
+async function handleSalesChat(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  sessionId: string,
+  message: string,
+  appOrigin: string
+) {
+  const ownerId = process.env.ADMIN_USER_ID;
+  if (!ownerId) {
+    return json({ ok: false, error: "Chat isn't available right now." }, 503);
+  }
+
+  if (await isRateLimited(supabase, ownerId, sessionId)) {
+    return json({ ok: false, error: "Too many messages — please try again shortly." }, 429);
+  }
+
+  const { data: existingCapture } = await supabase
+    .from("widget_chat_captures")
+    .select("status, transcript_messages")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  const transcript: WidgetHistoryItem[] = (existingCapture?.transcript_messages as WidgetHistoryItem[] | null) ?? [];
+  transcript.push({ sender: "visitor", body: message });
+
+  if (!existingCapture) {
+    await supabase.from("widget_chat_captures").insert({
+      business_id: ownerId,
+      session_id: sessionId,
+      transcript_messages: transcript,
+    });
+  }
+
+  await supabase.from("widget_rate_limit_events").insert({ business_id: ownerId, session_id: sessionId });
+
+  const result = await generateSalesReply(supabase, sessionId, transcript, appOrigin);
+
+  if (!result.ok) {
+    await supabase
+      .from("widget_chat_captures")
+      .update({ transcript_messages: transcript, last_message_at: new Date().toISOString() })
+      .eq("session_id", sessionId);
+    return json({ ok: false, error: "Something went wrong — please try again in a moment." }, 502);
+  }
+
+  transcript.push({ sender: "ai", body: result.reply });
+  await supabase
+    .from("widget_chat_captures")
+    .update({
+      transcript_messages: transcript,
+      last_message_at: new Date().toISOString(),
+      status: result.captured || existingCapture?.status === "captured" ? "captured" : "in_progress",
     })
     .eq("session_id", sessionId);
 

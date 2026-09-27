@@ -178,6 +178,30 @@ export async function notifyAdminOfTrialLimit(
   });
 }
 
+// §WorkRoute sales chat — a visitor on workroute.com.au left their details
+// for the owner to follow up (lib/workroute-sales-ai.ts). Full details go
+// by email; this is just the heads-up.
+export async function notifyAdminOfSalesLead(
+  supabase: SupabaseClient,
+  visitorName: string,
+  appOrigin: string
+): Promise<void> {
+  const adminId = process.env.ADMIN_USER_ID;
+  if (!adminId) return;
+
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", adminId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: "New WorkRoute lead",
+    body: `${visitorName} left their details on the WorkRoute website chat — check your email.`,
+    url: `${appOrigin}/app/admin/overview`,
+  });
+}
+
 // §25 — fired instead of notifyOwnerNewPhoneEnquiry when book_appointment
 // actually locked in a time during the call, so the tradie knows there's
 // already something on the calendar rather than just a lead to call back.
