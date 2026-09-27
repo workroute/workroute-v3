@@ -92,18 +92,50 @@ const TOOLS: Anthropic.Tool[] = [
 
 export type SalesProspect = { name?: string; phone?: string; email?: string; business?: string; notes?: string };
 
+// One row per chat in workroute_sales_leads (listed on the Owner Overview
+// page). Merge, never clobber — a later call that only adds a phone number
+// shouldn't erase the email an earlier call saved.
+async function upsertSalesLead(
+  supabase: SupabaseClient,
+  sessionId: string,
+  input: SalesProspect,
+  trialLinkSent: boolean
+): Promise<void> {
+  const fields: Record<string, string> = {};
+  for (const key of ["name", "email", "phone", "business", "notes"] as const) {
+    const value = input[key]?.trim();
+    if (value) fields[key] = value;
+  }
+
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("workroute_sales_leads").upsert(
+    {
+      session_id: sessionId,
+      ...fields,
+      ...(trialLinkSent ? { trial_link_sent_at: now } : {}),
+      updated_at: now,
+    },
+    { onConflict: "session_id" }
+  );
+  if (error) console.error(`[workroute-sales-ai] session ${sessionId}: saving lead failed —`, JSON.stringify(error));
+}
+
 async function handleSaveProspect(
   supabase: SupabaseClient,
   sessionId: string,
   transcript: WidgetHistoryItem[],
   appOrigin: string,
-  input: SalesProspect
+  input: SalesProspect,
+  trialLinkSent = false
 ): Promise<string> {
   if (!input.phone?.trim() && !input.email?.trim()) {
     return JSON.stringify({ ok: false, error: "Need a phone number or email before saving." });
   }
 
-  await supabase.from("widget_chat_captures").update({ status: "captured" }).eq("session_id", sessionId);
+  await Promise.all([
+    supabase.from("widget_chat_captures").update({ status: "captured" }).eq("session_id", sessionId),
+    upsertSalesLead(supabase, sessionId, input, trialLinkSent),
+  ]);
 
   // Notification failures shouldn't break the visitor's chat — the
   // transcript is already saved on the capture row either way.
@@ -139,10 +171,14 @@ async function handleSendTrialLink(
 
   // Steve gets the same lead email/push as a follow-up request, so he can
   // check in on how their trial is going.
-  await handleSaveProspect(supabase, sessionId, transcript, appOrigin, {
-    ...input,
-    notes: "Emailed the free trial sign-up link — follow up to see if they signed up and how they're going.",
-  });
+  await handleSaveProspect(
+    supabase,
+    sessionId,
+    transcript,
+    appOrigin,
+    { ...input, notes: "Emailed the free trial sign-up link — follow up to see if they signed up and how they're going." },
+    true
+  );
   return JSON.stringify({ ok: true });
 }
 

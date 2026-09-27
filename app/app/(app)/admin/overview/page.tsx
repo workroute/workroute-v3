@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import MarkPayingButton from "./mark-paying-button";
 
 const TRIAL_DAYS = 14;
@@ -88,6 +89,30 @@ export default async function OwnerOverviewPage() {
     };
   });
 
+  // §WorkRoute sales chat — people who left their details with Sarah on
+  // workroute.com.au (lib/workroute-sales-ai.ts), matched by email against
+  // real sign-ups so the owner can see who's converted and who to chase.
+  // Service-role on both: the leads table has no RLS policies, and auth
+  // emails aren't readable any other way.
+  const admin = createServiceRoleClient();
+  const [{ data: leadRows, error: leadsError }, { data: authData }] = await Promise.all([
+    admin
+      .from("workroute_sales_leads")
+      .select("id, name, email, phone, business, notes, trial_link_sent_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
+
+  const userIdByEmail = new Map(
+    (authData?.users ?? []).filter((u) => u.email).map((u) => [u.email!.toLowerCase(), u.id])
+  );
+  const leads = (leadRows ?? []).map((lead) => {
+    const userId = lead.email ? userIdByEmail.get(lead.email.toLowerCase()) : undefined;
+    return { ...lead, signedUpAs: userId ? (stats.find((b) => b.user_id === userId) ?? null) : null, hasAccount: !!userId };
+  });
+  const formatDate = (iso: string) => new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+
   return (
     <main className="min-h-screen bg-paper-50 pb-16 md:pb-0">
       <div className="mx-auto max-w-4xl px-4 py-10">
@@ -100,7 +125,69 @@ export default async function OwnerOverviewPage() {
           {stats.length} business{stats.length === 1 ? "" : "es"} on WorkRoute.
         </p>
 
-        <div className="mt-6 space-y-3">
+        <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Website leads</h2>
+        <p className="mt-1 text-sm text-rig-700">
+          People who left their details with Sarah on workroute.com.au. A tick means they've signed up with the same email.
+        </p>
+        <div className="mt-3 space-y-2">
+          {leadsError ? (
+            <p className="rounded-lg border border-rig-900/10 bg-white p-4 text-sm text-rust-500 shadow-sm">
+              Website leads aren&apos;t set up yet. Run supabase/migrations/0037_workroute_sales_leads.sql in Supabase.
+            </p>
+          ) : leads.length === 0 ? (
+            <p className="rounded-lg border border-rig-900/10 bg-white p-4 text-center text-sm text-rig-700/60 shadow-sm">
+              No website leads yet.
+            </p>
+          ) : (
+            leads.map((lead) => (
+              <div key={lead.id} className="rounded-lg bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-display font-semibold text-rig-900">
+                      {lead.name ?? "No name"}
+                      {lead.business && <span className="font-body font-normal text-rig-700"> · {lead.business}</span>}
+                    </p>
+                    <p className="mt-0.5 flex flex-wrap gap-x-3 text-sm">
+                      {lead.email && (
+                        <a href={`mailto:${lead.email}`} className="text-steel-500 hover:underline">
+                          {lead.email}
+                        </a>
+                      )}
+                      {lead.phone && (
+                        <a href={`tel:${lead.phone.replace(/\s/g, "")}`} className="text-steel-500 hover:underline">
+                          {lead.phone}
+                        </a>
+                      )}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      lead.hasAccount
+                        ? "bg-moss-500/10 text-moss-500"
+                        : lead.trial_link_sent_at
+                          ? "bg-amber-500/15 text-amber-600"
+                          : "bg-steel-500/10 text-steel-500"
+                    }`}
+                  >
+                    {lead.hasAccount
+                      ? `✓ Signed up${lead.signedUpAs ? ` · ${lead.signedUpAs.business_name} · ${lead.signedUpAs.trialStatus.label}` : ""}`
+                      : lead.trial_link_sent_at
+                        ? "Trial link sent · not signed up yet"
+                        : "Wants to hear from you"}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-rig-700/70">
+                  Chatted {formatDate(lead.created_at)}
+                  {lead.trial_link_sent_at && ` · link emailed ${formatDate(lead.trial_link_sent_at)}`}
+                  {lead.notes && ` · ${lead.notes}`}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+
+        <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Businesses</h2>
+        <div className="mt-3 space-y-3">
           {stats.length === 0 ? (
             <p className="rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
               No businesses signed up yet.
