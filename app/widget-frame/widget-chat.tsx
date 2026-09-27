@@ -4,6 +4,25 @@ import { useEffect, useRef, useState } from "react";
 
 type Message = { sender: "visitor" | "ai"; body: string };
 
+// Sarah's replies can include links (e.g. the free-trial sign-up page) —
+// make them tappable. Opens in a new tab since this runs inside an iframe
+// on someone else's site. Trailing sentence punctuation isn't part of the URL.
+function linkify(text: string): React.ReactNode[] {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+    if (!/^https?:\/\//.test(part)) return part;
+    const url = part.replace(/[.,!?;:)]+$/, "");
+    const trailing = part.slice(url.length);
+    return (
+      <span key={i}>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="break-all font-medium text-steel-500 underline">
+          {url}
+        </a>
+        {trailing}
+      </span>
+    );
+  });
+}
+
 // AI-generated (per the business owner, made with ChatGPT) — not a photo of
 // a real person, and it's their own generated asset, not scraped stock
 // photography. Object-position focuses on the face since the source image
@@ -242,7 +261,7 @@ export default function WidgetChat({
                 m.sender === "visitor" ? "bg-amber-500 text-rig-950" : "bg-paper-50 text-rig-900"
               }`}
             >
-              {m.body}
+              {linkify(m.body)}
             </div>
           </div>
         ))}

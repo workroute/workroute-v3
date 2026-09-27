@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { notifyAdminOfSalesLead } from "./push-notifications";
-import { sendSalesLeadEmail } from "./resend";
+import { sendSalesLeadEmail, sendTrialLinkEmail } from "./resend";
 import type { WidgetHistoryItem } from "./widget-ai";
 
 // §WorkRoute sales chat — the website chat widget on WorkRoute's OWN
@@ -50,7 +50,7 @@ What you know about WorkRoute (only state facts from this list — if asked some
 
 Your goals, in order:
 1. Answer their questions honestly and simply.
-2. If they sound interested, point them to the free trial link.
+2. If they sound interested in the free trial, offer to email them the sign-up link. Ask for their first name and email address (one at a time), then call send_trial_link. Tell them it's on its way and to check their spam folder if it doesn't show up. Also include the link ${SIGNUP_URL} in that reply so they can start straight away. If they don't want to give an email, just give them the link.
 3. If they'd rather talk to a person, have questions you can't answer, or want help getting set up, offer to have Steve call or email them. Get their name, their business name, and a phone number or email — one question at a time. Call save_prospect as soon as you have their name plus a phone number or email, and again if they add something new. Then tell them Steve will be in touch.
 
 Never make up features, prices, discounts, dates or promises. Never discuss other WorkRoute customers. Never use the word "escrow".`;
@@ -71,6 +71,21 @@ const TOOLS: Anthropic.Tool[] = [
         notes: { type: "string", description: "One short sentence on what they want or asked about" },
       },
       required: ["name"],
+    },
+  },
+  {
+    name: "send_trial_link",
+    description:
+      "Email the visitor the free-trial sign-up link, and let Steve know so he can follow up on how they're going. Call once you have their first name and email address.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "The visitor's name" },
+        email: { type: "string", description: "The visitor's email address" },
+        phone: { type: "string", description: "Phone number, if given" },
+        business: { type: "string", description: "Their business name and/or trade and area, if given" },
+      },
+      required: ["name", "email"],
     },
   },
 ];
@@ -99,6 +114,35 @@ async function handleSaveProspect(
   if (email.status === "rejected" || !email.value.ok) {
     console.error(`[workroute-sales-ai] session ${sessionId}: lead email failed —`, email.status === "fulfilled" ? email.value.error : email.reason);
   }
+  return JSON.stringify({ ok: true });
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function handleSendTrialLink(
+  supabase: SupabaseClient,
+  sessionId: string,
+  transcript: WidgetHistoryItem[],
+  appOrigin: string,
+  input: SalesProspect
+): Promise<string> {
+  const email = input.email?.trim() ?? "";
+  if (!EMAIL_RE.test(email)) {
+    return JSON.stringify({ ok: false, error: "That doesn't look like a valid email — ask them to check it." });
+  }
+
+  const sent = await sendTrialLinkEmail(email, input.name?.trim() || null, SIGNUP_URL);
+  if (!sent.ok) {
+    console.error(`[workroute-sales-ai] session ${sessionId}: trial link email failed —`, sent.error);
+    return JSON.stringify({ ok: false, error: "The email didn't send — give them the link in the chat instead." });
+  }
+
+  // Steve gets the same lead email/push as a follow-up request, so he can
+  // check in on how their trial is going.
+  await handleSaveProspect(supabase, sessionId, transcript, appOrigin, {
+    ...input,
+    notes: "Emailed the free trial sign-up link — follow up to see if they signed up and how they're going.",
+  });
   return JSON.stringify({ ok: true });
 }
 
@@ -142,6 +186,10 @@ export async function generateSalesReply(
         if (block.type !== "tool_use") continue;
         if (block.name === "save_prospect") {
           const result = await handleSaveProspect(supabase, sessionId, history, appOrigin, block.input as SalesProspect);
+          if (JSON.parse(result).ok) captured = true;
+          toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
+        } else if (block.name === "send_trial_link") {
+          const result = await handleSendTrialLink(supabase, sessionId, history, appOrigin, block.input as SalesProspect);
           if (JSON.parse(result).ok) captured = true;
           toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
         }

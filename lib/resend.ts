@@ -238,3 +238,51 @@ export async function sendSalesLeadEmail(
     return { ok: false, error: "Couldn't reach Resend." };
   }
 }
+
+// §WorkRoute sales chat — sent to a workroute.com.au visitor who asked Sarah
+// for the free-trial link. Replies go to the owner, not the no-reply sender.
+export async function sendTrialLinkEmail(
+  to: string,
+  name: string | null,
+  signupUrl: string
+): Promise<{ ok: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { ok: false, error: "Email isn't configured yet — missing RESEND_API_KEY." };
+  }
+
+  const greeting = name ? `Hi ${escapeHtml(name.split(" ")[0])},` : "Hi,";
+  const resend = new Resend(apiKey);
+
+  try {
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "WorkRoute <onboarding@resend.dev>",
+      to,
+      replyTo: process.env.SALES_LEAD_EMAIL || "steve@workroute.com.au",
+      subject: "Your WorkRoute free trial link",
+      html: `
+        <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1C1F26;">
+          <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute</p>
+          <h1 style="font-size: 22px; margin: 8px 0 16px;">${greeting} here's your free trial link.</h1>
+          <p style="font-size: 15px; line-height: 1.6;">
+            Thanks for chatting with Sarah. Your free trial runs for 14 days or 150 calls, whichever comes first.
+            Sign up below, fill in your business details and pricing, and Sarah can start answering your calls.
+          </p>
+          <p style="margin: 24px 0;">
+            <a href="${signupUrl}" style="background:#F2A900; color:#14171C; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:600; display:inline-block;">
+              Start my free trial
+            </a>
+          </p>
+          <p style="font-size: 15px; line-height: 1.6;">
+            Any questions, just reply to this email. It comes straight to me.<br>
+            Steve, WorkRoute founder
+          </p>
+        </div>
+      `,
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Couldn't reach Resend." };
+  }
+}
