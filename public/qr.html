@@ -50,6 +50,7 @@
       <a class="btn" id="email" href="#">Email</a>
     </div>
     <button class="btn" id="copy" type="button">Copy link</button>
+    <button class="btn" id="shareContact" type="button">Send my contact card</button>
   </div>
   <p class="toast" id="toast" role="status"></p>
 
@@ -97,6 +98,20 @@
     }
   }
   document.getElementById("copy").addEventListener("click", copyLink);
+
+  // Sends a link to the contact card. Tapping it on their phone offers
+  // "Add to contacts" with name, mobile and email filled in.
+  var CONTACT_URL = "https://app.workroute.com.au/steve.vcf";
+  document.getElementById("shareContact").addEventListener("click", function () {
+    var text = "Steve Pfister, WorkRoute. Tap to save my contact details:";
+    if (navigator.share) {
+      navigator.share({ title: "Steve Pfister - WorkRoute", text: text, url: CONTACT_URL }).catch(function () {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(CONTACT_URL).then(function () { say("Contact link copied"); });
+    } else {
+      say(CONTACT_URL);
+    }
+  });
 </script>
 </body>
 </html>
