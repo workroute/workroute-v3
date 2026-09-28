@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Client } from "@/lib/clients";
 import { initials } from "@/lib/avatar";
+import ImportCustomersModal from "./import-customers-modal";
 
 export type ClientRow = Client & {
   job_count: number;
@@ -47,6 +48,7 @@ function toCsv(rows: ClientRow[]): string {
 export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [showImport, setShowImport] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -76,6 +78,13 @@ export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
           className="field-input max-w-sm"
           placeholder="Search by name or phone…"
         />
+        <button
+          type="button"
+          onClick={() => setShowImport(true)}
+          className="whitespace-nowrap rounded border border-rig-700/20 bg-white px-3 py-2 text-sm font-medium text-rig-700 hover:bg-paper-100"
+        >
+          Import customers
+        </button>
         {rows.length > 0 && (
           <button
             type="button"
@@ -87,13 +96,20 @@ export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
         )}
       </div>
 
+      {showImport && (
+        <ImportCustomersModal
+          existingPhones={rows.map((r) => r.phone).filter((p): p is string => !!p)}
+          onClose={() => setShowImport(false)}
+        />
+      )}
+
       {rows.length === 0 ? (
         <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
-          No clients yet — they're added automatically when you capture a job, or you can{" "}
+          No clients yet — they're added automatically when you capture a job, you can{" "}
           <Link href="/app/clients/new" className="font-medium text-steel-500 hover:underline">
             add one directly
           </Link>
-          .
+          , or import your existing customer list using the button above.
         </p>
       ) : filtered.length === 0 ? (
         <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
