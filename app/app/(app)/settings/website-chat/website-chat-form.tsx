@@ -55,8 +55,9 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
       <div className="border-t border-rig-900/10 pt-6">
         <p className="font-display font-semibold text-rig-900">Your booking page</p>
         <p className="mt-1 text-xs text-rig-700/70">
-          A direct link customers can use to book themselves in — no call or chat needed. Share it on your business
-          card, socials, or your own website.
+          A direct link customers can use to book themselves in — no call or chat needed. This one's just a plain
+          web address, not code, so it goes wherever you'd normally share a link, not inside your website's code
+          like the snippet above.
         </p>
         <div className="mt-3 flex items-center gap-2 rounded border border-rig-700/20 bg-paper-50 p-3">
           <code className="min-w-0 flex-1 truncate text-xs text-rig-900">{bookingLink}</code>
@@ -64,6 +65,27 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
             {bookingCopyStatus === "copied" ? "Copied!" : "Copy link"}
           </button>
         </div>
+        <ul className="mt-3 space-y-1.5 text-xs text-rig-700/70">
+          <li>
+            <b className="text-rig-900">Google Business Profile</b> — there's usually a "booking link" or "website"
+            field, perfect spot for it.
+          </li>
+          <li>
+            <b className="text-rig-900">Instagram or Facebook bio link.</b>
+          </li>
+          <li>
+            <b className="text-rig-900">A "Book Now" button on your own website</b> — if you use a site builder
+            (Wix, Squarespace, etc.), just add a normal button or link pointing at this address, not code.
+          </li>
+          <li>
+            <b className="text-rig-900">Business cards or a QR code</b> — since it's just a link, it can be turned
+            into a QR code too.
+          </li>
+          <li>
+            <b className="text-rig-900">A text message or reply to an enquiry</b> — e.g. "Here's a link to book
+            yourself in: {bookingLink}"
+          </li>
+        </ul>
       </div>
 
       <div className="border-t border-rig-900/10 pt-6">
