@@ -202,6 +202,30 @@ export async function notifyAdminOfSalesLead(
   });
 }
 
+// §public-booking-page — a customer booked themselves in directly via the
+// tradie's own shareable booking link (app/book/[widgetKey]), no call or
+// chat involved at all. Same shape as notifyOwnerPhoneBooking, just worded
+// for this different source.
+export async function notifyOwnerPublicBooking(
+  supabase: SupabaseClient,
+  businessId: string,
+  customerName: string,
+  jobId: string,
+  appOrigin: string
+): Promise<void> {
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", businessId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: "New booking from your booking page",
+    body: `${customerName} booked themselves in directly — check the job details.`,
+    url: `${appOrigin}/app/jobs/${jobId}`,
+  });
+}
+
 // §25 — fired instead of notifyOwnerNewPhoneEnquiry when book_appointment
 // actually locked in a time during the call, so the tradie knows there's
 // already something on the calendar rather than just a lead to call back.
