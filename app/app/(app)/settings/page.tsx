@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { IconBuilding, IconBell, IconClock, IconPlug, IconPhone, IconMessages, IconHelp, IconReactivate, IconMic, IconOverview } from "../nav-icons";
+import { IconBuilding, IconPricing, IconBell, IconClock, IconPlug, IconPhone, IconMessages, IconHelp, IconReactivate, IconMic, IconOverview } from "../nav-icons";
 
 // §32e — Settings as its own hub, separate from just linking straight to
 // /app/profile. Business details still lives at /app/profile (untouched,
@@ -9,6 +9,7 @@ import { IconBuilding, IconBell, IconClock, IconPlug, IconPhone, IconMessages, I
 // dedicated destinations alongside that, it doesn't remove the old ones).
 const SETTINGS_ITEMS = [
   { href: "/app/profile", label: "Business details", description: "Your business information", Icon: IconBuilding },
+  { href: "/app/pricing", label: "Pricing", description: "So Sarah can quote real prices on a call", Icon: IconPricing },
   { href: "/app/settings/notifications", label: "Notifications", description: "Manage alerts & sounds", Icon: IconBell },
   { href: "/app/settings/work-hours", label: "Work hours", description: "Set your available hours", Icon: IconClock },
   { href: "/app/settings/phone-ai", label: "Phone AI", description: "Connected number & VIP alerts", Icon: IconPhone },

@@ -83,6 +83,14 @@ export function IconBuilding() {
     </svg>
   );
 }
+export function IconPricing() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 6.5v11M15 9.25c0-1.24-1.34-2.25-3-2.25s-3 1.01-3 2.25S10.34 11.5 12 11.5s3 1.01 3 2.25-1.34 2.25-3 2.25-3-1.01-3-2.25" strokeLinecap="round" />
+    </svg>
+  );
+}
 export function IconBell() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
