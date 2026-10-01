@@ -331,7 +331,11 @@ export function buildSalesPhoneAssistantConfig(voice: Record<string, unknown>) {
       messages: [{ role: "system", content: phoneSystemPrompt() }],
       tools: PHONE_TOOLS,
     },
-    voice,
+    // Same voice as the business, tuned calmer for the sales line: a real
+    // call came back "too Australian, not as smooth as the website video"
+    // (same voice — phone audio exaggerates the variation). Steadier
+    // stability, lower similarity boost and normal speed soften it.
+    voice: { ...voice, stability: 0.7, similarityBoost: 0.6, speed: 1.0 },
     // Same endCallPhrases approach as lib/phone-ai.ts, for the same reason
     // (a tool-driven hang-up truncates the goodbye).
     endCallPhrases: [PHONE_END_CALL_PHRASE],
