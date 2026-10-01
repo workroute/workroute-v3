@@ -9,10 +9,16 @@ type MobileMessageResult = {
   results?: { status: string; to: string }[];
 };
 
-export async function sendSms(to: string, message: string): Promise<{ ok: boolean; error?: string }> {
+// senderOverride must already be an approved sender on the Mobile Message
+// account (GET /v1/senders) — otherwise the default sender is used.
+export async function sendSms(
+  to: string,
+  message: string,
+  senderOverride?: string
+): Promise<{ ok: boolean; error?: string }> {
   const username = process.env.MOBILEMESSAGE_USERNAME;
   const password = process.env.MOBILEMESSAGE_PASSWORD;
-  const sender = process.env.MOBILEMESSAGE_SENDER_ID;
+  const sender = senderOverride || process.env.MOBILEMESSAGE_SENDER_ID;
 
   if (!username || !password || !sender) {
     return { ok: false, error: "SMS isn't configured yet — missing Mobile Message credentials." };

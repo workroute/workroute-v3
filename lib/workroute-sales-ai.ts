@@ -261,6 +261,11 @@ export const WORKROUTE_SALES_PHONE_NUMBER_ID: string | null = "21007937-d958-4b4
 const PHONE_MODEL = "claude-haiku-4-5-20251001";
 const PHONE_END_CALL_PHRASE = "Thanks for calling WorkRoute, have a great day!";
 
+// Steve's own mobile, a verified "own" sender on the Mobile Message account,
+// so a tradie who just hits reply on the sign-up text reaches Steve directly.
+// The default sender is a shared number, which replies don't reliably reach.
+const SALES_SMS_SENDER = "61421992122";
+
 function phoneSystemPrompt(): string {
   return `You are Sarah, WorkRoute's AI Office Manager, answering WorkRoute's own phone line. Most callers are Australian tradies who got a text from Steve, WorkRoute's founder, and are ringing to hear what you sound like. This call IS the demo. If asked whether you're an AI, say yes happily.
 
@@ -380,7 +385,8 @@ export async function handleSalesPhoneTool(
     const greeting = prospect.name?.trim() ? `Hi ${prospect.name.trim()}, ` : "Hi, ";
     const sent = await sendSms(
       callerNumber,
-      `${greeting}here's your WorkRoute free trial link: ${SIGNUP_URL} Any questions, email Steve at steve@workroute.com.au. Cheers, Sarah`
+      `${greeting}here's your WorkRoute free trial link: ${SIGNUP_URL} Any questions, just reply to this text and Steve will get back to you. Cheers, Sarah`,
+      SALES_SMS_SENDER
     );
     if (!sent.ok) {
       console.error(`[workroute-sales-ai] call ${vapiCallId}: sign-up text failed —`, sent.error);
