@@ -187,7 +187,8 @@ function escapeHtml(value: string): string {
 
 export async function sendSalesLeadEmail(
   prospect: { name?: string; phone?: string; email?: string; business?: string; notes?: string },
-  transcript: { sender: "visitor" | "ai"; body: string }[]
+  transcript: { sender: "visitor" | "ai"; body: string }[],
+  source: "website chat" | "phone line" = "website chat"
 ): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -221,14 +222,14 @@ export async function sendSalesLeadEmail(
       from: process.env.RESEND_FROM_EMAIL || "WorkRoute <onboarding@resend.dev>",
       to: process.env.SALES_LEAD_EMAIL || "steve@workroute.com.au",
       replyTo: prospect.email?.trim() || undefined,
-      subject: `New WorkRoute lead: ${prospect.name?.trim() || "website visitor"}`,
+      subject: `New WorkRoute lead: ${prospect.name?.trim() || (source === "phone line" ? "phone caller" : "website visitor")}`,
       html: `
         <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; color: #1C1F26;">
-          <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute website chat</p>
+          <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute ${source}</p>
           <h1 style="font-size: 20px; margin: 8px 0 16px;">Someone wants to hear from you</h1>
           ${rows}
-          <h2 style="font-size: 15px; margin: 24px 0 8px;">The chat so far</h2>
-          <div style="font-size: 14px; line-height: 1.5; color: #3A4149;">${chat}</div>
+          ${chat ? `<h2 style="font-size: 15px; margin: 24px 0 8px;">The chat so far</h2>
+          <div style="font-size: 14px; line-height: 1.5; color: #3A4149;">${chat}</div>` : ""}
         </div>
       `,
     });

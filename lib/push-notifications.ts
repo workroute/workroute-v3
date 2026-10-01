@@ -184,7 +184,8 @@ export async function notifyAdminOfTrialLimit(
 export async function notifyAdminOfSalesLead(
   supabase: SupabaseClient,
   visitorName: string,
-  appOrigin: string
+  appOrigin: string,
+  source: "website chat" | "phone line" = "website chat"
 ): Promise<void> {
   const adminId = process.env.ADMIN_USER_ID;
   if (!adminId) return;
@@ -197,7 +198,7 @@ export async function notifyAdminOfSalesLead(
 
   await sendToAll(supabase, "owner_push_subscriptions", subs, {
     title: "New WorkRoute lead",
-    body: `${visitorName} left their details on the WorkRoute website chat — check your email.`,
+    body: `${visitorName} left their details on the WorkRoute ${source} — check your email.`,
     url: `${appOrigin}/app/admin/overview`,
   });
 }

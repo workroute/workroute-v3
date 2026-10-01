@@ -14,8 +14,14 @@ import {
   recalculateEstimate,
   notifyNewPhoneJob,
   isVoiceFailure,
+  resolveVoice,
   type PhoneBusinessContext,
 } from "@/lib/phone-ai";
+import {
+  WORKROUTE_SALES_PHONE_NUMBER_ID,
+  buildSalesPhoneAssistantConfig,
+  handleSalesPhoneTool,
+} from "@/lib/workroute-sales-ai";
 import { loadTradePricingConfig } from "@/lib/trade-pricing";
 import { notifyOwnerVoiceFailure, notifyAdminOfTrialLimit, notifyTradieApproachingTrialLimit } from "@/lib/push-notifications";
 import { checkAndAlertVip } from "@/lib/vip-alerts";
@@ -97,6 +103,13 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
     startingPrice: profile.starting_price,
     pronunciationOverrides: profile.pronunciation_overrides ?? [],
   };
+
+  // §WorkRoute sales phone line — this number answers as WorkRoute itself
+  // (lib/workroute-sales-ai.ts), keeping only the business's chosen voice.
+  // No capture row: nothing about a sales call belongs in a tradie's jobs.
+  if (phoneNumberId === WORKROUTE_SALES_PHONE_NUMBER_ID) {
+    return NextResponse.json({ assistant: buildSalesPhoneAssistantConfig(resolveVoice(business)) });
+  }
 
   // §trial-limits — 14 days or 150 calls, whichever comes first, unless
   // is_paying has been flipped manually (Owner Overview page — there's no
@@ -224,7 +237,14 @@ async function handleToolCalls(supabase: SupabaseClient, message: any, appOrigin
 
       let result: string;
       try {
-        if (name === "update_job_draft") {
+        // Inbound only — outbound calls (reactivation, invoice chase, quote
+        // follow-up) placed from the same number keep their normal tools.
+        if (
+          message.call?.type !== "outboundPhoneCall" &&
+          message.call?.phoneNumberId === WORKROUTE_SALES_PHONE_NUMBER_ID
+        ) {
+          result = await handleSalesPhoneTool(supabase, vapiCallId, callerNumber, appOrigin, name, parameters);
+        } else if (name === "update_job_draft") {
           result = await handleUpdateJobDraft(supabase, vapiCallId, callerNumber, parameters);
         } else if (name === "flag_for_attention") {
           result = await handleFlagForAttention(supabase, vapiCallId, appOrigin, parameters);

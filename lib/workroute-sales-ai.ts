@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { notifyAdminOfSalesLead } from "./push-notifications";
 import { sendSalesLeadEmail, sendTrialLinkEmail } from "./resend";
+import { sendSms } from "./mobile-message";
+import type { VapiTool } from "./phone-ai";
 import type { WidgetHistoryItem } from "./widget-ai";
 
 // §WorkRoute sales chat — the website chat widget on WorkRoute's OWN
@@ -240,4 +242,144 @@ export async function generateSalesReply(
     console.error(`[workroute-sales-ai] session ${sessionId}: threw —`, error);
     return { ok: false };
   }
+}
+
+// §WorkRoute sales phone line — the same sales Sarah, but answering a phone
+// number instead of the website chat. Tradies from cold outreach ring it to
+// hear Sarah for themselves: she explains WorkRoute, runs a short role-play
+// where the tradie plays a customer booking a job, then takes their details
+// for Steve. Like the chat, nothing here creates jobs or clients.
+
+// Steve's Mowing's DIDLogic number (+61 7 3522 6422). Checked in the Vapi
+// webhook before any normal call setup, so this number always answers as
+// WorkRoute's sales line, never as a tradie's receptionist. Set to null to
+// hand the number back to Steve's Mowing.
+export const WORKROUTE_SALES_PHONE_NUMBER_ID: string | null = "21007937-d958-4b42-9c8d-b9b85d093fe4";
+
+// Same fast model as the tradie phone AI (lib/phone-ai.ts) — on a live call,
+// response latency matters more than polish.
+const PHONE_MODEL = "claude-haiku-4-5-20251001";
+const PHONE_END_CALL_PHRASE = "Thanks for calling WorkRoute, have a great day!";
+
+function phoneSystemPrompt(): string {
+  return `You are Sarah, WorkRoute's AI Office Manager, answering WorkRoute's own phone line. Most callers are Australian tradies who got a text from Steve, WorkRoute's founder, and are ringing to hear what you sound like. This call IS the demo. If asked whether you're an AI, say yes happily.
+
+This is a phone call: keep every reply to one or two short spoken sentences. No lists, no symbols, no web addresses read out. Australian, warm, relaxed, no hard sell. Ask one question at a time.
+
+What you know about WorkRoute (only state facts from this list — if asked something not covered, say you're not sure and offer to have Steve call them back):
+- An Australian app for small trade businesses. Pricing questions are already set up for lawn mowing, home cleaning, pool cleaning and mobile mechanics. For other trades, say Steve can set it up for them and offer to have him call.
+- WorkRoute's AI answers the business's calls, website chat and texts 24/7 with an Australian voice, takes the job details, gives a price guide from the tradie's own pricing (always as an estimate), and books it into their diary using their real availability.
+- Recognises returning callers. Sends the tradie a notification for every new job.
+- Plans the day's run with real driving times, texts customers an "on my way" ETA, turns voice job notes into an invoice, chases unpaid invoices, asks for Google reviews, and calls past customers to win them back.
+- A 3pm brief of tomorrow's jobs, route and weather.
+- Price: $199 a month, everything included. Free trial: 14 days or 150 calls, whichever comes first.
+- No lock-in: they can download their full customer list any time.
+- The tradie can pick the voice and the name their receptionist uses.
+
+How the call should go:
+1. Find out what trade they're in. Then offer the demo: "Want to hear what your customers would hear? Pretend you're a customer ringing to book a job, and I'll be your receptionist."
+2. If they say yes, say "Okay, ring ring!" and switch into the role: greet them as the receptionist for "your business", then ask their name, the job, the address and when suits — one at a time, like a real booking. Offer a believable time, such as Tuesday morning. Keep it under a minute.
+3. Then step out of the role and explain what would have happened for real: the job lands in their diary with all the details, they get a notification on their phone, and the customer gets a confirmation text. It would use their own prices and their own real availability.
+4. Ask if they'd like to try it free. If yes, call text_signup_link and tell them the link is on its way by text.
+5. Whether or not they want the trial, ask for their first name and business name, then call save_prospect so Steve can follow up. If they'd rather talk to a person, say Steve will call them back on this number.
+
+When the caller is finished, say exactly: "${PHONE_END_CALL_PHRASE}"
+
+Never make up features, prices, discounts, dates or promises. Never discuss other WorkRoute customers. Never use the word "escrow".`;
+}
+
+const PHONE_TOOLS: VapiTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "save_prospect",
+      description:
+        "Save the caller's details so Steve (WorkRoute's founder) can follow up. Their phone number is captured automatically. Call once you have their name, and again if they tell you more.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The caller's name" },
+          business: { type: "string", description: "Their business name and/or trade, if given" },
+          notes: { type: "string", description: "One short sentence on how the call went and what they want" },
+        },
+        required: ["name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "text_signup_link",
+      description: "Text the free-trial sign-up link to the number the caller is ringing from. Call when they say they'd like to try it.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "The caller's first name, if known" },
+        },
+      },
+    },
+  },
+];
+
+export function buildSalesPhoneAssistantConfig(voice: Record<string, unknown>) {
+  return {
+    firstMessage: "Hi, you've reached WorkRoute. I'm Sarah, the AI receptionist for local tradies. What trade are you in?",
+    firstMessageMode: "assistant-speaks-first",
+    model: {
+      provider: "anthropic",
+      model: PHONE_MODEL,
+      messages: [{ role: "system", content: phoneSystemPrompt() }],
+      tools: PHONE_TOOLS,
+    },
+    voice,
+    // Same endCallPhrases approach as lib/phone-ai.ts, for the same reason
+    // (a tool-driven hang-up truncates the goodbye).
+    endCallPhrases: [PHONE_END_CALL_PHRASE],
+    endCallMessage: PHONE_END_CALL_PHRASE,
+    transcriber: { provider: "deepgram", model: "nova-3", language: "en-AU", smartFormat: true },
+  };
+}
+
+// Tool calls from the sales line. The Vapi call id doubles as the lead's
+// session_id, so repeat save_prospect calls in one call merge into one row.
+export async function handleSalesPhoneTool(
+  supabase: SupabaseClient,
+  vapiCallId: string,
+  callerNumber: string | null,
+  appOrigin: string,
+  name: string | undefined,
+  parameters: SalesProspect
+): Promise<string> {
+  const prospect: SalesProspect = { ...parameters, phone: callerNumber ?? undefined };
+
+  if (name === "save_prospect") {
+    await upsertSalesLead(supabase, vapiCallId, prospect, false);
+    const [, email] = await Promise.allSettled([
+      notifyAdminOfSalesLead(supabase, prospect.name ?? "A caller", appOrigin, "phone line"),
+      sendSalesLeadEmail(prospect, [], "phone line"),
+    ]);
+    if (email.status === "rejected" || !email.value.ok) {
+      console.error(`[workroute-sales-ai] call ${vapiCallId}: lead email failed —`, email.status === "fulfilled" ? email.value.error : email.reason);
+    }
+    return JSON.stringify({ ok: true });
+  }
+
+  if (name === "text_signup_link") {
+    if (!callerNumber) {
+      return JSON.stringify({ ok: false, error: "Their number is hidden — offer to have Steve call them instead." });
+    }
+    const greeting = prospect.name?.trim() ? `Hi ${prospect.name.trim()}, ` : "Hi, ";
+    const sent = await sendSms(
+      callerNumber,
+      `${greeting}here's your WorkRoute free trial link: ${SIGNUP_URL} Any questions, email Steve at steve@workroute.com.au. Cheers, Sarah`
+    );
+    if (!sent.ok) {
+      console.error(`[workroute-sales-ai] call ${vapiCallId}: sign-up text failed —`, sent.error);
+      return JSON.stringify({ ok: false, error: "The text didn't send — tell them Steve will send it instead." });
+    }
+    await upsertSalesLead(supabase, vapiCallId, { ...prospect, notes: prospect.notes ?? "Texted the free trial link." }, true);
+    return JSON.stringify({ ok: true });
+  }
+
+  return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
 }
