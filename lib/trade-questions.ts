@@ -17,12 +17,19 @@ export type QuestionOption = { value: string; label: string };
 // (see pricingQuestionIds in app/api/vapi/webhook/route.ts) — asking every
 // generic question regardless of relevance is what made an earlier version
 // of the phone AI slow.
+// aiClassifiedFrom: this question affects price but is never asked aloud —
+// the AI works out the value itself from another question's already-known
+// answer (named here by id), using its own judgment, rather than asking the
+// caller a question they couldn't meaningfully answer. e.g. a mechanic
+// pricing by vehicle brand tier: asking "what price tier is your car?"
+// would be bizarre, but Sarah already knows the make from a normal
+// question and can classify it herself.
 export type Question =
-  | { id: string; label: string; type: "text"; placeholder?: string; alwaysAsk?: boolean }
-  | { id: string; label: string; type: "select"; options: QuestionOption[]; alwaysAsk?: boolean }
-  | { id: string; label: string; type: "multiselect"; options: QuestionOption[]; alwaysAsk?: boolean }
-  | { id: string; label: string; type: "boolean"; alwaysAsk?: boolean }
-  | { id: string; label: string; type: "quantity"; unit: string; min?: number; max?: number; alwaysAsk?: boolean };
+  | { id: string; label: string; type: "text"; placeholder?: string; alwaysAsk?: boolean; aiClassifiedFrom?: string }
+  | { id: string; label: string; type: "select"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string }
+  | { id: string; label: string; type: "multiselect"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string }
+  | { id: string; label: string; type: "boolean"; alwaysAsk?: boolean; aiClassifiedFrom?: string }
+  | { id: string; label: string; type: "quantity"; unit: string; min?: number; max?: number; alwaysAsk?: boolean; aiClassifiedFrom?: string };
 
 // Shorthand for option lists where value === label (the common case).
 function opts(labels: string[]): QuestionOption[] {
@@ -126,9 +133,27 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
 
   "Mobile Mechanic": [
     { id: "make", label: "Make", type: "text" },
+    {
+      // §brand-tier — real parts/labour cost genuinely varies by brand (a
+      // Toyota vs a Mercedes), but asking a caller "what price tier is your
+      // car?" directly would be a bizarre question they couldn't answer.
+      // Sarah classifies this herself from "make" above once she has it —
+      // see aiClassifiedFrom on the Question type.
+      id: "brand_tier",
+      label: "Vehicle brand tier",
+      type: "select",
+      options: opts(["Standard", "European / Luxury"]),
+      aiClassifiedFrom: "make",
+    },
     { id: "model", label: "Model", type: "text" },
     { id: "year", label: "Year", type: "text", placeholder: "e.g. 2018" },
     { id: "rego", label: "Rego (if available)", type: "text" },
+    {
+      id: "cylinders",
+      label: "Cylinders",
+      type: "select",
+      options: opts(["4 cylinder", "6 cylinder", "8 cylinder+"]),
+    },
     {
       id: "service_type",
       label: "Logbook service or specific fault?",
@@ -305,8 +330,30 @@ export function describeQuestionsForPrompt(trade: string): string {
 // phone AI slow and frustrating on real calls.
 export function describePricingQuestionsForPrompt(trade: string, pricingQuestionIds: string[]): string {
   const idSet = new Set(pricingQuestionIds);
-  const questions = (TRADE_QUESTIONS[trade] ?? []).filter((q) => idSet.has(q.id));
+  // §brand-tier — an aiClassifiedFrom question is never asked directly, so
+  // it's excluded here and surfaced instead via
+  // describeAiClassifiedQuestionsForPrompt below.
+  const questions = (TRADE_QUESTIONS[trade] ?? []).filter((q) => idSet.has(q.id) && !q.aiClassifiedFrom);
   return formatQuestionList(questions);
+}
+
+// §brand-tier — the counterpart to describePricingQuestionsForPrompt: tells
+// the AI which pricing factors to work out itself (from an answer it
+// already has) instead of asking the caller. Scoped the same way — only
+// questions the business has actually priced, via pricingQuestionIds.
+export function describeAiClassifiedQuestionsForPrompt(trade: string, pricingQuestionIds: string[]): string {
+  const idSet = new Set(pricingQuestionIds);
+  const all = TRADE_QUESTIONS[trade] ?? [];
+  const questions = all.filter((q) => idSet.has(q.id) && q.aiClassifiedFrom);
+  if (questions.length === 0) return "";
+
+  return questions
+    .map((q) => {
+      const sourceLabel = all.find((sq) => sq.id === q.aiClassifiedFrom)?.label ?? q.aiClassifiedFrom;
+      const validValues = q.type === "select" || q.type === "multiselect" ? q.options.map((o) => `"${o.value}"`).join(", ") : "";
+      return `${q.id} — never ask this directly; once you know "${sourceLabel}", classify it yourself into exactly one of ${validValues} using your own judgment, and call update_job_draft with that value under trade_answers.${q.id}`;
+    })
+    .join(". ");
 }
 
 // §50 — kept deliberately separate from describePricingQuestionsForPrompt:

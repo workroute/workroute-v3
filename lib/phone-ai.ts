@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   TRADE_QUESTIONS,
   describePricingQuestionsForPrompt,
+  describeAiClassifiedQuestionsForPrompt,
   describeAlwaysAskQuestionsForPrompt,
   alwaysAskQuestionIds,
 } from "./trade-questions";
@@ -149,6 +150,7 @@ function systemPrompt(
   const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const hasPricingQuestions = pricingQuestionIds.length > 0;
   const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds);
+  const aiClassifiedText = describeAiClassifiedQuestionsForPrompt(business.trade, pricingQuestionIds);
   const alwaysAskText = describeAlwaysAskQuestionsForPrompt(business.trade);
   const hasAlwaysAskQuestions = alwaysAskQuestionIds(business.trade).length > 0;
 
@@ -175,7 +177,7 @@ Once you've covered these (or done what you reasonably can), call get_price_esti
 - If it returns a real price, tell the caller naturally — e.g. "Based on that, you're looking at around $X." Make clear it's an estimate, not fixed — ${tradieName} may adjust it once he's seen the job in person. Then move straight to offering a booking (below).
 - If it comes back needing a quote instead (quoteRequired: true), that's completely normal — it just means this particular job needs ${tradieName}'s eyes on it in person. Tell the caller he'll confirm the price when he's out there, then move straight to offering a booking anyway — a quote visit is still a real booking, and still fills the diary.
 
-Never say a dollar figure that didn't come from get_price_estimate's actual result — never estimate, calculate, round, or guess one yourself, even roughly.`
+Never say a dollar figure that didn't come from get_price_estimate's actual result — never estimate, calculate, round, or guess one yourself, even roughly.${aiClassifiedText ? `\n\nSome pricing factors are never asked directly — you work them out yourself from what the caller already told you, using your own judgment, and still call update_job_draft with the value before get_price_estimate: ${aiClassifiedText}.` : ""}`
     : business.startingPrice
       ? `
 This business hasn't set up detailed pricing yet, but prices start at $${business.startingPrice}. Once you have a clear job description, you can mention that as a starting point — e.g. "prices start at around $${business.startingPrice}" — but always make clear the final price depends on the actual job, since you don't have enough detail to give a firm number. Then move straight to offering a booking (below). Never say any other dollar figure, and never imply $${business.startingPrice} is the confirmed price for this specific job.`
@@ -364,7 +366,7 @@ const TOOLS: VapiTool[] = [
           job_label: { type: "string", description: "A short few-word summary of the job, e.g. 'Front & back mow'" },
           trade_answers: {
             type: "object",
-            description: "Only include this if the caller volunteered specifics unprompted — never ask questions just to fill it in.",
+            description: "Only include this if the caller volunteered specifics unprompted, or for a factor the system prompt tells you to classify yourself — never ask a question solely to fill it in.",
           },
         },
       },
