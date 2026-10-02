@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendSms } from "./mobile-message";
+import { sendSms, sendCustomerSms } from "./mobile-message";
 import { notifyOwnerHighPriority } from "./push-notifications";
 import { checkAvailability, rescheduleJob } from "./messenger-scheduling";
 import { recalculateEstimate, normalizeTradeAnswers, namesLikelyMatch, type TradeAnswers } from "./phone-ai";
@@ -382,7 +382,7 @@ async function handleBookAppointment(
   if (job.customer_phone) {
     const messengerLink = `${appOrigin}/m/${job.customer_access_token}`;
     const message = messageFor("booking_confirmed", job.customer_name, business.firstName, business.businessName, messengerLink);
-    await sendSms(job.customer_phone, message);
+    await sendCustomerSms(supabase, business.businessId, job.customer_phone, message);
   }
 
   return JSON.stringify({ ok: true, quoteRequired: job.quote_required });

@@ -15,6 +15,7 @@ const SETTINGS_ITEMS = [
   { href: "/app/settings/phone-ai", label: "Phone AI", description: "Connected number & VIP alerts", Icon: IconPhone },
   { href: "/app/settings/voice", label: "Voice", description: "Choose your AI's voice & name", Icon: IconMic },
   { href: "/app/settings/reactivation-calling", label: "Reactivation calling", description: "Have Sarah call lapsed clients", Icon: IconReactivate },
+  { href: "/app/settings/text-messages", label: "Text messages", description: "Send customer texts from your mobile", Icon: IconMessages },
   { href: "/app/settings/website-chat", label: "Website Chat", description: "Add Sarah to your site", Icon: IconMessages },
   { href: "/app/settings/integrations", label: "Integrations", description: "Connected services", Icon: IconPlug },
   { href: "/app/settings/help", label: "Help & support", description: "Get help or contact us", Icon: IconHelp },

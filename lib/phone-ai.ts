@@ -7,7 +7,7 @@ import {
   alwaysAskQuestionIds,
 } from "./trade-questions";
 import { computeEstimate, loadTradePricingConfig, type EstimateResult } from "./trade-pricing";
-import { sendSms } from "./mobile-message";
+import { sendSms, sendCustomerSms } from "./mobile-message";
 import { notifyOwnerHighPriority, notifyOwnerNewPhoneEnquiry, notifyOwnerPhoneBooking } from "./push-notifications";
 import type { MatchedClient } from "./returning-client";
 import { checkAvailability, rescheduleJob } from "./messenger-scheduling";
@@ -1290,7 +1290,7 @@ export async function handleBookAppointment(
       null,
       appointmentLabel
     );
-    await sendSms(job.customer_phone, message);
+    await sendCustomerSms(supabase, call.business_id, job.customer_phone, message);
     await supabase.from("messages").insert({
       job_id: call.job_id,
       business_id: call.business_id,

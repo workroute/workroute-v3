@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { getSeriesDueForRenewalPrompt, markRenewalPrompted } from "@/lib/recurring-jobs";
-import { sendSms } from "@/lib/mobile-message";
+import { sendCustomerSms } from "@/lib/mobile-message";
 import { messageFor } from "@/lib/notifications";
 
 // §Recurring renewal — a "Regular" series only pre-books 5 visits up front
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
         formatDateLabel(candidate.scheduledDate)
       );
 
-      const result = await sendSms(candidate.customerPhone, message);
+      const result = await sendCustomerSms(supabase, business.user_id, candidate.customerPhone, message);
       if (result.ok) {
         await markRenewalPrompted(supabase, candidate.jobId);
         sent++;

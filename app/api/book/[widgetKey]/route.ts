@@ -3,7 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { geocodeAddress } from "@/lib/google-maps";
 import { checkAvailability, suggestAvailableTimes, rescheduleJob } from "@/lib/messenger-scheduling";
 import { messageFor, formatAppointmentLabel } from "@/lib/notifications";
-import { sendSms } from "@/lib/mobile-message";
+import { sendCustomerSms } from "@/lib/mobile-message";
 import { notifyOwnerPublicBooking } from "@/lib/push-notifications";
 
 // §public-booking-page — the public endpoint behind app/book/[widgetKey],
@@ -214,7 +214,7 @@ async function handleConfirm(
       null,
       appointmentLabel
     );
-    await sendSms(job.customer_phone, message);
+    await sendCustomerSms(supabase, profile.user_id, job.customer_phone, message);
     await supabase.from("messages").insert({
       job_id: jobId,
       business_id: profile.user_id,

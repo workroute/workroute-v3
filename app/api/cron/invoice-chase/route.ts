@@ -7,7 +7,7 @@ import {
   markReminderCallDone,
   placeOutboundInvoiceChaseCall,
 } from "@/lib/invoice-chase";
-import { sendSms } from "@/lib/mobile-message";
+import { sendCustomerSms } from "@/lib/mobile-message";
 import { messageFor } from "@/lib/notifications";
 
 // §Invoice chase — runs once a day. Week 1: text a reminder (reusing the
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
         { number: invoice.invoiceNumber, amount: invoice.amount, bankDetails: business.bank_details, paymentLink: business.payment_link }
       );
 
-      const result = await sendSms(invoice.customerPhone, message);
+      const result = await sendCustomerSms(supabase, business.user_id, invoice.customerPhone, message);
       if (result.ok) {
         await markReminderSent(supabase, invoice.jobId);
         remindersSent++;

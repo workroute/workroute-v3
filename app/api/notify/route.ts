@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { messageFor, formatAppointmentLabel, type NotificationEvent } from "@/lib/notifications";
-import { sendSms } from "@/lib/mobile-message";
+import { sendCustomerSms } from "@/lib/mobile-message";
 import { getDrivingInfo, reverseGeocode } from "@/lib/google-maps";
 
 const NOTIFICATION_EVENTS: NotificationEvent[] = ["booking_confirmed", "on_the_way", "running_late", "completed"];
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     null,
     appointmentLabel
   );
-  const result = await sendSms(job.customer_phone, message);
+  const result = await sendCustomerSms(supabase, user.id, job.customer_phone, message);
 
   // Give the Messenger thread itself something real to show, not just the
   // SMS invite — same appointment detail, so clicking through isn't blank.
