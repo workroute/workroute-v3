@@ -185,7 +185,7 @@ export async function notifyAdminOfSalesLead(
   supabase: SupabaseClient,
   visitorName: string,
   appOrigin: string,
-  source: "website chat" | "phone line" = "website chat"
+  source: "website chat" | "phone line" | "missed-call report" = "website chat"
 ): Promise<void> {
   const adminId = process.env.ADMIN_USER_ID;
   if (!adminId) return;
