@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { geocodeAddress } from "@/lib/google-maps";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 import { checkAvailability, suggestAvailableTimes, rescheduleJob } from "@/lib/messenger-scheduling";
 import { messageFor, formatAppointmentLabel } from "@/lib/notifications";
 import { sendCustomerSms } from "@/lib/mobile-message";
@@ -68,7 +69,7 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, first_name")
+    .select("user_id, business_name, first_name, trade")
     .eq("widget_key", params.widgetKey)
     .maybeSingle();
 
@@ -82,7 +83,7 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
   await supabase.from("widget_rate_limit_events").insert({ business_id: profile.user_id, session_id: sessionId });
 
   if (action === "start") {
-    return handleStart(supabase, profile.user_id, body);
+    return handleStart(supabase, profile.user_id, body, isFixedLocationTrade(profile.trade));
   }
   if (action === "check_availability") {
     return handleCheckAvailability(supabase, profile.user_id, body);
@@ -97,7 +98,12 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
 // first, schedule second" order the phone AI and Messenger already use, so
 // checkAvailability/suggestAvailableTimes (which both need a real job to
 // exclude from conflict checks) work unmodified.
-async function handleStart(supabase: ReturnType<typeof createServiceRoleClient>, businessId: string, body: any) {
+async function handleStart(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  businessId: string,
+  body: any,
+  fixedLocation: boolean
+) {
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
   const addressStreet = typeof body?.addressStreet === "string" ? body.addressStreet.trim() : "";
@@ -105,14 +111,17 @@ async function handleStart(supabase: ReturnType<typeof createServiceRoleClient>,
   const addressPostcode = typeof body?.addressPostcode === "string" ? body.addressPostcode.trim() : "";
   const jobLabel = typeof body?.jobLabel === "string" ? body.jobLabel.trim() : "";
 
-  if (!name || !phone || !addressStreet || !addressSuburb || !jobLabel) {
+  // A salon/massage customer comes to the business, so no address is needed.
+  if (!name || !phone || !jobLabel || (!fixedLocation && (!addressStreet || !addressSuburb))) {
     return json({ ok: false, error: "Please fill in all fields." }, 400);
   }
 
   // Best-effort — a geocode miss still lets the booking go ahead (typed
   // address is kept as-is), it just means travel-time conflict checking
   // won't apply to this particular job, same fallback the phone AI accepts.
-  const geocoded = await geocodeAddress({ addressStreet, addressSuburb, addressPostcode: addressPostcode || null });
+  const geocoded = fixedLocation
+    ? null
+    : await geocodeAddress({ addressStreet, addressSuburb, addressPostcode: addressPostcode || null });
 
   const { data: job, error } = await supabase
     .from("jobs")
@@ -121,8 +130,8 @@ async function handleStart(supabase: ReturnType<typeof createServiceRoleClient>,
       source: "form",
       customer_name: name,
       customer_phone: phone,
-      address_street: geocoded?.addressStreet ?? addressStreet,
-      address_suburb: geocoded?.addressSuburb ?? addressSuburb,
+      address_street: geocoded?.addressStreet ?? (addressStreet || null),
+      address_suburb: geocoded?.addressSuburb ?? (addressSuburb || null),
       address_postcode: geocoded?.addressPostcode ?? (addressPostcode || null),
       latitude: geocoded?.lat ?? null,
       longitude: geocoded?.lng ?? null,

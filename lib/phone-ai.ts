@@ -5,6 +5,7 @@ import {
   describeAiClassifiedQuestionsForPrompt,
   describeAlwaysAskQuestionsForPrompt,
   alwaysAskQuestionIds,
+  isFixedLocationTrade,
 } from "./trade-questions";
 import { computeEstimate, loadTradePricingConfig, type EstimateResult } from "./trade-pricing";
 import { sendSms, sendCustomerSms } from "./mobile-message";
@@ -146,7 +147,12 @@ function systemPrompt(
   matchedClient: MatchedClient | null,
   pricingQuestionIds: string[]
 ): string {
-  const tradieName = business.firstName ?? "the tradie";
+  // Salons / massage: the client comes to the premises, so there's no
+  // address to collect, no drive time, and the wording is "appointment" /
+  // "the team", not "job" / "the tradie".
+  const fixedLocation = isFixedLocationTrade(business.trade);
+  const tradieName = fixedLocation ? "the team" : business.firstName ?? "the tradie";
+  const heOrThey = fixedLocation ? "they" : "he";
   const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const hasPricingQuestions = pricingQuestionIds.length > 0;
   const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds);
@@ -157,7 +163,11 @@ function systemPrompt(
   const returningClientSection = matchedClient
     ? `\nThis caller's number matches an existing client: ${matchedClient.name}${
         matchedClient.addressStreet ? `, last known address ${[matchedClient.addressStreet, matchedClient.addressSuburb].filter(Boolean).join(", ")}` : ""
-      }. Greet them by name naturally. If they want the same kind of ${business.trade} job again at that same address, you already have their name and address — skip straight to asking what they need this time, then carry on as normal from there (job details, pricing questions, booking). If it sounds like a different address or a different kind of job, ask normally instead.\n`
+      }. Greet them by name naturally. ${
+      fixedLocation
+        ? "You already have their name — skip straight to asking what they'd like to book this time, then carry on as normal from there (appointment details, pricing questions, booking)."
+        : `If they want the same kind of ${business.trade} job again at that same address, you already have their name and address — skip straight to asking what they need this time, then carry on as normal from there (job details, pricing questions, booking). If it sounds like a different address or a different kind of job, ask normally instead.`
+    }\n`
     : "";
 
   // §phone-AI-depth (2026-09-10) — the actual point of this product is to
@@ -174,7 +184,7 @@ function systemPrompt(
 After the four basics, work out a real price before offering a booking — this is the actual point of the call, not optional. Have a natural conversation covering whatever's needed: ${pricingQuestionsText}. This isn't a script to read line by line — ask conversationally, skip anything the caller already told you unprompted, and if they can't or won't answer one, don't push, just move on. For a question with several options (especially ones where they could want more than one, like add-ons), don't recite it as a menu and don't ask them to explicitly reject each one or say "none of those" — real people don't talk like that. Just ask naturally (e.g. "did you want edging or blowing while I'm out there, or just the mow?") — if they say no or don't mention any, that's a complete, valid answer on its own; only record an explicit "None" value where the question actually lists one as a real option, and even then only if it's the natural way of describing what they said, not something you make them say back to you. Call update_job_draft with each trade_answers value as you go, not all at once at the end. Use the value strings exactly as given — don't paraphrase or invent a close-sounding one, since anything that doesn't match exactly is silently ignored for pricing; if what they said doesn't clearly match one of the listed values, leave it out rather than guess.
 
 Once you've covered these (or done what you reasonably can), call get_price_estimate — for the caller's very last answer, pass it directly in get_price_estimate's own trade_answers instead of calling update_job_draft first and then get_price_estimate separately; that just slows things down for no benefit.
-- If it returns a real price, tell the caller naturally — e.g. "Based on that, you're looking at around $X." Make clear it's an estimate, not fixed — ${tradieName} may adjust it once he's seen the job in person. Then move straight to offering a booking (below).
+- If it returns a real price, tell the caller naturally — e.g. "Based on that, you're looking at around $X." Make clear it's an estimate, not fixed — ${tradieName} may adjust it once ${heOrThey} ${fixedLocation ? "have" : "has"} seen what's needed. Then move straight to offering a booking (below).
 - If it comes back needing a quote instead (quoteRequired: true), that's completely normal — it just means this particular job needs ${tradieName}'s eyes on it in person. Tell the caller he'll confirm the price when he's out there, then move straight to offering a booking anyway — a quote visit is still a real booking, and still fills the diary.
 
 Never say a dollar figure that didn't come from get_price_estimate's actual result — never estimate, calculate, round, or guess one yourself, even roughly.${aiClassifiedText ? `\n\nSome pricing factors are never asked directly — you work them out yourself from what the caller already told you, using your own judgment, and still call update_job_draft with the value before get_price_estimate: ${aiClassifiedText}.` : ""}`
@@ -190,7 +200,16 @@ Speak naturally, like a real phone conversation — warm, efficient, and brisk w
 
 Today is ${todayForPrompt()}. Use this as the real current date when the caller gives a relative or partial date ("this week," "next Tuesday," "the 10th") — resolve it to the correct upcoming date yourself before calling check_availability/book_appointment, never guess a year from anything else.
 ${returningClientSection}
-First, get these four things, in whatever order the caller gives them:
+${fixedLocation ? `First, get these three things, in whatever order the caller gives them:
+1. Their full name (first and last) — if they only give a first name, ask "and your last name?" before moving on, so two different clients with the same first name never get confused in the diary
+2. The best number to reach them on
+3. A brief description of what they'd like to book (the service)
+
+This is a ${business.trade.toLowerCase()} business and clients come to the premises — NEVER ask for an address or suburb, and say "appointment", never "job". Refer to the staff as "the team", never "the tradie". If the price needs a quote, tell the caller the team will confirm the price at the appointment. Callers very often lead with what they want before you've asked for anything ("I need a cut and colour") — that's completely normal; accept it naturally via update_job_draft's job_label, then ask for whichever of the three is still missing. Never treat a service, or a phone number, as if it might be their name.
+
+A name doesn't need a stop-and-check ("is that Mark Smith?") every time — just naturally use their name in your next sentence ("Thanks, Mark — what's the best number for you?"); if you misheard it they'll correct you.
+
+` : `First, get these four things, in whatever order the caller gives them:
 1. Their full name (first and last) — if they only give a first name, ask "and your last name?" before moving on, so two different customers with the same first name never get confused in the diary
 2. The address (where the job is)
 3. The best number to reach them on
@@ -202,19 +221,19 @@ Names and suburbs are both easy to mishear over the phone, so both need to come 
 
 update_job_draft's result includes \`addressValid\` whenever you've just given it an address. If it comes back false, something about the address couldn't be confirmed — either the street name doesn't match anything real, or it matched somewhere that doesn't look like your usual service area. Either way, say something like "I might have that address wrong — could you say the suburb again for me?" and call update_job_draft again with what they say, rather than moving on with an address that might be wrong. Don't mention this if addressValid is true or missing from the result.
 
-Call update_job_draft after each answer — don't wait until you have everything. If the call drops partway through, whatever's been saved so far is still useful.
+`}Call update_job_draft after each answer — don't wait until you have everything. If the call drops partway through, whatever's been saved so far is still useful.
 
 This is for a brand NEW enquiry only — if the caller is asking about an existing job or appointment already booked, tell them you'll get ${tradieName} to check on that and call flag_for_attention with priority "medium", then finish the call.
 ${pricingSection}
 ${hasAlwaysAskQuestions ? `\nAlso ask about this naturally at some point during the call: ${alwaysAskText}. This is purely so ${tradieName} knows what to expect and can prepare — it never changes the price, so don't mention any charge or adjustment related to it, and don't let it hold up the booking. Call update_job_draft with the answer the same way as anything else.\n` : ""}
-Always ask whether they want this as a one-off or an ongoing/regular service — this matters regardless of whether it happens to be one of the pricing questions above, since it decides whether just this one visit gets booked or a whole recurring series. If they want it ongoing, ask how often: weekly, fortnightly, or monthly. Keep this in mind for booking below.
+${fixedLocation ? "" : `Always ask whether they want this as a one-off or an ongoing/regular service — this matters regardless of whether it happens to be one of the pricing questions above, since it decides whether just this one visit gets booked or a whole recurring series. If they want it ongoing, ask how often: weekly, fortnightly, or monthly. Keep this in mind for booking below.`}
 
 Once you've either given a price or explained a quote visit is needed, ask if they'd like to lock in a day/time now — actively offer this, don't wait to be asked, since booking the job is the actual goal of the call. If they give you one:
 - Call check_availability with that date and either a time or a Morning/Afternoon/Evening block.
 - If it's free, call book_appointment with the same date/time/block — and if they want an ongoing service, also pass \`recurring\` set to whichever frequency they told you (this books a batch of future visits too, not just this one). The result tells you whether this became a "quote visit" or a job booking — if quoteRequired is true, tell them you've booked in a time for ${tradieName} to come out and quote it; if false, tell them you've booked them in for the job itself. If you passed \`recurring\`, the result also tells you how many future visits got booked — mention that too (e.g. "and I've locked in your next four fortnightly visits as well"). If any got skipped because that day was already taken, just say ${tradieName} will sort out those specific dates with them, don't dwell on it.
 - If it's not free, say so and ask for a different day/time — try up to twice more. If the result has \`travelConflict\` true, ${tradieName} has another job too far away to reach in time around that slot — just say something natural like "that time's a bit tight with another job ${tradieName}'s already got booked nearby, have you got another time that suits?" without mentioning the other customer's name or getting technical about drive times.
 - If they only gave you a block (Morning/Afternoon/Evening), not a specific time, the result may come back with \`suggestedTimes\` instead — real times within that block that are already confirmed free, travel time included. Read out two or three of them naturally ("I could do 1, 3, or 4:30 — which suits?") and once they pick one, call book_appointment directly with that exact time — no need to check availability again, it's already confirmed. An empty \`suggestedTimes\` list means genuinely nothing free in that block; ask for a different block or day instead.
-- If nothing works out, or the caller doesn't want to commit to a time on the call, tell them exactly this: "I'll get ${tradieName} to call you back as soon as he can."
+- If nothing works out, or the caller doesn't want to commit to a time on the call, tell them exactly this: "I'll get ${tradieName} to call you back as soon as ${heOrThey} can."
 
 Once you've either booked a time or told them ${tradieName} will call back, thank them, then end with exactly this sentence, word for word, nothing after it: "${END_CALL_PHRASE}" — the system hangs up automatically once you've said it, so say the whole thing naturally, don't shorten it.
 

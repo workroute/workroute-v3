@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { TRADE_NAMES, isFixedLocationTrade } from "@/lib/trade-questions";
 
 type Profile = {
   first_name: string;
@@ -12,13 +13,14 @@ type Profile = {
   service_area: string;
   city: string;
   google_review_link: string;
+  chairs: number | null;
   bank_details: string;
   payment_link: string;
 } | null;
 
 // Matches the trade-specific question sets defined in lib/trade-questions.ts (§8a).
 // Add a trade here only once its question set exists there too.
-const TRADES = ["Lawn Mowing", "Home Cleaning", "Mobile Mechanic", "Landscaping", "Pool Cleaning"];
+const TRADES = TRADE_NAMES;
 
 export default function ProfileForm({
   userId,
@@ -35,6 +37,7 @@ export default function ProfileForm({
   const [serviceArea, setServiceArea] = useState(initialProfile?.service_area ?? "");
   const [city, setCity] = useState(initialProfile?.city ?? "");
   const [googleReviewLink, setGoogleReviewLink] = useState(initialProfile?.google_review_link ?? "");
+  const [chairs, setChairs] = useState(String(initialProfile?.chairs ?? 1));
   const [bankDetails, setBankDetails] = useState(initialProfile?.bank_details ?? "");
   const [paymentLink, setPaymentLink] = useState(initialProfile?.payment_link ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -56,6 +59,9 @@ export default function ProfileForm({
       service_area: serviceArea,
       city,
       google_review_link: googleReviewLink || null,
+      // Only sent for salon/massage so a tradie profile save never touches a column
+      // that might not exist yet if this deploys before migration 0038 is run.
+      ...(isFixedLocationTrade(trade) ? { chairs: Math.min(20, Math.max(1, Math.round(Number(chairs)) || 1)) } : {}),
       bank_details: bankDetails || null,
       payment_link: paymentLink || null,
       updated_at: new Date().toISOString(),
@@ -132,6 +138,27 @@ export default function ProfileForm({
           ))}
         </select>
       </div>
+
+      {isFixedLocationTrade(trade) && (
+        <div>
+          <label htmlFor="chairs" className="field-label">
+            How many people can be working at once?
+          </label>
+          <input
+            id="chairs"
+            type="number"
+            min={1}
+            max={20}
+            value={chairs}
+            onChange={(e) => setChairs(e.target.value)}
+            className="field-input"
+          />
+          <p className="mt-1 text-xs text-rig-700/60">
+            e.g. 3 stylists or 3 treatment rooms. Sarah will keep booking a time until this many appointments
+            overlap, then offer the next free slot.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

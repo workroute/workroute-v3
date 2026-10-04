@@ -4,7 +4,9 @@ import { useState } from "react";
 
 type Step = "details" | "date" | "times" | "confirmed";
 
-export default function BookingForm({ widgetKey }: { widgetKey: string }) {
+// fixedLocation: the customer comes to the business (salon, massage), so no
+// address is collected and the wording is "appointment", not "job".
+export default function BookingForm({ widgetKey, fixedLocation = false }: { widgetKey: string; fixedLocation?: boolean }) {
   // One booking flow per page visit — no need to persist across reloads the
   // way the website chat widget does, so a plain in-memory id is enough.
   const [sessionId] = useState(() => crypto.randomUUID());
@@ -35,7 +37,7 @@ export default function BookingForm({ widgetKey }: { widgetKey: string }) {
 
   async function handleDetailsSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !phone.trim() || !addressStreet.trim() || !addressSuburb.trim() || !jobLabel.trim()) {
+    if (!name.trim() || !phone.trim() || !jobLabel.trim() || (!fixedLocation && (!addressStreet.trim() || !addressSuburb.trim()))) {
       setError("Please fill in every field.");
       return;
     }
@@ -102,7 +104,9 @@ export default function BookingForm({ widgetKey }: { widgetKey: string }) {
     <div className="space-y-4">
       {step === "details" && (
         <form onSubmit={handleDetailsSubmit} className="space-y-3">
-          <p className="text-sm text-rig-700">Tell us a bit about the job and we'll find you a time.</p>
+          <p className="text-sm text-rig-700">
+            {fixedLocation ? "Tell us what you'd like to book and we'll find you a time." : "Tell us a bit about the job and we'll find you a time."}
+          </p>
           <div>
             <label className="field-label">Your name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className="field-input" placeholder="e.g. Jane Smith" />
@@ -117,6 +121,8 @@ export default function BookingForm({ widgetKey }: { widgetKey: string }) {
               placeholder="04XX XXX XXX"
             />
           </div>
+          {!fixedLocation && (
+          <>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="field-label">Street address</label>
@@ -131,13 +137,15 @@ export default function BookingForm({ widgetKey }: { widgetKey: string }) {
             <label className="field-label">Postcode (optional)</label>
             <input value={addressPostcode} onChange={(e) => setAddressPostcode(e.target.value)} className="field-input" />
           </div>
+          </>
+          )}
           <div>
-            <label className="field-label">What do you need done?</label>
+            <label className="field-label">{fixedLocation ? "What would you like to book?" : "What do you need done?"}</label>
             <textarea
               value={jobLabel}
               onChange={(e) => setJobLabel(e.target.value)}
               className="field-input min-h-[60px]"
-              placeholder="e.g. Front and back lawn mow"
+              placeholder={fixedLocation ? "e.g. Cut and colour" : "e.g. Front and back lawn mow"}
             />
           </div>
 

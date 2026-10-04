@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 import BookingForm from "./booking-form";
 
 // §public-booking-page — deliberately public, no auth. widget_key is the
@@ -42,7 +43,7 @@ export default async function BookPage({ params }: { params: { widgetKey: string
           <p className="font-display text-lg font-semibold text-paper-50">{profile.business_name}</p>
           <p className="text-xs text-paper-50/70">
             {profile.trade}
-            {profile.service_area ? ` — servicing ${profile.service_area}` : ""}
+            {profile.service_area && !isFixedLocationTrade(profile.trade) ? ` — servicing ${profile.service_area}` : ""}
           </p>
         </header>
         {(dialPhone || reviewLink) && (
@@ -70,7 +71,7 @@ export default async function BookPage({ params }: { params: { widgetKey: string
           </div>
         )}
         <div className="p-4">
-          <BookingForm widgetKey={params.widgetKey} />
+          <BookingForm widgetKey={params.widgetKey} fixedLocation={isFixedLocationTrade(profile.trade)} />
         </div>
       </div>
     </main>

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDrivingMinutesFromOrigin } from "./google-maps";
+import { isFixedLocationTrade } from "./trade-questions";
 
 export type AvailabilityCheck = {
   date: string; // "YYYY-MM-DD"
@@ -51,6 +52,11 @@ type DayContext = {
   // (Google Maps miss) rather than "no travel conflict."
   driveMinutesByNeighborId: Map<string, number>;
   geocodedNeighbors: SameDayJob[];
+  // Fixed-location businesses (salons, massage) have no travel, and can run
+  // `chairs` appointments at once — a slot is only full when every chair is
+  // taken. Mobile trades keep the original one-job-at-a-time + drive-time rules.
+  fixedLocation: boolean;
+  chairs: number;
 };
 
 async function loadDayContext(
@@ -59,7 +65,7 @@ async function loadDayContext(
   excludeJobId: string,
   date: string
 ): Promise<DayContext> {
-  const [{ data: sameDayJobs }, { data: candidate }] = await Promise.all([
+  const [{ data: sameDayJobs }, { data: candidate }, { data: businessProfile }] = await Promise.all([
     supabase
       .from("jobs")
       .select("id, customer_name, scheduled_time, scheduled_block, latitude, longitude, estimated_duration_minutes")
@@ -68,14 +74,17 @@ async function loadDayContext(
       .neq("id", excludeJobId)
       .neq("status", "Completed"),
     supabase.from("jobs").select("latitude, longitude, estimated_duration_minutes").eq("id", excludeJobId).maybeSingle(),
+    supabase.from("business_profiles").select("trade, chairs").eq("user_id", businessId).maybeSingle(),
   ]);
 
+  const fixedLocation = isFixedLocationTrade(businessProfile?.trade);
+  const chairs = Math.max(1, businessProfile?.chairs ?? 1);
   const jobs = sameDayJobs ?? [];
-  const candidateDuration = candidate?.estimated_duration_minutes ?? 30;
+  const candidateDuration = candidate?.estimated_duration_minutes ?? (fixedLocation ? 60 : 30);
   const geocodedNeighbors = jobs.filter((j) => j.latitude != null && j.longitude != null && j.scheduled_time);
 
   const driveMinutesByNeighborId = new Map<string, number>();
-  if (candidate?.latitude != null && candidate?.longitude != null && geocodedNeighbors.length > 0) {
+  if (!fixedLocation && candidate?.latitude != null && candidate?.longitude != null && geocodedNeighbors.length > 0) {
     const driveMinutesList = await getDrivingMinutesFromOrigin(
       { lat: candidate.latitude, lng: candidate.longitude },
       geocodedNeighbors.map((j) => ({ lat: j.latitude!, lng: j.longitude! }))
@@ -86,7 +95,20 @@ async function loadDayContext(
     });
   }
 
-  return { sameDayJobs: jobs, candidateDuration, driveMinutesByNeighborId, geocodedNeighbors };
+  return { sameDayJobs: jobs, candidateDuration, driveMinutesByNeighborId, geocodedNeighbors, fixedLocation, chairs };
+}
+
+// Jobs already booked at an exact time whose appointment overlaps the
+// candidate's [start, start + duration) window. Block-only jobs (no exact
+// time) can't be placed on the clock, so they're ignored, same as before.
+function overlappingJobs(candidateMinutes: number, ctx: DayContext): SameDayJob[] {
+  const candidateEnd = candidateMinutes + ctx.candidateDuration;
+  return ctx.sameDayJobs.filter((job) => {
+    if (!job.scheduled_time) return false;
+    const start = toMinutes(job.scheduled_time.slice(0, 5));
+    const end = start + (job.estimated_duration_minutes ?? (ctx.fixedLocation ? 60 : 30));
+    return start < candidateEnd && end > candidateMinutes;
+  });
 }
 
 // Pure arithmetic against already-fetched drive times — no API call — so
@@ -166,6 +188,15 @@ export async function checkAvailability(
 
   const ctx = await loadDayContext(supabase, businessId, excludeJobId, date);
 
+  if (ctx.fixedLocation) {
+    if (!time) return { available: true };
+    const overlapping = overlappingJobs(toMinutes(time), ctx);
+    if (overlapping.length >= ctx.chairs) {
+      return { available: false, conflictingCustomerName: overlapping[0].customer_name };
+    }
+    return { available: true };
+  }
+
   const conflict = ctx.sameDayJobs.find((job) => {
     if (time) return job.scheduled_time?.slice(0, 5) === time;
     return false;
@@ -207,8 +238,12 @@ export async function suggestAvailableTimes(
   const suggestions: string[] = [];
   for (let minutes = rangeStart; minutes + ctx.candidateDuration <= rangeEnd; minutes += 30) {
     const candidateTime = toHHMM(minutes);
-    if (bookedTimes.has(candidateTime)) continue;
-    if (findTravelConflictAtTime(minutes, ctx)) continue;
+    if (ctx.fixedLocation) {
+      if (overlappingJobs(minutes, ctx).length >= ctx.chairs) continue;
+    } else {
+      if (bookedTimes.has(candidateTime)) continue;
+      if (findTravelConflictAtTime(minutes, ctx)) continue;
+    }
 
     suggestions.push(candidateTime);
     if (suggestions.length >= maxSuggestions) break;

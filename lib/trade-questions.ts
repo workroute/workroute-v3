@@ -276,12 +276,72 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       options: opts(["ASAP", "Within 1 month", "1–3 months", "Flexible"]),
     },
   ],
+
+  // Fixed-location trades (see FIXED_LOCATION_TRADES below) — the customer
+  // comes to the business, so there's no address or travel to ask about.
+  // `service` is the price/duration driver the same way Lawn Mowing's `size`
+  // is, so a salon sets base price + per-option durations on the Pricing page.
+  Hairdressing: [
+    {
+      id: "service",
+      label: "Service",
+      type: "select",
+      options: opts(["Cut", "Colour", "Cut and colour", "Foils / highlights", "Treatment", "Other"]),
+    },
+    {
+      id: "hair_length",
+      label: "Hair length",
+      type: "select",
+      options: opts(["Short", "Medium", "Long"]),
+    },
+    {
+      // alwaysAsk, not priced — worth knowing so the right person is
+      // scheduled, but it never changes the quote.
+      id: "stylist_preference",
+      label: "Preferred stylist (if any)",
+      type: "text",
+      placeholder: "e.g. Jess, or no preference",
+      alwaysAsk: true,
+    },
+  ],
+
+  Massage: [
+    {
+      id: "massage_type",
+      label: "Type of massage",
+      type: "select",
+      options: opts(["Relaxation", "Remedial", "Deep tissue", "Sports", "Pregnancy", "Other"]),
+    },
+    {
+      id: "session_length",
+      label: "Session length",
+      type: "select",
+      options: opts(["30 minutes", "60 minutes", "90 minutes"]),
+    },
+    {
+      // alwaysAsk, not priced — a heads-up so the therapist can prepare.
+      id: "health_notes",
+      label: "Injuries or health conditions to know about",
+      type: "text",
+      alwaysAsk: true,
+    },
+  ],
 };
 
 // Single source of truth for "which trades exist" — anywhere that needs a
 // dropdown of trades (profile setup, quick start) should read this rather
 // than hand-maintaining its own copy of the list.
 export const TRADE_NAMES = Object.keys(TRADE_QUESTIONS);
+
+// Trades where the customer comes to the business rather than the business
+// going to them: no customer address, no service-area check, no drive-time
+// check, and (see business_profiles.chairs) more than one booking can happen
+// at the same time. Everything else is a mobile trade, exactly as before.
+export const FIXED_LOCATION_TRADES = new Set(["Hairdressing", "Massage"]);
+
+export function isFixedLocationTrade(trade: string | null | undefined): boolean {
+  return !!trade && FIXED_LOCATION_TRADES.has(trade);
+}
 
 export const SOURCE_OPTIONS: { value: string; label: string }[] = [
   { value: "call", label: "Call" },
