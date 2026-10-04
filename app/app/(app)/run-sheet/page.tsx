@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getBusinessProfile } from "@/lib/supabase/auth";
 import { getRunSheetBuckets } from "@/lib/run-sheet-data";
 import RunSheetBoard from "./run-sheet-board";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -38,7 +39,7 @@ export default async function RunSheetPage() {
         </h1>
         <p className="mt-1 text-sm text-rig-700">Here's what's happening today.</p>
 
-        <RunSheetBoard initialBuckets={buckets} />
+        <RunSheetBoard initialBuckets={buckets} fixedLocation={isFixedLocationTrade(profile?.trade)} />
       </div>
     </main>
   );

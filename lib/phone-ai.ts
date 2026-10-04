@@ -6,6 +6,7 @@ import {
   describeAlwaysAskQuestionsForPrompt,
   alwaysAskQuestionIds,
   isFixedLocationTrade,
+  staffPreference,
 } from "./trade-questions";
 import { computeEstimate, loadTradePricingConfig, type EstimateResult } from "./trade-pricing";
 import { sendSms, sendCustomerSms } from "./mobile-message";
@@ -55,6 +56,9 @@ export type PhoneBusinessContext = {
   // same "not configured yet" meaning as an absent trade_pricing_configs
   // row, not $0.
   startingPrice: number | null;
+  // Salons / massage: names a client can ask for. Optional so every other
+  // PhoneBusinessContext builder (cron jobs, outbound calls) is unaffected.
+  staffNames?: string[];
   // §pronunciation-fixes — a business name, suburb, or trade term the
   // text-to-speech engine mispronounces, paired with a phonetic respelling
   // that comes out sounding right (e.g. "Woombye" → "Woom-bye"). Empty
@@ -207,7 +211,14 @@ ${fixedLocation ? `First, get these three things, in whatever order the caller g
 
 This is a ${business.trade.toLowerCase()} business and clients come to the premises — NEVER ask for an address or suburb, and say "appointment", never "job". Refer to the staff as "the team", never "the tradie". If the price needs a quote, tell the caller the team will confirm the price at the appointment. Callers very often lead with what they want before you've asked for anything ("I need a cut and colour") — that's completely normal; accept it naturally via update_job_draft's job_label, then ask for whichever of the three is still missing. Never treat a service, or a phone number, as if it might be their name.
 
-A name doesn't need a stop-and-check ("is that Mark Smith?") every time — just naturally use their name in your next sentence ("Thanks, Mark — what's the best number for you?"); if you misheard it they'll correct you.
+${
+  (() => {
+    const pref = staffPreference(business.trade);
+    const names = business.staffNames ?? [];
+    if (!pref || names.length === 0) return "";
+    return `Clients often like to see the same ${pref.role}. At some point before offering a time, ask whether they'd like a particular ${pref.role} — the team is: ${names.join(", ")} — or no preference. Call update_job_draft with trade_answers.${pref.questionId} set to exactly one name from that list, or "No preference". Names are easy to mishear: only ever record a name from that list, and if you're not sure which one they said, ask them to repeat it. This only records who they'd like — don't promise that person will definitely be free at the time; the team will confirm.\n\n`;
+  })()
+}A name doesn't need a stop-and-check ("is that Mark Smith?") every time — just naturally use their name in your next sentence ("Thanks, Mark — what's the best number for you?"); if you misheard it they'll correct you.
 
 ` : `First, get these four things, in whatever order the caller gives them:
 1. Their full name (first and last) — if they only give a first name, ask "and your last name?" before moving on, so two different customers with the same first name never get confused in the diary

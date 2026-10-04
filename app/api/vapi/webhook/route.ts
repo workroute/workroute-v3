@@ -82,7 +82,7 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
   const { data: profile } = await supabase
     .from("business_profiles")
     .select(
-      "user_id, business_name, trade, first_name, service_area, ai_voice_id, ai_persona_name, starting_price, created_at, is_paying, trial_limit_notified_at, trial_warning_sent_at, pronunciation_overrides"
+      "user_id, business_name, trade, first_name, service_area, ai_voice_id, ai_persona_name, starting_price, created_at, is_paying, trial_limit_notified_at, trial_warning_sent_at, pronunciation_overrides, staff_names"
     )
     .eq("vapi_phone_number_id", phoneNumberId)
     .maybeSingle();
@@ -102,6 +102,7 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
     personaName: profile.ai_persona_name,
     startingPrice: profile.starting_price,
     pronunciationOverrides: profile.pronunciation_overrides ?? [],
+    staffNames: profile.staff_names ?? [],
   };
 
   // §WorkRoute sales phone line — this number answers as WorkRoute itself

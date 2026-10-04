@@ -1,5 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { isFixedLocationTrade } from "@/lib/trade-questions";
+import { isFixedLocationTrade, staffPreference } from "@/lib/trade-questions";
 import BookingForm from "./booking-form";
 
 // §public-booking-page — deliberately public, no auth. widget_key is the
@@ -13,7 +13,7 @@ export default async function BookPage({ params }: { params: { widgetKey: string
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("business_name, trade, service_area, phone, google_review_link")
+    .select("business_name, trade, service_area, phone, google_review_link, staff_names")
     .eq("widget_key", params.widgetKey)
     .maybeSingle();
 
@@ -71,7 +71,10 @@ export default async function BookPage({ params }: { params: { widgetKey: string
           </div>
         )}
         <div className="p-4">
-          <BookingForm widgetKey={params.widgetKey} fixedLocation={isFixedLocationTrade(profile.trade)} />
+          <BookingForm widgetKey={params.widgetKey} fixedLocation={isFixedLocationTrade(profile.trade)}
+            staffNames={profile.staff_names ?? []}
+            staffRole={staffPreference(profile.trade)?.role ?? "stylist"}
+          />
         </div>
       </div>
     </main>

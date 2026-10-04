@@ -14,6 +14,7 @@ type Profile = {
   city: string;
   google_review_link: string;
   chairs: number | null;
+  staff_names: string[] | null;
   bank_details: string;
   payment_link: string;
 } | null;
@@ -37,6 +38,7 @@ export default function ProfileForm({
   const [serviceArea, setServiceArea] = useState(initialProfile?.service_area ?? "");
   const [city, setCity] = useState(initialProfile?.city ?? "");
   const [googleReviewLink, setGoogleReviewLink] = useState(initialProfile?.google_review_link ?? "");
+  const [staffNames, setStaffNames] = useState((initialProfile?.staff_names ?? []).join(", "));
   const [chairs, setChairs] = useState(String(initialProfile?.chairs ?? 1));
   const [bankDetails, setBankDetails] = useState(initialProfile?.bank_details ?? "");
   const [paymentLink, setPaymentLink] = useState(initialProfile?.payment_link ?? "");
@@ -61,7 +63,14 @@ export default function ProfileForm({
       google_review_link: googleReviewLink || null,
       // Only sent for salon/massage so a tradie profile save never touches a column
       // that might not exist yet if this deploys before migration 0038 is run.
-      ...(isFixedLocationTrade(trade) ? { chairs: Math.min(20, Math.max(1, Math.round(Number(chairs)) || 1)) } : {}),
+      ...(isFixedLocationTrade(trade)
+        ? {
+            chairs: Math.min(20, Math.max(1, Math.round(Number(chairs)) || 1)),
+            staff_names: Array.from(
+              new Set(staffNames.split(/[,\n]/).map((n) => n.trim().slice(0, 40)).filter(Boolean))
+            ).slice(0, 20),
+          }
+        : {}),
       bank_details: bankDetails || null,
       payment_link: paymentLink || null,
       updated_at: new Date().toISOString(),
@@ -156,6 +165,20 @@ export default function ProfileForm({
           <p className="mt-1 text-xs text-rig-700/60">
             e.g. 3 stylists or 3 treatment rooms. Sarah will keep booking a time until this many appointments
             overlap, then offer the next free slot.
+          </p>
+          <label htmlFor="staff_names" className="field-label mt-4">
+            Staff names
+          </label>
+          <input
+            id="staff_names"
+            value={staffNames}
+            onChange={(e) => setStaffNames(e.target.value)}
+            className="field-input"
+            placeholder="e.g. Jess, Sam, Alex"
+          />
+          <p className="mt-1 text-xs text-rig-700/60">
+            Separate names with commas. Clients can pick who they'd like on your booking page, and Sarah asks on
+            calls. This records their preference — it doesn't give each person their own calendar yet.
           </p>
         </div>
       )}

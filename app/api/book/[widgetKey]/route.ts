@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { geocodeAddress } from "@/lib/google-maps";
-import { isFixedLocationTrade } from "@/lib/trade-questions";
+import { isFixedLocationTrade, staffPreference } from "@/lib/trade-questions";
 import { checkAvailability, suggestAvailableTimes, rescheduleJob } from "@/lib/messenger-scheduling";
 import { messageFor, formatAppointmentLabel } from "@/lib/notifications";
 import { sendCustomerSms } from "@/lib/mobile-message";
@@ -69,7 +69,7 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, first_name, trade")
+    .select("user_id, business_name, first_name, trade, staff_names")
     .eq("widget_key", params.widgetKey)
     .maybeSingle();
 
@@ -83,7 +83,7 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
   await supabase.from("widget_rate_limit_events").insert({ business_id: profile.user_id, session_id: sessionId });
 
   if (action === "start") {
-    return handleStart(supabase, profile.user_id, body, isFixedLocationTrade(profile.trade));
+    return handleStart(supabase, profile.user_id, body, profile.trade, profile.staff_names ?? []);
   }
   if (action === "check_availability") {
     return handleCheckAvailability(supabase, profile.user_id, body);
@@ -102,14 +102,20 @@ async function handleStart(
   supabase: ReturnType<typeof createServiceRoleClient>,
   businessId: string,
   body: any,
-  fixedLocation: boolean
+  trade: string | null,
+  staffNames: string[]
 ) {
+  const fixedLocation = isFixedLocationTrade(trade);
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
   const addressStreet = typeof body?.addressStreet === "string" ? body.addressStreet.trim() : "";
   const addressSuburb = typeof body?.addressSuburb === "string" ? body.addressSuburb.trim() : "";
   const addressPostcode = typeof body?.addressPostcode === "string" ? body.addressPostcode.trim() : "";
   const jobLabel = typeof body?.jobLabel === "string" ? body.jobLabel.trim() : "";
+  // Only a name the owner actually listed is accepted, never free text from the public form.
+  const requestedStaff = typeof body?.staffPreference === "string" ? body.staffPreference.trim() : "";
+  const pref = staffPreference(trade);
+  const staffChoice = pref && staffNames.includes(requestedStaff) ? requestedStaff : null;
 
   // A salon/massage customer comes to the business, so no address is needed.
   if (!name || !phone || !jobLabel || (!fixedLocation && (!addressStreet || !addressSuburb))) {
@@ -136,6 +142,7 @@ async function handleStart(
       latitude: geocoded?.lat ?? null,
       longitude: geocoded?.lng ?? null,
       job_label: jobLabel,
+      ...(pref && staffChoice ? { trade_answers: { [pref.questionId]: staffChoice } } : {}),
       // Typed directly by the customer, not transcribed off a phone call —
       // at least as reliable as a High-confidence AI capture.
       confidence: "High",

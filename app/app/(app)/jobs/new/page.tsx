@@ -2,12 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadTradePricingConfig } from "@/lib/trade-pricing";
+import { isFixedLocationTrade, staffPreference } from "@/lib/trade-questions";
 import JobForm from "./job-form";
+import AppointmentForm from "./appointment-form";
 
 export default async function NewJobPage({
   searchParams,
 }: {
-  searchParams: { clientId?: string };
+  searchParams: { clientId?: string; rebookFrom?: string };
 }) {
   const supabase = createClient();
 
@@ -21,7 +23,7 @@ export default async function NewJobPage({
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("trade, business_name")
+    .select("trade, business_name, staff_names")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -60,6 +62,61 @@ export default async function NewJobPage({
       .eq("business_id", user.id)
       .maybeSingle();
     initialClient = client;
+  }
+
+  // Salon / massage: a short appointment form instead of the tradie job form.
+  // "Book again" arrives with ?rebookFrom=<job> (or just ?clientId=), and the
+  // service + preferred stylist from their most recent visit are pre-filled,
+  // so a regular rebooking is one date/time away.
+  if (isFixedLocationTrade(profile.trade)) {
+    let previousAnswers: Record<string, any> = {};
+    let clientForForm = initialClient ? { id: initialClient.id, name: initialClient.name, phone: initialClient.phone } : null;
+
+    if (searchParams.rebookFrom) {
+      const { data: prev } = await supabase
+        .from("jobs")
+        .select("client_id, customer_name, customer_phone, trade_answers")
+        .eq("id", searchParams.rebookFrom)
+        .eq("business_id", user.id)
+        .maybeSingle();
+      if (prev) {
+        previousAnswers = prev.trade_answers ?? {};
+        if (!clientForForm && prev.client_id) {
+          clientForForm = { id: prev.client_id, name: prev.customer_name, phone: prev.customer_phone };
+        }
+      }
+    } else if (initialClient) {
+      const { data: last } = await supabase
+        .from("jobs")
+        .select("trade_answers")
+        .eq("client_id", initialClient.id)
+        .eq("business_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      previousAnswers = last?.trade_answers ?? {};
+    }
+
+    return (
+      <main className="min-h-screen bg-paper-50">
+        <div className="mx-auto max-w-lg px-4 py-10">
+          <h1 className="font-display text-2xl font-bold text-rig-900">Book an appointment</h1>
+          <p className="mt-1 text-sm text-rig-700">
+            {clientForForm ? "Same as last time. Just pick a day and time." : "Walk-in, phone booking, or a regular booking again."}
+          </p>
+          <div className="mt-6 rounded-lg bg-white p-6 shadow-sm">
+            <AppointmentForm
+              businessId={user.id}
+              trade={profile.trade}
+              pricingConfig={pricingConfig}
+              staffNames={profile.staff_names ?? []}
+              initialClient={clientForForm}
+              initialAnswers={previousAnswers}
+            />
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (

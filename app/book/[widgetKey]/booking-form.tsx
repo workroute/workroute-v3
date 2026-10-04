@@ -6,7 +6,17 @@ type Step = "details" | "date" | "times" | "confirmed";
 
 // fixedLocation: the customer comes to the business (salon, massage), so no
 // address is collected and the wording is "appointment", not "job".
-export default function BookingForm({ widgetKey, fixedLocation = false }: { widgetKey: string; fixedLocation?: boolean }) {
+export default function BookingForm({
+  widgetKey,
+  fixedLocation = false,
+  staffNames = [],
+  staffRole = "stylist",
+}: {
+  widgetKey: string;
+  fixedLocation?: boolean;
+  staffNames?: string[];
+  staffRole?: string;
+}) {
   // One booking flow per page visit — no need to persist across reloads the
   // way the website chat widget does, so a plain in-memory id is enough.
   const [sessionId] = useState(() => crypto.randomUUID());
@@ -21,6 +31,7 @@ export default function BookingForm({ widgetKey, fixedLocation = false }: { widg
   const [addressSuburb, setAddressSuburb] = useState("");
   const [addressPostcode, setAddressPostcode] = useState("");
   const [jobLabel, setJobLabel] = useState("");
+  const [staffChoice, setStaffChoice] = useState("");
 
   const [date, setDate] = useState("");
   const [times, setTimes] = useState<string[]>([]);
@@ -50,6 +61,7 @@ export default function BookingForm({ widgetKey, fixedLocation = false }: { widg
       addressSuburb,
       addressPostcode,
       jobLabel,
+      staffPreference: staffChoice,
     });
     setBusy(false);
     if (!data.ok) {
@@ -148,6 +160,20 @@ export default function BookingForm({ widgetKey, fixedLocation = false }: { widg
               placeholder={fixedLocation ? "e.g. Cut and colour" : "e.g. Front and back lawn mow"}
             />
           </div>
+
+          {fixedLocation && staffNames.length > 0 && (
+            <div>
+              <label className="field-label">Preferred {staffRole} (optional)</label>
+              <select value={staffChoice} onChange={(e) => setStaffChoice(e.target.value)} className="field-input">
+                <option value="">No preference</option>
+                {staffNames.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && <p className="rounded bg-rust-500/10 px-3 py-2 text-sm text-rust-500">{error}</p>}
 

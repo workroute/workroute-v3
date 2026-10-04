@@ -320,6 +320,13 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
     },
     {
       // alwaysAsk, not priced — a heads-up so the therapist can prepare.
+      id: "therapist_preference",
+      label: "Preferred therapist (if any)",
+      type: "text",
+      placeholder: "e.g. Sam, or no preference",
+      alwaysAsk: true,
+    },
+    {
       id: "health_notes",
       label: "Injuries or health conditions to know about",
       type: "text",
@@ -338,6 +345,14 @@ export const TRADE_NAMES = Object.keys(TRADE_QUESTIONS);
 // check, and (see business_profiles.chairs) more than one booking can happen
 // at the same time. Everything else is a mobile trade, exactly as before.
 export const FIXED_LOCATION_TRADES = new Set(["Hairdressing", "Massage"]);
+
+// The trade_answers key and spoken word for "ask for a particular person" —
+// null for mobile trades, which have no staff picker.
+export function staffPreference(trade: string | null | undefined): { questionId: string; role: string } | null {
+  if (trade === "Hairdressing") return { questionId: "stylist_preference", role: "stylist" };
+  if (trade === "Massage") return { questionId: "therapist_preference", role: "therapist" };
+  return null;
+}
 
 export function isFixedLocationTrade(trade: string | null | undefined): boolean {
   return !!trade && FIXED_LOCATION_TRADES.has(trade);

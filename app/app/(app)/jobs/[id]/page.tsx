@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { TRADE_QUESTIONS } from "@/lib/trade-questions";
+import { TRADE_QUESTIONS, isFixedLocationTrade } from "@/lib/trade-questions";
 import { STATUS_STYLES, statusLabel, type Job as RunSheetJob } from "@/lib/run-sheet";
 import { initials } from "@/lib/avatar";
 import OutcomeActions from "./outcome-actions";
@@ -154,6 +154,15 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             <RescheduleAction job={job as RunSheetJob} />
           )}
         </div>
+
+        {isFixedLocationTrade(profile?.trade) && job.client_id && (
+          <Link
+            href={`/app/jobs/new?clientId=${job.client_id}&rebookFrom=${job.id}`}
+            className="btn-primary mt-4 inline-flex w-full justify-center"
+          >
+            Book again
+          </Link>
+        )}
 
         {job.status === "Completed" && (
           <div className="mt-4">

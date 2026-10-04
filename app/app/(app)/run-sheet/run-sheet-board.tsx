@@ -83,8 +83,12 @@ function formatDayLabel(dateStr: string): string {
 
 export default function RunSheetBoard({
   initialBuckets,
+  fixedLocation = false,
 }: {
   initialBuckets: Record<BucketKey, Job[]>;
+  // Salons / massage: clients come to the premises, so there's no route to
+  // show — hides the map, the "Open in Google Maps" link and the location count.
+  fixedLocation?: boolean;
 }) {
   const [buckets, setBuckets] = useState(initialBuckets);
   const [schedulingJob, setSchedulingJob] = useState<Job | null>(null);
@@ -233,7 +237,7 @@ export default function RunSheetBoard({
       .map((j) => [j.address_suburb, j.address_postcode].filter(Boolean).join("|"))
       .filter(Boolean)
   ).size;
-  const mapsUrl = buildGoogleMapsUrl(todayJobs);
+  const mapsUrl = fixedLocation ? null : buildGoogleMapsUrl(todayJobs);
   // §Google Maps integration — an at-a-glance embedded picture of today's
   // run, not a navigation tool (the "Open in Google Maps" link above still
   // owns the actual drive). Requires the separate, browser-restricted
@@ -241,7 +245,7 @@ export default function RunSheetBoard({
   // geocoding) — quietly renders nothing if that's not configured, rather
   // than showing a broken iframe.
   const mapsEmbedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const mapsEmbedUrl = mapsEmbedKey ? buildGoogleMapsEmbedUrl(todayJobs, mapsEmbedKey) : null;
+  const mapsEmbedUrl = mapsEmbedKey && !fixedLocation ? buildGoogleMapsEmbedUrl(todayJobs, mapsEmbedKey) : null;
 
   return (
     <div className="mt-6">
@@ -260,7 +264,7 @@ export default function RunSheetBoard({
           href={`/app/jobs/${nextJob.id}`}
           className="mb-6 block rounded-lg border-2 border-amber-500 bg-amber-500/10 p-4 shadow-sm hover:bg-amber-500/15"
         >
-          <p className="font-mono text-xs uppercase tracking-widest text-amber-600">Next Job</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-amber-600">{fixedLocation ? "Next appointment" : "Next Job"}</p>
           <div className="mt-2 flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-sm font-semibold text-amber-600">
               {initials(nextJob.customer_name)}
@@ -320,8 +324,8 @@ export default function RunSheetBoard({
         <div>
           <p className="font-mono text-xs uppercase tracking-widest text-steel-500">Today's run</p>
           <p className="text-sm text-rig-700">
-            {todayJobs.length} {todayJobs.length === 1 ? "job" : "jobs"}
-            {locationCount > 0
+            {todayJobs.length} {fixedLocation ? (todayJobs.length === 1 ? "appointment" : "appointments") : todayJobs.length === 1 ? "job" : "jobs"}
+            {!fixedLocation && locationCount > 0
               ? ` · ${locationCount} ${locationCount === 1 ? "location" : "locations"}`
               : ""}
           </p>
@@ -341,7 +345,7 @@ export default function RunSheetBoard({
             href="/app/jobs/new"
             className="inline-flex items-center justify-center rounded bg-amber-500 px-3 py-1.5 font-display text-sm font-semibold text-rig-950 transition hover:bg-amber-600"
           >
-            + New Job
+            {fixedLocation ? "+ Book appointment" : "+ New Job"}
           </Link>
         </div>
       </div>

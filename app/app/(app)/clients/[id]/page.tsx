@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Client } from "@/lib/clients";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 import ClientDetailForm from "./client-detail-form";
 import JobHistory, { type JobHistoryRow } from "./job-history";
 
@@ -65,7 +66,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             ← All clients
           </Link>
           <Link href={`/app/jobs/new?clientId=${client.id}`} className="btn-primary px-3 py-1.5 text-sm">
-            + New Job
+            {isFixedLocationTrade(profile?.trade) ? "Book again" : "+ New Job"}
           </Link>
         </div>
         <h1 className="mt-2 font-display text-2xl font-bold text-rig-900">{client.name}</h1>
