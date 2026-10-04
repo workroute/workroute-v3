@@ -41,6 +41,7 @@ if (excludeFile) {
 }
 
 const FIELDS = [
+  "places.id",
   "places.displayName",
   "places.nationalPhoneNumber",
   "places.websiteUri",
@@ -69,13 +70,19 @@ async function searchPage(pageToken) {
   return res.json();
 }
 
-const found = [];
+// Google can keep handing back a next-page token while re-sending the same
+// places, so dedupe by place id and stop the moment a page adds nothing new.
+const byId = new Map();
 let token;
+let pages = 0;
 do {
   const data = await searchPage(token);
-  found.push(...(data.places ?? []));
-  token = data.nextPageToken;
-} while (token && found.length < max);
+  const before = byId.size;
+  for (const p of data.places ?? []) byId.set(p.id, p);
+  token = byId.size > before ? data.nextPageToken : undefined;
+  pages++;
+} while (token && byId.size < max && pages < 10);
+const found = [...byId.values()];
 
 const leads = found.filter(
   (p) =>
