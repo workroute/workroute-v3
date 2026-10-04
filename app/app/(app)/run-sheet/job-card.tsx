@@ -25,11 +25,14 @@ export default function JobCard({
   draggable,
   onStatusChange,
   onSchedule,
+  fixedLocation = false,
 }: {
   job: Job;
   draggable: boolean;
   onStatusChange: (jobId: string, status: Job["status"]) => void;
   onSchedule: (job: Job) => void;
+  // Salons / massage: nobody is travelling, so there is no "On the way" step.
+  fixedLocation?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: job.id,
@@ -134,7 +137,7 @@ export default function JobCard({
 
         {/* §32 — Reschedule and Declined/Lost moved to the job detail page;
             this card only shows the day's execution actions now. */}
-        {STATUS_ACTIONS[job.status].map((nextStatus) => (
+        {STATUS_ACTIONS[job.status].filter((s) => !(fixedLocation && s === "On the way")).map((nextStatus) => (
           <button
             key={nextStatus}
             type="button"

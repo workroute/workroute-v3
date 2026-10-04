@@ -311,6 +311,7 @@ export default function RunSheetBoard({
                 draggable={false}
                 onStatusChange={handleStatusChange}
                 onSchedule={setSchedulingJob}
+                fixedLocation={fixedLocation}
               />
             ))}
           </div>
@@ -378,13 +379,14 @@ export default function RunSheetBoard({
                     draggable
                     onStatusChange={handleStatusChange}
                     onSchedule={setSchedulingJob}
+                    fixedLocation={fixedLocation}
                   />
                 </div>
               </div>
             ))}
             {todayJobs.length === 0 && (
               <p className="text-sm text-rig-700/60">
-                No jobs scheduled — enjoy the quiet before the next one.
+                {fixedLocation ? "No appointments today." : "No jobs scheduled — enjoy the quiet before the next one."}
               </p>
             )}
           </div>
