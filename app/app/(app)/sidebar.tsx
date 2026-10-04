@@ -26,10 +26,13 @@ export default function Sidebar({
   businessName,
   firstName,
   needsAttentionCount,
+  hideReports = false,
 }: {
   businessName: string;
   firstName: string | null;
   needsAttentionCount: number;
+  // Hidden for salons until Reports has something useful for them.
+  hideReports?: boolean;
 }) {
   return (
     // §32 — desktop-only now; mobile gets MobileBottomNav instead (see
@@ -40,7 +43,7 @@ export default function Sidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
+        {NAV_ITEMS.filter((item) => !(hideReports && item.href === "/app/reports")).map(({ href, label, Icon }) => {
           const badge = href === "/app/messages" && needsAttentionCount > 0 ? needsAttentionCount : null;
           return (
             <Link

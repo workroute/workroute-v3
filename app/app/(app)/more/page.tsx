@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IconCustomers, IconJobs, IconReports, IconSettings } from "../nav-icons";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 
 // §32 — mobile-only landing spot for the sections that don't need daily,
 // one-tap access (those four live directly in MobileBottomNav instead).
@@ -26,13 +27,17 @@ export default async function MorePage() {
     redirect("/login");
   }
 
+  // Reports is hidden for salons until it has something useful for them.
+  const { data: profile } = await supabase.from("business_profiles").select("trade").eq("user_id", user.id).maybeSingle();
+  const items = MORE_ITEMS.filter((item) => !(isFixedLocationTrade(profile?.trade) && item.href === "/app/reports"));
+
   return (
     <main className="min-h-screen bg-paper-50 pb-16 md:pb-0">
       <div className="mx-auto max-w-lg px-4 py-10">
         <h1 className="font-display text-2xl font-bold text-rig-900">More</h1>
 
         <div className="mt-6 space-y-3">
-          {MORE_ITEMS.map(({ href, label, description, Icon }) => (
+          {items.map(({ href, label, description, Icon }) => (
             <Link
               key={href}
               href={href}

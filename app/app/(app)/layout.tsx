@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getAuthedUser, getBusinessProfile } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { TRADE_QUESTIONS } from "@/lib/trade-questions";
+import { TRADE_QUESTIONS, isFixedLocationTrade } from "@/lib/trade-questions";
 import Sidebar from "./sidebar";
 import MobileBottomNav from "./mobile-bottom-nav";
 
@@ -41,7 +41,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Shown in the shared layout (not a one-off screen) so it can't be missed
   // by landing on a different page first, and stays until actually resolved
   // rather than being dismissible.
-  const missingTradeOrArea = !profile?.trade || !profile?.service_area?.trim();
+  // A salon / massage business has no service area (clients come to it), so
+  // only the trade is required for them.
+  const fixedLocation = isFixedLocationTrade(profile?.trade);
+  const missingTradeOrArea = !profile?.trade || (!fixedLocation && !profile?.service_area?.trim());
 
   // §57 — trade/area alone used to clear this banner even with zero pricing
   // configured, which silently breaks the one thing that actually sells
@@ -68,6 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         businessName={profile?.business_name ?? ""}
         firstName={profile?.first_name ?? null}
         needsAttentionCount={count ?? 0}
+        hideReports={fixedLocation}
       />
       {/* §32 — bottom padding keeps content clear of the fixed mobile nav;
           desktop doesn't render that nav at all, so no padding needed there. */}
