@@ -80,7 +80,11 @@ async function loadDayContext(
   const fixedLocation = isFixedLocationTrade(businessProfile?.trade);
   const chairs = Math.max(1, businessProfile?.chairs ?? 1);
   const jobs = sameDayJobs ?? [];
-  const candidateDuration = candidate?.estimated_duration_minutes ?? (fixedLocation ? 60 : 30);
+  // A salon service left at 0 minutes would never block a chair, so treat a
+  // missing or zero length as the 60-minute default there.
+  const candidateDuration = fixedLocation
+    ? candidate?.estimated_duration_minutes || 60
+    : candidate?.estimated_duration_minutes ?? 30;
   const geocodedNeighbors = jobs.filter((j) => j.latitude != null && j.longitude != null && j.scheduled_time);
 
   const driveMinutesByNeighborId = new Map<string, number>();
@@ -106,7 +110,7 @@ function overlappingJobs(candidateMinutes: number, ctx: DayContext): SameDayJob[
   return ctx.sameDayJobs.filter((job) => {
     if (!job.scheduled_time) return false;
     const start = toMinutes(job.scheduled_time.slice(0, 5));
-    const end = start + (job.estimated_duration_minutes ?? (ctx.fixedLocation ? 60 : 30));
+    const end = start + (ctx.fixedLocation ? job.estimated_duration_minutes || 60 : job.estimated_duration_minutes ?? 30);
     return start < candidateEnd && end > candidateMinutes;
   });
 }

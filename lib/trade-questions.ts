@@ -286,7 +286,7 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       id: "service",
       label: "Service",
       type: "select",
-      options: opts(["Cut", "Colour", "Cut and colour", "Foils / highlights", "Treatment", "Other"]),
+      options: opts(["Mens cut", "Womens cut", "Kids cut", "Colour", "Cut and colour", "Foils / highlights", "Treatment", "Other"]),
     },
     {
       id: "hair_length",

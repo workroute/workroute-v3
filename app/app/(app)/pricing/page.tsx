@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { TRADE_QUESTIONS } from "@/lib/trade-questions";
+import { TRADE_QUESTIONS, isFixedLocationTrade } from "@/lib/trade-questions";
 import type { TradePricingConfig } from "@/lib/trade-pricing";
 import PricingForm from "./pricing-form";
 
@@ -45,11 +45,13 @@ export default async function PricingPage() {
       <div className="mx-auto max-w-lg px-4 py-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold text-rig-900">Pricing setup</h1>
+            <h1 className="font-display text-2xl font-bold text-rig-900">
+              {isFixedLocationTrade(trade) ? "Your price list" : "Pricing setup"}
+            </h1>
             <p className="mt-1 text-sm text-rig-700">
-              Set a base price/duration for {trade || "your trade"}, then how each job
-              detail adjusts it. Captured jobs will calculate their estimate
-              automatically from these rules (§31).
+              {isFixedLocationTrade(trade)
+                ? "So Sarah can quote real prices and book the right amount of time for each service."
+                : `Set a base price/duration for ${trade || "your trade"}, then how each job detail adjusts it. Captured jobs will calculate their estimate automatically from these rules (§31).`}
             </p>
           </div>
           <Link
@@ -67,6 +69,7 @@ export default async function PricingPage() {
               trade={trade}
               questions={questions}
               initialConfig={initialConfig}
+              simple={isFixedLocationTrade(trade)}
             />
           ) : (
             <p className="text-sm text-rig-700">

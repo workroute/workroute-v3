@@ -37,8 +37,9 @@ function dependencyCandidates(questions: Question[], excludeQuestionId: string):
   return questions.filter((q) => q.id !== excludeQuestionId && q.type === "select");
 }
 
-function rowsForQuestion(question: Question, questions: Question[]): Row[] {
-  const hasDependencyCandidates = dependencyCandidates(questions, question.id).length > 0;
+function rowsForQuestion(question: Question, questions: Question[], simple: boolean): Row[] {
+  // simple (salons): a plain price list, so no "vary by another answer" option.
+  const hasDependencyCandidates = !simple && dependencyCandidates(questions, question.id).length > 0;
   if (question.type === "select" || question.type === "multiselect") {
     return question.options.map((opt) => ({
       key: opt.value,
@@ -183,12 +184,17 @@ export default function PricingForm({
   trade,
   questions,
   initialConfig,
+  simple = false,
 }: {
   businessId: string;
   trade: string;
   questions: Question[];
   initialConfig: TradePricingConfig | null;
+  // Salons / massage: shown as a plain price list (a price and a time for each
+  // service) instead of base price + adjustments. Same numbers underneath.
+  simple?: boolean;
 }) {
+  const mainQuestionId = questions.find((q) => q.type === "select")?.id;
   const [basePrice, setBasePrice] = useState(initialConfig?.basePrice ?? 0);
   const [baseDurationMinutes, setBaseDurationMinutes] = useState(initialConfig?.baseDurationMinutes ?? 0);
   const [rows, setRows] = useState(() => hydrate(questions, initialConfig));
@@ -262,6 +268,13 @@ export default function PricingForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {simple && (
+        <p className="rounded-lg bg-paper-100 p-3 text-sm text-rig-700">
+          Type what you charge for each service and how long it takes. Anything listed after that, like hair
+          length, is an <b>extra</b> that adds on top. Leave a box at 0 if it doesn&apos;t change the price.
+        </p>
+      )}
+      {!simple && (
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="field-label">Base price</label>
@@ -285,12 +298,15 @@ export default function PricingForm({
           />
         </div>
       </div>
+      )}
+      {!simple && (
       <p className="text-xs text-rig-700/60">
         Every {trade} job starts here — each answer below adds or subtracts from it.
       </p>
+      )}
 
       {questions.map((q) => {
-        const qRows = rowsForQuestion(q, questions);
+        const qRows = rowsForQuestion(q, questions, simple);
         if (qRows.length === 0) return null;
         return (
           <div key={q.id} className="border-t border-rig-900/10 pt-4">
@@ -343,10 +359,16 @@ export default function PricingForm({
                     </div>
                     {!draft.requiresQuote && dependencyQuestion && dependencyQuestion.type === "select" && (
                       <div className="mt-2 space-y-2">
+                        {/* Column headings: without these the two boxes per row were just "0" and "0". */}
+                        <div className="grid grid-cols-[5.5rem,1fr,1fr] items-end gap-3">
+                          <span className="invisible text-xs font-medium">{dependencyQuestion.options[0]?.label}</span>
+                          <span className="text-xs text-rig-700/70">{simple ? "Price ($)" : "Price adj ($)"}</span>
+                          <span className="text-xs text-rig-700/70">{simple ? "Time (minutes)" : "Duration adj (min)"}</span>
+                        </div>
                         {dependencyQuestion.options.map((depOpt) => {
                           const value = draft.dependentValues[depOpt.value] ?? { priceDelta: 0, durationDelta: 0 };
                           return (
-                            <div key={depOpt.value} className="grid grid-cols-[auto,1fr,1fr] items-center gap-3">
+                            <div key={depOpt.value} className="grid grid-cols-[5.5rem,1fr,1fr] items-center gap-3">
                               <span className="text-xs font-medium text-rig-700">{depOpt.label}</span>
                               <input
                                 type="number"
@@ -385,7 +407,7 @@ export default function PricingForm({
                     {!draft.requiresQuote && !dependencyQuestion && (
                       <div className="mt-2 grid grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs text-rig-700/70">Price adj ($)</label>
+                          <label className="text-xs text-rig-700/70">{simple ? (q.id === mainQuestionId ? "Price ($)" : "Extra price ($)") : "Price adj ($)"}</label>
                           <input
                             type="number"
                             step="0.01"
@@ -395,7 +417,7 @@ export default function PricingForm({
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-rig-700/70">Duration adj (min)</label>
+                          <label className="text-xs text-rig-700/70">{simple ? (q.id === mainQuestionId ? "Time (minutes)" : "Extra time (minutes)") : "Duration adj (min)"}</label>
                           <input
                             type="number"
                             value={draft.durationDelta}
