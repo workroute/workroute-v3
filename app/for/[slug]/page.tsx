@@ -22,6 +22,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   return {
     title: page.title,
     description: page.description,
+    alternates: { canonical: `/for/${page.slug}` },
     openGraph: { title: page.title, description: page.description, type: "website" },
   };
 }

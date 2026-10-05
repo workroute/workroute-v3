@@ -5,6 +5,10 @@ const nextConfig = {
   async rewrites() {
     return [{ source: "/qr", destination: "/qr.html" }];
   },
+  // Old WordPress pages that Google still lists send visitors to the new homepage.
+  async redirects() {
+    return [{ source: "/elementor-2618", destination: "/", permanent: true }];
+  },
   // So phones open the owner's contact card as "Add to contacts".
   async headers() {
     return [

@@ -42,3 +42,15 @@ body {
     placeholder:text-rig-700/40 focus-visible:outline focus-visible:outline-2
     focus-visible:outline-offset-2 focus-visible:outline-amber-600;
 }
+
+/* Long-form legal pages (Privacy Policy, Terms). Plain headings, paragraphs and lists. */
+.legal h1 { @apply font-display text-4xl font-bold leading-tight text-brand-ink; }
+.legal h2 { @apply mt-10 font-display text-2xl font-bold leading-snug text-brand-ink; }
+.legal h3 { @apply mt-6 font-display text-lg font-semibold text-brand-ink; }
+.legal p { @apply mt-4 text-[15.5px] leading-relaxed text-brand-ink/80; }
+.legal ul { @apply mt-3 list-disc space-y-1.5 pl-6 text-[15.5px] leading-relaxed text-brand-ink/80; }
+.legal ol { @apply mt-3 list-decimal space-y-1.5 pl-6 text-[15.5px] leading-relaxed text-brand-ink/80; }
+.legal li { @apply pl-1; }
+.legal hr { @apply my-8 border-brand-navy/10; }
+.legal a { @apply font-medium text-brand-navy underline; }
+.legal strong { @apply font-semibold text-brand-ink; }

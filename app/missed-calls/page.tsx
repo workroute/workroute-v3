@@ -8,6 +8,7 @@ import { WORKROUTE_DEMO_PHONE } from "@/lib/missed-call-cost";
 // lead for Steve. Linked from workroute.com.au and the cold-outreach texts.
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/missed-calls" },
   title: "What do missed calls cost your business? | WorkRoute",
   description:
     "Free calculator for Australian tradies and local services: put in your calls, job value and how many you miss, and see roughly how much work goes to someone else each year.",

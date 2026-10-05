@@ -17,6 +17,9 @@ const MARKETING_HOSTS = new Set(["workroute.com.au", "www.workroute.com.au"]);
 const MARKETING_EXACT = new Set([
   "/",
   "/missed-calls",
+  "/contact",
+  "/privacy-policy",
+  "/terms-and-conditions",
   "/widget.js",
   "/sarah-avatar.png",
   "/sarah-intro.mp4",
@@ -27,8 +30,13 @@ const MARKETING_EXACT = new Set([
   "/sitemap.xml",
 ]);
 const MARKETING_PREFIXES = ["/for/", "/_next/", "/icons/", "/api/missed-call-report"];
+// Addresses that belong to the product itself. On the marketing domain these are
+// sent to the app address; any other unknown address just shows "page not found".
+const APP_PREFIXES = ["/app", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/api", "/book", "/m/", "/slot", "/widget-frame", "/qr", "/steve.vcf"];
 
-function isMarketingPath(pathname: string): boolean {
+function isMarketingPath(rawPathname: string): boolean {
+  // The old WordPress links ended in a slash ("/privacy-policy/"); treat both the same.
+  const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
   return MARKETING_EXACT.has(pathname) || MARKETING_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
@@ -52,6 +60,8 @@ export async function middleware(request: NextRequest) {
 
   if (MARKETING_HOSTS.has(requestHost)) {
     if (isMarketingPath(request.nextUrl.pathname)) return NextResponse.next();
+    const path = request.nextUrl.pathname;
+    if (!APP_PREFIXES.some((p) => path === p || path.startsWith(p.endsWith("/") ? p : p + "/"))) return NextResponse.next();
     const toApp = new URL(request.nextUrl.pathname + request.nextUrl.search, `https://${CANONICAL_HOST}`);
     return NextResponse.redirect(toApp, 307); // temporary while the domain switch is new
   }

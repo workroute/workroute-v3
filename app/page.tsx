@@ -23,6 +23,7 @@ import { DEMO_PHONE_DISPLAY, DEMO_PHONE_TEL, Eyebrow, Icon, SIGNUP_HREF, Section
 
 export const metadata: Metadata = {
   title: "WorkRoute | AI receptionist for tradies and local services",
+  alternates: { canonical: "/" },
   description:
     "Sarah answers every call, quotes a real price and books a real time in your diary. Built for tradies, hairdressers, massage and other local services. 14-day free trial.",
   openGraph: {
