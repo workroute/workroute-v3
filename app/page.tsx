@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 const WHO_TEXT: Record<string, string> = {
-  "lawn-care": "Real prices from your lawn-size rates, and a day's run planned around real driving time.",
+  "lawn-care": "Real prices from your lawn-size rates and a day's run planned around real driving time. Landscaping projects get a site visit booked for a quote.",
   cleaning: "Quotes by home size and extras, with regular visits booked weeks ahead.",
   "pool-care": "Quoted by pool size, type and condition, with regulars booked in automatically.",
   mechanics: "Your price for each job, adjusted for brand, fuel and vehicle type.",
@@ -110,7 +110,7 @@ export default async function HomePage() {
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80">
                 Meet Sarah, your AI office manager. She answers every call, quotes a real price, books a real time in your
-                diary and keeps clients in the loop, while you cut, mow, clean or fix.
+                diary and keeps clients in the loop, while you cut, mow, landscape, clean or fix.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -248,7 +248,7 @@ export default async function HomePage() {
                   <Icon name="route" className="h-6 w-6" />
                 </span>
                 <h3 className="mt-5 font-display text-2xl font-semibold">Built for the road</h3>
-                <p className="mt-1 text-sm text-white/60">Lawn care, cleaning, pool care, mechanics and other trades</p>
+                <p className="mt-1 text-sm text-white/60">Lawn care, landscaping, cleaning, pool care, mechanics and other trades</p>
                 <ul className="mt-6 space-y-3">
                   {TRADIE_POINTS.map((p) => (
                     <li key={p} className="flex gap-3 text-[15px] leading-snug text-white/85">

@@ -10,6 +10,8 @@ export type TradePage = {
   slug: string;
   name: string; // short name, e.g. "Pool care"
   tradeKey: string; // key in TRADE_QUESTIONS
+  // A second trade shown on the same page (e.g. landscaping beside lawn care).
+  also?: { label: string; tradeKey: string };
   icon: IconName;
   kind: "road" | "chair";
   title: string; // <title>
@@ -26,12 +28,13 @@ export type TradePage = {
 export const TRADE_PAGES: TradePage[] = [
   {
     slug: "lawn-care",
-    name: "Lawn care",
+    name: "Lawn care / Landscaping",
     tradeKey: "Lawn Mowing",
+    also: { label: "Landscaping projects", tradeKey: "Landscaping" },
     icon: "leaf",
     kind: "road",
-    title: "AI receptionist for lawn care and mowing businesses | WorkRoute",
-    description: "Sarah answers the phone while you mow, quotes a real price from your lawn-size rates and books the job into a run planned around real driving time.",
+    title: "AI receptionist for lawn care, mowing and landscaping businesses | WorkRoute",
+    description: "Sarah answers the phone while you mow or landscape, quotes a real price from your lawn-size rates and books the job into a run planned around real driving time. Landscaping projects get a site visit booked for a quote.",
     h1a: "You mow the lawns.",
     h1b: "Sarah runs the office.",
     lead: "Sarah answers every call while you're on the mower, quotes a price from your own rates and books the job into your run.",
@@ -47,8 +50,10 @@ export const TRADE_PAGES: TradePage[] = [
       "On My Way texts the customer a calculated ETA, and Delay sends a quick update",
       "Voice job notes turn into a job record and a numbered invoice",
       "A 3pm daily brief of tomorrow's jobs and the weather",
+      "Landscaping projects have their own built-in questions: soft or hard landscaping, new build or renovation, access, slope, budget and timeline",
     ],
     faq: [
+      { q: "Can she handle landscaping jobs too?", a: "Yes. Landscaping has its own built-in questions: soft or hard landscaping, new build or renovation, machine or wheelbarrow access, level or sloped ground, budget range and timeline. Every project is different, so most landscapers mark these as 'requires quote'. Sarah then books a site visit and tells the caller you'll confirm the price in person." },
       { q: "Can she price different lawn sizes and extras?", a: "Yes. She asks about lawn size, how overgrown it is and any extras, then quotes from the prices you've set. It's always explained as an estimate that may change once you see the property." },
     ],
   },

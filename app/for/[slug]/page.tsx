@@ -35,6 +35,9 @@ export default function TradePage({ params }: { params: { slug: string } }) {
   const priced = (TRADE_QUESTIONS[page.tradeKey] ?? []).filter(
     (q) => q.type === "select" || q.type === "multiselect" || q.type === "boolean"
   );
+  const alsoPriced = page.also
+    ? (TRADE_QUESTIONS[page.also.tradeKey] ?? []).filter((q) => q.type === "select" || q.type === "multiselect" || q.type === "boolean")
+    : [];
   const others = TRADE_PAGES.filter((t) => t.slug !== page.slug);
   const roadOrChair = page.kind === "chair" ? "Built for the chair" : "Built for the road";
 
@@ -132,6 +135,32 @@ export default function TradePage({ params }: { params: { slug: string } }) {
                 </div>
               ))}
             </div>
+
+            {page.also && alsoPriced.length > 0 && (
+              <>
+                <h3 className="mt-12 font-display text-2xl font-bold text-brand-ink">{page.also.label}</h3>
+                <p className="mt-2 max-w-2xl text-brand-ink/70">
+                  Projects are quoted one at a time. Mark these as &ldquo;requires quote&rdquo; and Sarah books a site visit, then
+                  tells the caller you&apos;ll confirm the price in person.
+                </p>
+                <div className="mt-6 grid gap-3 md:grid-cols-2">
+                  {alsoPriced.map((q) => (
+                    <div key={q.id} className="rounded-2xl bg-white p-5 shadow-sm">
+                      <p className="font-display text-[15px] font-semibold text-brand-ink">{q.label}</p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {q.type === "select" || q.type === "multiselect"
+                          ? q.options.slice(0, 8).map((o) => (
+                              <span key={o.value} className="rounded-full bg-brand-ice px-2.5 py-1 text-xs text-brand-ink/80">{o.label}</span>
+                            ))
+                          : ["Yes", "No"].map((o) => (
+                              <span key={o} className="rounded-full bg-brand-ice px-2.5 py-1 text-xs text-brand-ink/80">{o}</span>
+                            ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
 
