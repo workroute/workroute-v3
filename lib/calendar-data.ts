@@ -41,6 +41,7 @@ export async function getCalendarWeek(
     .from("jobs")
     .select("scheduled_date, attention_priority")
     .eq("business_id", businessId)
+    .neq("status", "Cancelled")
     .gte("scheduled_date", days[0])
     .lte("scheduled_date", days[6]);
 

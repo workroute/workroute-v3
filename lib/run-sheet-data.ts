@@ -22,6 +22,7 @@ export async function getRunSheetBuckets(
       "id, customer_name, job_label, address_street, address_suburb, address_postcode, latitude, longitude, status, quote_required, recurring_frequency, scheduled_date, scheduled_time, scheduled_block, run_order, outcome, customer_access_token, ai_paused, attention_priority, created_at"
     )
     .eq("business_id", businessId)
+    .neq("status", "Cancelled")
     .or(
       `status.eq.Unscheduled,and(status.neq.Completed,scheduled_date.lte.${today}),and(status.eq.Completed,scheduled_date.eq.${today})`
     );

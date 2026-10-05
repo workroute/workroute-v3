@@ -227,6 +227,29 @@ export async function notifyOwnerPublicBooking(
   });
 }
 
+// "Sarah fills the gap" — a client tapped the text and moved up into a slot
+// that had opened (lib/gap-fill.ts), so the owner knows the diary changed.
+export async function notifyOwnerSlotFilled(
+  supabase: SupabaseClient,
+  businessId: string,
+  customerName: string,
+  newTimeLabel: string,
+  jobId: string,
+  appOrigin: string
+): Promise<void> {
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", businessId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: "A cancelled spot was filled",
+    body: `${customerName} moved up to ${newTimeLabel}.`,
+    url: `${appOrigin}/app/jobs/${jobId}`,
+  });
+}
+
 // §25 — fired instead of notifyOwnerNewPhoneEnquiry when book_appointment
 // actually locked in a time during the call, so the tradie knows there's
 // already something on the calendar rather than just a lead to call back.

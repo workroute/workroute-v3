@@ -72,7 +72,7 @@ async function loadDayContext(
       .eq("business_id", businessId)
       .eq("scheduled_date", date)
       .neq("id", excludeJobId)
-      .neq("status", "Completed"),
+      .not("status", "in", "(Completed,Cancelled)"),
     supabase.from("jobs").select("latitude, longitude, estimated_duration_minutes").eq("id", excludeJobId).maybeSingle(),
     supabase.from("business_profiles").select("trade, chairs").eq("user_id", businessId).maybeSingle(),
   ]);

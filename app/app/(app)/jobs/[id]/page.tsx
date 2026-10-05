@@ -6,6 +6,7 @@ import { STATUS_STYLES, statusLabel, type Job as RunSheetJob } from "@/lib/run-s
 import { initials } from "@/lib/avatar";
 import OutcomeActions from "./outcome-actions";
 import RescheduleAction from "./reschedule-action";
+import CancelAppointment from "./cancel-appointment";
 import MessengerThread from "./messenger-thread";
 import JobTabs from "./job-tabs";
 import CompletionRecap from "./completion-recap";
@@ -150,10 +151,14 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             status={job.status as RunSheetJob["status"]}
             initialOutcome={job.outcome as RunSheetJob["outcome"]}
           />
-          {job.status !== "Unscheduled" && job.status !== "Completed" && (
+          {job.status !== "Unscheduled" && job.status !== "Completed" && job.status !== "Cancelled" && (
             <RescheduleAction job={job as RunSheetJob} />
           )}
         </div>
+
+        {isFixedLocationTrade(profile?.trade) && job.status === "Scheduled" && (
+          <CancelAppointment jobId={job.id} customerName={job.customer_name} />
+        )}
 
         {isFixedLocationTrade(profile?.trade) && job.client_id && (
           <Link

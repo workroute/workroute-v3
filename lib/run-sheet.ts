@@ -9,7 +9,7 @@ export type Job = {
   address_postcode: string | null;
   latitude: number | null;
   longitude: number | null;
-  status: "Unscheduled" | "Scheduled" | "On the way" | "Running late" | "Completed";
+  status: "Unscheduled" | "Scheduled" | "On the way" | "Running late" | "Completed" | "Cancelled";
   quote_required: boolean;
   recurring_frequency: "Weekly" | "Fortnightly" | "Monthly" | null;
   scheduled_date: string | null; // "YYYY-MM-DD"
@@ -68,6 +68,7 @@ export const STATUS_ACTIONS: Record<Job["status"], Job["status"][]> = {
   "On the way": ["Running late", "Completed"],
   "Running late": ["On the way", "Completed"],
   Completed: [],
+  Cancelled: [],
 };
 
 // §32 — display-only label override for run sheet action buttons. Keeps the
@@ -103,6 +104,7 @@ export const STATUS_STYLES: Record<Job["status"], string> = {
   "On the way": "bg-amber-500/15 text-amber-600",
   "Running late": "bg-rust-500/10 text-rust-500",
   Completed: "bg-moss-500/10 text-moss-500",
+  Cancelled: "bg-rig-700/10 text-rig-700",
 };
 
 // §20 — job outcome tracking. A lightweight terminal marker alongside the

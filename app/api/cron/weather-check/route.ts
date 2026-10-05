@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       .from("jobs")
       .select("customer_name, job_label")
       .eq("business_id", business.user_id)
-      .neq("status", "Completed")
+      .not("status", "in", "(Completed,Cancelled)")
       .eq("scheduled_date", tomorrow);
 
     const jobCount = jobs?.length ?? 0;

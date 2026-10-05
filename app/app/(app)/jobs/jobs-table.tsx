@@ -10,7 +10,7 @@ export type JobRow = {
   id: string;
   customer_name: string;
   job_label: string | null;
-  status: "Unscheduled" | "Scheduled" | "On the way" | "Running late" | "Completed";
+  status: "Unscheduled" | "Scheduled" | "On the way" | "Running late" | "Completed" | "Cancelled";
   outcome: "Won" | "Lost" | "Declined" | null;
   quote_required: boolean;
   estimated_price: number | null;

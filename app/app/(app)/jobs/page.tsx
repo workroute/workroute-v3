@@ -29,7 +29,8 @@ export default async function JobsPage({
     .select(
       "id, customer_name, job_label, status, outcome, quote_required, estimated_price, scheduled_date, scheduled_time, scheduled_block"
     )
-    .eq("business_id", user.id);
+    .eq("business_id", user.id)
+    .neq("status", "Cancelled");
   query = date ? query.eq("scheduled_date", date) : query;
   const { data: jobsData } = await query.order("created_at", { ascending: false });
 
