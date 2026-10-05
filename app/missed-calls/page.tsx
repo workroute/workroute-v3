@@ -32,8 +32,8 @@ export default function MissedCallsPage() {
             What are missed calls costing you?
           </h1>
           <p className="mt-3 max-w-xl text-paper-50/75">
-            When you&apos;re up a ladder, under a house or halfway through a cut, the phone rings out. Most new customers
-            won&apos;t leave a message. They just ring the next business on Google. Put in your own numbers and see what that adds up to.
+            When you&apos;re up a ladder, under a house or halfway through a cut, you can&apos;t get to the phone. Most new
+            customers won&apos;t leave a message. They just ring the next business on Google. Put in your own numbers and see what that adds up to.
           </p>
         </div>
       </header>

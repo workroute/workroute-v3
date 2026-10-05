@@ -350,7 +350,7 @@ export async function sendMissedCallReportEmail(
           </table>
 
           <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0;">
-            WorkRoute's AI receptionist, Sarah, answers the calls you can't get to and books it straight into your WorkRoute diary.
+            WorkRoute's AI receptionist, Sarah, answers your calls on the second ring and books it straight into your WorkRoute diary.
             It's $${WORKROUTE_MONTHLY_PRICE} a month${r.jobsToCoverPrice > 0 ? `, so it pays for itself if it saves you ${r.jobsToCoverPrice} job${r.jobsToCoverPrice === 1 ? "" : "s"} a month` : ""}.
           </p>
           <p style="font-size: 15px; line-height: 1.6;">

@@ -27,7 +27,7 @@ const TRADE_PRESETS: { label: string; jobValue: number; jobsPerYear: number }[] 
 ];
 
 const SLIDERS: { key: keyof MissedCallInputs; label: string; hint: string }[] = [
-  { key: "missedPct", label: "Calls you miss", hint: "Rang out, went to voicemail, or you couldn't pick up on the job." },
+  { key: "missedPct", label: "Calls you miss", hint: "Went to voicemail, or you couldn't pick up on the job." },
   { key: "newWorkPct", label: "Missed calls that are new work", hint: "Not spam, suppliers or customers you already have." },
   { key: "noCallbackPct", label: "New callers who ring someone else", hint: "Instead of leaving a message or trying you again." },
   { key: "winPct", label: "Enquiries you usually win", hint: "When you do get to talk to them." },
@@ -144,7 +144,7 @@ export default function Calculator() {
             onChange={(e) => set("missedPct", String(Number(e.target.value) * 10))}
             className="mt-2 w-full accent-amber-500"
           />
-          <p className="mt-1 text-xs text-rig-700/70">Rang out, went to voicemail, or you couldn&apos;t pick up on the job.</p>
+          <p className="mt-1 text-xs text-rig-700/70">Went to voicemail, or you couldn&apos;t pick up on the job.</p>
         </div>
 
         <div className="mt-6 max-w-[11rem]">
@@ -233,7 +233,7 @@ export default function Calculator() {
         </details>
 
         <p className="mt-5 border-t border-paper-50/10 pt-4 text-sm text-paper-50/80">
-          WorkRoute&apos;s AI receptionist answers the calls you can&apos;t get to and books them in. It&apos;s $
+          WorkRoute&apos;s AI receptionist answers your calls on the second ring and books them in. It&apos;s $
           {WORKROUTE_MONTHLY_PRICE} a month
           {result.jobsToCoverPrice > 0 && (
             <>

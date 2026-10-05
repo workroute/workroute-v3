@@ -138,7 +138,7 @@ export default async function HomePage() {
         {/* Trust strip */}
         <section aria-label="Highlights" className="border-b border-brand-navy/10 bg-white">
           <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-3 px-4 py-6 text-sm font-medium text-brand-ink/75 sm:px-6 md:grid-cols-4">
-            {["Answers calls 24/7", "Quotes real prices on the call", "Books into a real diary", "Texts clients a confirmation"].map((t) => (
+            {["Picks up on the second ring, 24/7", "Quotes real prices on the call", "Books into a real diary", "Texts clients a confirmation"].map((t) => (
               <li key={t} className="flex items-center gap-2">
                 <Icon name="check" className="h-4 w-4 shrink-0 text-brand-sky" />
                 {t}
@@ -155,7 +155,7 @@ export default async function HomePage() {
             <SectionHeading
               eyebrow="Who it's for"
               title="Built for people who can't answer the phone mid-job"
-              lead="If your hands are busy and the phone rings out, Sarah picks up. These businesses are already set up with the right questions and prices."
+              lead="If your hands are busy when the phone rings, Sarah picks up on the second ring. These businesses are already set up with the right questions and prices."
             />
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {TRADE_PAGES.map((t) => (

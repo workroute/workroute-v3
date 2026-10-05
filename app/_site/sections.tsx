@@ -197,7 +197,7 @@ export function FinalCta() {
     <section className="relative overflow-hidden bg-gradient-to-b from-brand-navy to-brand-deep py-16 text-center text-white sm:py-24">
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-sky/20 blur-3xl" />
       <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
-        <h2 className="font-display text-3xl font-bold leading-tight sm:text-5xl">Ready for the phone to stop ringing out?</h2>
+        <h2 className="font-display text-3xl font-bold leading-tight sm:text-5xl">Ready for every call to be answered?</h2>
         <p className="mt-4 text-lg text-white/75">Try Sarah free for 14 days, or ring her now and hear how she sounds.</p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
