@@ -302,6 +302,35 @@ async function handleEndOfCallReport(supabase: SupabaseClient, message: any, app
     })
     .eq("vapi_call_id", vapiCallId);
 
+  // Real cost tracking (see lib/call-costs.ts): Vapi's own figures for this
+  // call. A separate, best-effort update on purpose, so a missing column
+  // (migration 0040 not run yet) can never stop the call above completing.
+  try {
+    const costBreakdown = message.costBreakdown ?? message.call?.costBreakdown ?? null;
+    const startedAt = message.startedAt ?? message.call?.startedAt;
+    const endedAt = message.endedAt ?? message.call?.endedAt;
+    const seconds =
+      typeof message.durationSeconds === "number"
+        ? message.durationSeconds
+        : startedAt && endedAt
+          ? (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000
+          : null;
+    const cost = message.cost ?? message.call?.cost ?? costBreakdown?.total ?? null;
+    if (seconds != null && cost != null) {
+      const { error: costError } = await supabase
+        .from("phone_call_captures")
+        .update({
+          duration_seconds: Math.round(seconds),
+          vapi_cost_usd: Number(cost),
+          tts_characters: Math.round(costBreakdown?.ttsCharacters ?? 0),
+        })
+        .eq("vapi_call_id", vapiCallId);
+      if (costError) console.error("[vapi-webhook] couldn't save call cost —", costError.message);
+    }
+  } catch (error) {
+    console.error("[vapi-webhook] call cost tracking failed —", error);
+  }
+
   // §25 — a broken voice ID doesn't error, it just goes dead-air (see
   // isVoiceFailure's comment in lib/phone-ai.ts) — surface it loudly here
   // rather than let the call quietly complete as if it went fine.

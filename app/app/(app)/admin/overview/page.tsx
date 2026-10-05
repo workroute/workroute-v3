@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { totalCallCosts, COST_ESTIMATES, type CallCostRow } from "@/lib/call-costs";
 import MarkPayingButton from "./mark-paying-button";
 
 const TRIAL_DAYS = 14;
@@ -54,6 +55,25 @@ export default async function OwnerOverviewPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
+  // Real call costs (migration 0040). Its own query, so if the columns don't
+  // exist yet only this section is affected, never the trial/call counts above.
+  const { data: costRows, error: costError } = businessIds.length
+    ? await createServiceRoleClient()
+        .from("phone_call_captures")
+        .select("business_id, created_at, duration_seconds, vapi_cost_usd, tts_characters")
+        .in("business_id", businessIds)
+        .not("vapi_cost_usd", "is", null)
+    : { data: [], error: null };
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const costsFor = (rows: (CallCostRow & { business_id: string; created_at: string })[]) => totalCallCosts(rows);
+  const allCostRows = (costRows ?? []) as (CallCostRow & { business_id: string; created_at: string })[];
+  const monthCostRows = allCostRows.filter((r) => new Date(r.created_at) >= monthStart);
+  const monthTotals = costsFor(monthCostRows);
+  const allTimeTotals = costsFor(allCostRows);
+  const usd = (n: number) => `$${n.toFixed(2)}`;
+
   const weekAgo = Date.now() - 7 * 86400000;
   const pricingSet = new Set((pricingConfigs ?? []).map((p) => p.business_id));
 
@@ -82,6 +102,7 @@ export default async function OwnerOverviewPage() {
       totalJobs: jobs.length,
       totalCalls: calls.length,
       jobsThisWeek,
+      monthCosts: costsFor(monthCostRows.filter((r) => r.business_id === b.user_id)),
       needsAttention,
       hasPricing: pricingSet.has(b.user_id) || !!b.starting_price,
       lastActivity,
@@ -124,6 +145,50 @@ export default async function OwnerOverviewPage() {
         <p className="mt-1 text-sm text-rig-700">
           {stats.length} business{stats.length === 1 ? "" : "es"} on WorkRoute.
         </p>
+
+        <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">What calls cost you</h2>
+        {costError ? (
+          <p className="mt-3 rounded-lg border border-rig-900/10 bg-white p-4 text-sm text-rust-500 shadow-sm">
+            Call costs aren&apos;t set up yet. Run supabase/migrations/0040_call_costs.sql in Supabase.
+          </p>
+        ) : (
+          <div className="mt-3 rounded-lg bg-white p-4 shadow-sm">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                { label: "This month", t: monthTotals },
+                { label: "All time (since tracking began)", t: allTimeTotals },
+              ].map(({ label, t }) => (
+                <div key={label}>
+                  <p className="font-mono text-xs uppercase tracking-widest text-steel-500">{label}</p>
+                  {t.calls === 0 ? (
+                    <p className="mt-1 text-sm text-rig-700/60">No calls tracked yet.</p>
+                  ) : (
+                    <>
+                      <p className="mt-1 text-sm text-rig-700">
+                        <b className="text-rig-900">{t.calls}</b> calls · <b className="text-rig-900">{t.minutes.toFixed(1)}</b> min
+                      </p>
+                      <p className="text-sm text-rig-700">
+                        Vapi bill: <b className="text-rig-900">{usd(t.vapiUsd)}</b> (exact)
+                      </p>
+                      <p className="text-sm text-rig-700">
+                        All-in estimate: <b className="text-rig-900">{usd(t.allInEstimateUsd)}</b> ·{" "}
+                        <b className="text-rig-900">{usd(t.allInEstimateUsd / t.calls)}</b> a call ·{" "}
+                        <b className="text-rig-900">{usd(t.allInEstimateUsd / Math.max(t.minutes, 0.01))}</b> a minute
+                      </p>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 border-t border-rig-900/5 pt-3 text-xs text-rig-700/70">
+              US dollars. The Vapi figure is exact (platform, speech recognition and AI model). The all-in
+              estimate adds ElevenLabs voice (about ${COST_ESTIMATES.elevenLabsUsdPer1kChars.toFixed(2)} per 1,000
+              characters spoken) and the phone line (about ${COST_ESTIMATES.telephonyUsdPerMinute.toFixed(2)} a
+              minute), which are billed to you separately. Update those two rates in lib/call-costs.ts when your
+              real invoices say otherwise. Texts and Google Maps aren&apos;t counted.
+            </p>
+          </div>
+        )}
 
         <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Website leads</h2>
         <p className="mt-1 text-sm text-rig-700">
@@ -248,6 +313,12 @@ export default async function OwnerOverviewPage() {
                   <span>
                     <b className="text-rig-900">{b.totalCalls}</b> calls total
                   </span>
+                  {b.monthCosts.calls > 0 && (
+                    <span>
+                      This month: <b className="text-rig-900">{b.monthCosts.minutes.toFixed(1)}</b> min ·{" "}
+                      <b className="text-rig-900">{usd(b.monthCosts.allInEstimateUsd)}</b> est. cost
+                    </span>
+                  )}
                   <span>
                     Last activity:{" "}
                     <b className="text-rig-900">
