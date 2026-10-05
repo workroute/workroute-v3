@@ -98,6 +98,27 @@ export default function SignupPage() {
               <button type="submit" disabled={status === "loading"} className="btn-primary w-full">
                 {status === "loading" ? "Creating account…" : "Create account"}
               </button>
+              <p className="text-center text-xs leading-relaxed text-rig-700/70">
+                By creating an account you agree to our{" "}
+                <a
+                  href="https://workroute.com.au/terms-and-conditions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-steel-500 underline"
+                >
+                  Terms and Conditions
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://workroute.com.au/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-steel-500 underline"
+                >
+                  Privacy Policy
+                </a>
+                .
+              </p>
             </form>
           )}
 
