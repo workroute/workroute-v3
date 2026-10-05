@@ -84,12 +84,12 @@ export default function Calculator() {
   const demoTel = `tel:${WORKROUTE_DEMO_PHONE.replace(/\s/g, "")}`;
 
   return (
-    <div className="mx-auto -mt-6 grid max-w-3xl gap-6 px-4 pb-10 md:grid-cols-[1fr_minmax(0,300px)] md:items-start">
-      {/* Inputs */}
+    <div className="mx-auto -mt-6 grid max-w-3xl gap-6 px-4 pb-24 md:grid-cols-[1fr_minmax(0,300px)] md:items-start md:pb-10">
+      {/* Inputs: three simple questions. The rest is tucked away. */}
       <section className="rounded-lg bg-white p-5 shadow-sm">
-        <h2 className="font-display text-lg font-semibold text-rig-900">Your numbers</h2>
+        <h2 className="font-display text-lg font-semibold text-rig-900">Three quick questions</h2>
 
-        <p className="field-label mt-4">Your business (optional)</p>
+        <p className="field-label mt-5">1. What kind of business do you run? (optional)</p>
         <div className="flex flex-wrap gap-2">
           {TRADE_PRESETS.map((preset) => (
             <button
@@ -106,16 +106,50 @@ export default function Calculator() {
             </button>
           ))}
         </div>
+        <p className="mt-1 text-xs text-rig-700/70">This just fills in a typical job price for you. You can change it below.</p>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          <NumberField
-            label="Calls a week"
-            value={inputs.callsPerWeek}
-            onChange={(v) => set("callsPerWeek", v)}
-            field="callsPerWeek"
+        <div className="mt-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor="callsPerWeek" className="font-display text-sm font-medium text-rig-800">
+              2. How many calls do you get in a week?
+            </label>
+            <span className="font-mono text-sm font-medium text-rig-900">{inputs.callsPerWeek}</span>
+          </div>
+          <input
+            id="callsPerWeek"
+            type="range"
+            min={1}
+            max={100}
+            step={1}
+            value={Math.min(100, inputs.callsPerWeek)}
+            onChange={(e) => set("callsPerWeek", e.target.value)}
+            className="mt-2 w-full accent-amber-500"
           />
+        </div>
+
+        <div className="mt-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor="missedPct" className="font-display text-sm font-medium text-rig-800">
+              3. Out of every 10 calls, how many go unanswered?
+            </label>
+            <span className="font-mono text-sm font-medium text-rig-900">{Math.round(inputs.missedPct / 10)} of 10</span>
+          </div>
+          <input
+            id="missedPct"
+            type="range"
+            min={0}
+            max={10}
+            step={1}
+            value={Math.round(inputs.missedPct / 10)}
+            onChange={(e) => set("missedPct", String(Number(e.target.value) * 10))}
+            className="mt-2 w-full accent-amber-500"
+          />
+          <p className="mt-1 text-xs text-rig-700/70">Rang out, went to voicemail, or you couldn&apos;t pick up on the job.</p>
+        </div>
+
+        <div className="mt-6 max-w-[11rem]">
           <NumberField
-            label="Average job ($)"
+            label="What's a typical job worth? ($)"
             value={inputs.jobValue}
             onChange={(v) => {
               setTrade(null);
@@ -123,57 +157,83 @@ export default function Calculator() {
             }}
             field="jobValue"
           />
-          <NumberField
-            label="Jobs per customer a year"
-            value={inputs.jobsPerYear}
-            onChange={(v) => {
-              setTrade(null);
-              set("jobsPerYear", v);
-            }}
-            field="jobsPerYear"
-          />
         </div>
 
-        <div className="mt-6 space-y-5">
-          {SLIDERS.map(({ key, label, hint }) => (
-            <div key={key}>
-              <div className="flex items-baseline justify-between gap-3">
-                <label htmlFor={key} className="font-display text-sm font-medium text-rig-800">
-                  {label}
-                </label>
-                <span className="font-mono text-sm font-medium text-rig-900">{inputs[key]}%</span>
+        <details className="group mt-7 rounded-lg border border-rig-700/15 p-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-display text-sm font-semibold text-rig-900 [&::-webkit-details-marker]:hidden">
+            Adjust the assumptions (optional)
+            <span className="text-rig-700/60 transition group-open:rotate-180" aria-hidden="true">
+              ▾
+            </span>
+          </summary>
+          <p className="mt-3 text-sm text-rig-700">
+            To work out the cost, we assume a few things about the calls you miss. Change any that don&apos;t sound like your
+            business.
+          </p>
+          <div className="mt-5 space-y-5">
+            {SLIDERS.filter((x) => x.key !== "missedPct").map(({ key, label, hint }) => (
+              <div key={key}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <label htmlFor={key} className="font-display text-sm font-medium text-rig-800">
+                    {label}
+                  </label>
+                  <span className="font-mono text-sm font-medium text-rig-900">{inputs[key]}%</span>
+                </div>
+                <input
+                  id={key}
+                  type="range"
+                  min={LIMITS[key].min}
+                  max={LIMITS[key].max}
+                  step={LIMITS[key].step}
+                  value={inputs[key]}
+                  onChange={(e) => set(key, e.target.value)}
+                  className="mt-2 w-full accent-amber-500"
+                />
+                <p className="mt-1 text-xs text-rig-700/70">{hint}</p>
               </div>
-              <input
-                id={key}
-                type="range"
-                min={LIMITS[key].min}
-                max={LIMITS[key].max}
-                step={LIMITS[key].step}
-                value={inputs[key]}
-                onChange={(e) => set(key, e.target.value)}
-                className="mt-2 w-full accent-amber-500"
+            ))}
+            <div className="max-w-[11rem]">
+              <NumberField
+                label="Times a customer books you in a year"
+                value={inputs.jobsPerYear}
+                onChange={(v) => {
+                  setTrade(null);
+                  set("jobsPerYear", v);
+                }}
+                field="jobsPerYear"
               />
-              <p className="mt-1 text-xs text-rig-700/70">{hint}</p>
+              <p className="mt-1 text-xs text-rig-700/70">1 for a one-off job, more for regulars.</p>
             </div>
-          ))}
-        </div>
+          </div>
+        </details>
       </section>
 
-      {/* Result */}
+      {/* Result: one big number, then the working on request. */}
       <aside id="result" className="scroll-mt-6 rounded-lg bg-rig-900 p-5 text-paper-50 shadow-lg md:sticky md:top-6" aria-live="polite">
-        <p className="font-mono text-xs uppercase tracking-widest text-amber-500">Work going elsewhere</p>
+        <p className="font-mono text-xs uppercase tracking-widest text-amber-500">What missed calls could cost you</p>
         <p className="mt-2 font-display text-4xl font-bold text-amber-500">{formatDollars(result.lostPerYear)}</p>
         <p className="text-sm text-paper-50/70">a year, about {formatDollars(result.lostPerMonth)} a month</p>
 
-        <dl className="mt-5 space-y-2 border-t border-paper-50/10 pt-4 text-sm">
-          <Stat label="Missed calls a week" value={formatCount(result.missedPerWeek)} />
-          <Stat label="New customers lost a week" value={formatCount(result.lostJobsPerWeek)} />
-          <Stat label="New customers lost a year" value={formatCount(result.lostCustomersPerYear)} />
-          <Stat label="Worth per customer a year" value={formatDollars(result.valuePerCustomer)} />
-        </dl>
+        <p className="mt-4 text-sm text-paper-50/85">
+          {result.lostCustomersPerYear >= 0.5
+            ? `That's roughly ${formatCount(result.lostCustomersPerYear)} customers a year who ring someone else instead.`
+            : "At these numbers you're losing very few customers. Try more calls or more missed calls."}
+        </p>
+
+        <details className="group mt-4 border-t border-paper-50/10 pt-4">
+          <summary className="cursor-pointer list-none text-sm font-medium text-paper-50/80 underline decoration-paper-50/30 underline-offset-4 [&::-webkit-details-marker]:hidden">
+            See how we worked it out
+          </summary>
+          <dl className="mt-3 space-y-2 text-sm">
+            <Stat label="Missed calls a week" value={formatCount(result.missedPerWeek)} />
+            <Stat label="Customers lost a week" value={formatCount(result.lostJobsPerWeek)} />
+            <Stat label="Customers lost a year" value={formatCount(result.lostCustomersPerYear)} />
+            <Stat label="Worth per customer a year" value={formatDollars(result.valuePerCustomer)} />
+          </dl>
+        </details>
 
         <p className="mt-5 border-t border-paper-50/10 pt-4 text-sm text-paper-50/80">
-          WorkRoute&apos;s AI receptionist answers the calls you can&apos;t get to and books the job in. It&apos;s $
+          WorkRoute&apos;s AI receptionist answers the calls you can&apos;t get to and books them in. It&apos;s $
           {WORKROUTE_MONTHLY_PRICE} a month
           {result.jobsToCoverPrice > 0 && (
             <>
@@ -187,13 +247,13 @@ export default function Calculator() {
         </p>
       </aside>
 
-      {/* Phones: the result card sits below the sliders, so keep the total
+      {/* Phones: the result card sits below the questions, so keep the total
           in view while they drag. */}
       <a
         href="#result"
         className="fixed inset-x-0 bottom-0 z-10 flex items-baseline justify-between gap-3 bg-rig-950 px-4 py-3 text-paper-50 shadow-lg md:hidden"
       >
-        <span className="text-sm text-paper-50/70">Work going elsewhere</span>
+        <span className="text-sm text-paper-50/70">What missed calls could cost you</span>
         <span className="font-display text-xl font-bold text-amber-500">{formatDollars(result.lostPerYear)}/yr</span>
       </a>
 
