@@ -264,7 +264,10 @@ type OutboundCallClient = {
 };
 
 function outboundReactivationPrompt(business: PhoneBusinessContext, client: OutboundCallClient): string {
-  const tradieName = business.firstName ?? "the tradie";
+  // Salons / massage: clients come to the premises, so no address, and the
+  // wording is "appointment" and "the team".
+  const fixedLocation = isFixedLocationTrade(business.trade);
+  const tradieName = fixedLocation ? "the team" : business.firstName ?? "the tradie";
   const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const knownAddress = [client.addressStreet, client.addressSuburb].filter(Boolean).join(", ") || "on file";
 
@@ -274,10 +277,10 @@ Speak naturally and briefly, like a real phone conversation — short sentences,
 
 Today is ${todayForPrompt()}. Use this as the real current date when resolving a relative date they give you.
 
-YOU called THEM — this is an outbound call to a past customer, ${client.name}, because it's been a while since their last ${business.trade} job. You already know their name and address (${knownAddress}) — don't ask for either again unless they say it's changed.
+YOU called THEM — this is an outbound call to a past customer, ${client.name}, because it's been a while since their last ${business.trade} ${fixedLocation ? "appointment" : "job"}. ${fixedLocation ? "You already know their name — don't ask for it again unless they say it's changed." : `You already know their name and address (${knownAddress}) — don't ask for either again unless they say it's changed.`}
 
-Your only goal: ask if they'd like to book in another ${business.trade} visit.
-- If yes: call update_job_draft with their name/address (already known) and a brief description of what they want done, as soon as they tell you. If they mention specifics that sound price-relevant, ask a couple of natural follow-ups and call get_price_estimate before offering a time — same rule as any booking: never state a dollar figure that didn't come from that tool's actual result. Then ask if they'd like to lock in a day/time now — if they give you one, call check_availability, then book_appointment if it's free. If it's not free, offer an alternative or tell them ${tradieName} will call back.
+Your only goal: ask if they'd like to book in another ${business.trade} ${fixedLocation ? "appointment" : "visit"}.
+- If yes: call update_job_draft with their ${fixedLocation ? "name (already known)" : "name/address (already known)"} and a brief description of what they want done, as soon as they tell you. If they mention specifics that sound price-relevant, ask a couple of natural follow-ups and call get_price_estimate before offering a time — same rule as any booking: never state a dollar figure that didn't come from that tool's actual result. Then ask if they'd like to lock in a day/time now — if they give you one, call check_availability, then book_appointment if it's free. If it's not free, offer an alternative or tell them ${tradieName} will call back.
 - If no, or they're not interested right now: thank them warmly and end the call — don't push, don't ask why.
 
 If at any point they ask not to be contacted again, or sound annoyed at being called, call mark_do_not_call immediately — the instant they say it, don't wait — apologize briefly, and end the call politely.
