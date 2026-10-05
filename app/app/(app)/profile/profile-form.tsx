@@ -211,6 +211,9 @@ export default function ProfileForm({
         </div>
       </div>
 
+      {/* Salons / massage have no service area and no travel, so these two are hidden. */}
+      {!isFixedLocationTrade(trade) && (
+        <>
       <div>
         <label htmlFor="service_area" className="field-label">
           Service area
@@ -243,6 +246,8 @@ export default function ProfileForm({
           Used to show local weather on your dashboard.
         </p>
       </div>
+        </>
+      )}
 
       <div>
         <label htmlFor="google_review_link" className="field-label">

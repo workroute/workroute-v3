@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 import PhoneAiForm from "./phone-ai-form";
 import AdminNumberProvisioner from "./admin-number-provisioner";
 
@@ -52,7 +53,7 @@ export default async function PhoneAiSettingsPage() {
           instant heads-up SMS.
         </p>
 
-        {profile?.trade !== "Lawn Mowing" && (
+        {profile?.trade !== "Lawn Mowing" && !isFixedLocationTrade(profile?.trade) && (
           <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-rig-900">
             The AI will still answer and capture job details for {profile?.trade ?? "your trade"} — it just can't
             calculate a live price yet, so calls land as "Quote required" until pricing is configured for this
