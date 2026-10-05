@@ -28,6 +28,14 @@ const config: Config = {
         rust: {
           500: "#B23A2F", // errors
         },
+        // Marketing site brand (matches the navy/blue of workroute.com.au).
+        brand: {
+          navy: "#021F59",
+          deep: "#01143A",
+          sky: "#12A6FF",
+          ice: "#EAF5FF",
+          ink: "#0B1B3A",
+        },
         moss: {
           500: "#4C7A51", // success / confirmed states
         },

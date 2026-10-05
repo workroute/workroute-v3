@@ -9,6 +9,29 @@ import { NextResponse, type NextRequest } from "next/server";
 const LEGACY_HOST = "workroute-v3.vercel.app";
 const CANONICAL_HOST = "app.workroute.com.au";
 
+// The public marketing site (workroute.com.au) and the product (app.…) are one
+// deploy. On the marketing domain only the marketing pages are served; any
+// other path (login, the app, the API) is sent to the app address so sessions
+// never end up split across two domains.
+const MARKETING_HOSTS = new Set(["workroute.com.au", "www.workroute.com.au"]);
+const MARKETING_EXACT = new Set([
+  "/",
+  "/missed-calls",
+  "/widget.js",
+  "/sarah-avatar.png",
+  "/sarah-intro.mp4",
+  "/icon.png",
+  "/apple-icon.png",
+  "/manifest.webmanifest",
+  "/robots.txt",
+  "/sitemap.xml",
+]);
+const MARKETING_PREFIXES = ["/for/", "/_next/", "/icons/", "/api/missed-call-report"];
+
+function isMarketingPath(pathname: string): boolean {
+  return MARKETING_EXACT.has(pathname) || MARKETING_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 // Runs on every request. Three jobs:
 // 1. Redirect the legacy vercel.app domain to the real one.
 // 2. Keep the Supabase auth session fresh (refreshes expired tokens).
@@ -17,6 +40,20 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.hostname === LEGACY_HOST) {
     const redirectUrl = new URL(request.nextUrl.pathname + request.nextUrl.search, `https://${CANONICAL_HOST}`);
     return NextResponse.redirect(redirectUrl, 308); // permanent — helps search engines/browsers stop treating these as two sites
+  }
+
+  // The host the visitor actually typed (Vercel forwards it; the header also
+  // works the same in local testing, where nextUrl always says "localhost").
+  const requestHost = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.hostname)
+    .split(",")[0]
+    .trim()
+    .toLowerCase()
+    .replace(/:\d+$/, "");
+
+  if (MARKETING_HOSTS.has(requestHost)) {
+    if (isMarketingPath(request.nextUrl.pathname)) return NextResponse.next();
+    const toApp = new URL(request.nextUrl.pathname + request.nextUrl.search, `https://${CANONICAL_HOST}`);
+    return NextResponse.redirect(toApp, 307); // temporary while the domain switch is new
   }
 
   let response = NextResponse.next({ request: { headers: request.headers } });

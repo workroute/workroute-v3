@@ -270,8 +270,9 @@ export default function PricingForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {simple && (
         <p className="rounded-lg bg-paper-100 p-3 text-sm text-rig-700">
-          Type what you charge for each service and how long it takes. Anything listed after that, like hair
-          length, is an <b>extra</b> that adds on top. Leave a box at 0 if it doesn&apos;t change the price.
+          Type what you charge for each job and how long it takes. Anything listed after that is an <b>extra</b>{" "}
+          that adds on top. Leave a box at 0 if it doesn&apos;t change the price, and tick &ldquo;Requires quote&rdquo;
+          for anything you&apos;d rather price once you&apos;ve seen it.
         </p>
       )}
       {!simple && (

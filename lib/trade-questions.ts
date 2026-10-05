@@ -132,6 +132,30 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
   ],
 
   "Mobile Mechanic": [
+    {
+      // The price-list driver, same role as a salon's "service": each job a
+      // mechanic quotes gets its own price and time on the Pricing page.
+      // Anything open-ended ("Diagnose a fault", "Other") is normally set to
+      // "requires quote" there rather than given a fixed price.
+      id: "service_type",
+      label: "What needs doing?",
+      type: "select",
+      options: opts([
+        "Logbook service",
+        "Brakes",
+        "Battery",
+        "Air-conditioning",
+        "Pre-purchase inspection",
+        "Diagnose a fault",
+        "Other",
+      ]),
+    },
+    {
+      id: "fault_symptom",
+      label: "If a fault — symptom",
+      type: "select",
+      options: opts(["Warning light", "Noise", "Won't start", "Other"]),
+    },
     { id: "make", label: "Make", type: "text" },
     {
       // §brand-tier — real parts/labour cost genuinely varies by brand (a
@@ -139,32 +163,39 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       // car?" directly would be a bizarre question they couldn't answer.
       // Sarah classifies this herself from "make" above once she has it —
       // see aiClassifiedFrom on the Question type.
+      //   Standard             — Japanese, Korean, Australian and American
+      //                          makes (Toyota, Mazda, Hyundai, Kia, Ford...)
+      //   European             — VW, Audi, BMW, Mercedes-Benz, Volvo, Skoda...
+      //   Luxury / performance — Porsche, Land Rover, Maserati, Tesla, etc.
       id: "brand_tier",
       label: "Vehicle brand tier",
       type: "select",
-      options: opts(["Standard", "European / Luxury"]),
+      options: opts(["Standard", "European", "Luxury / performance"]),
       aiClassifiedFrom: "make",
     },
     { id: "model", label: "Model", type: "text" },
     { id: "year", label: "Year", type: "text", placeholder: "e.g. 2018" },
     { id: "rego", label: "Rego (if available)", type: "text" },
     {
+      id: "fuel_type",
+      label: "Fuel type",
+      type: "select",
+      options: opts(["Petrol", "Diesel", "Hybrid / electric"]),
+    },
+    {
+      // Sarah works this out from the model ("Hilux" is a ute, "Prado" a
+      // 4WD) rather than asking the caller to categorise their own vehicle.
+      id: "vehicle_type",
+      label: "Vehicle type",
+      type: "select",
+      options: opts(["Car / hatch", "SUV / 4WD", "Ute / van"]),
+      aiClassifiedFrom: "model",
+    },
+    {
       id: "cylinders",
       label: "Cylinders",
       type: "select",
       options: opts(["4 cylinder", "6 cylinder", "8 cylinder+"]),
-    },
-    {
-      id: "service_type",
-      label: "Logbook service or specific fault?",
-      type: "select",
-      options: opts(["Logbook service", "Specific fault"]),
-    },
-    {
-      id: "fault_symptom",
-      label: "If fault — symptom",
-      type: "select",
-      options: opts(["Warning light", "Noise", "Won't start", "Other"]),
     },
     {
       id: "parts_supplied_by",
@@ -352,6 +383,13 @@ export function staffPreference(trade: string | null | undefined): { questionId:
   if (trade === "Hairdressing") return { questionId: "stylist_preference", role: "stylist" };
   if (trade === "Massage") return { questionId: "therapist_preference", role: "therapist" };
   return null;
+}
+
+// Trades whose Pricing page is a plain price list (a price and a time for each
+// job or service) rather than "base price plus adjustments": every salon
+// style business, and mobile mechanics, who quote a list of distinct jobs.
+export function usesPriceList(trade: string | null | undefined): boolean {
+  return isFixedLocationTrade(trade) || trade === "Mobile Mechanic";
 }
 
 export function isFixedLocationTrade(trade: string | null | undefined): boolean {
