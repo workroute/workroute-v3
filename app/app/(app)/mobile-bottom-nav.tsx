@@ -10,10 +10,17 @@ const ITEMS = [
   { href: "/app/messages", label: "Messages", Icon: IconMessages },
 ] as const;
 
-export default function MobileBottomNav({ needsAttentionCount }: { needsAttentionCount: number }) {
+// hideMessages: salons / massage don't use the customer message inbox.
+export default function MobileBottomNav({
+  needsAttentionCount,
+  hideMessages = false,
+}: {
+  needsAttentionCount: number;
+  hideMessages?: boolean;
+}) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-rig-900/10 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
-      {ITEMS.map(({ href, label, Icon }) => {
+      {ITEMS.filter((item) => !(hideMessages && item.href === "/app/messages")).map(({ href, label, Icon }) => {
         const badge = href === "/app/messages" && needsAttentionCount > 0 ? needsAttentionCount : null;
         return (
           <Link

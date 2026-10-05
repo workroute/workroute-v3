@@ -65,6 +65,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const profileIncomplete = missingTradeOrArea || missingPricing;
 
+  // Salons / massage don't use the message inbox day to day, so it stays out of
+  // the menu, but it appears (with its count) the moment something needs the
+  // owner's attention, so a flagged call or client reply is never missed.
+  const hideMessages = fixedLocation && (count ?? 0) === 0;
+
   return (
     <div className="flex min-h-screen bg-paper-50">
       <Sidebar
@@ -72,6 +77,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         firstName={profile?.first_name ?? null}
         needsAttentionCount={count ?? 0}
         hideReports={fixedLocation}
+        hideMessages={hideMessages}
       />
       {/* §32 — bottom padding keeps content clear of the fixed mobile nav;
           desktop doesn't render that nav at all, so no padding needed there. */}
@@ -88,7 +94,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         )}
         {children}
       </div>
-      <MobileBottomNav needsAttentionCount={count ?? 0} />
+      <MobileBottomNav needsAttentionCount={count ?? 0} hideMessages={hideMessages} />
     </div>
   );
 }
