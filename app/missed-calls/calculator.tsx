@@ -22,6 +22,8 @@ const TRADE_PRESETS: { label: string; jobValue: number; jobsPerYear: number }[] 
   { label: "Handyman", jobValue: 250, jobsPerYear: 2 },
   { label: "Plumber", jobValue: 400, jobsPerYear: 1 },
   { label: "Electrician", jobValue: 450, jobsPerYear: 1 },
+  { label: "Hairdresser", jobValue: 95, jobsPerYear: 8 },
+  { label: "Massage", jobValue: 100, jobsPerYear: 8 },
 ];
 
 const SLIDERS: { key: keyof MissedCallInputs; label: string; hint: string }[] = [
@@ -87,7 +89,7 @@ export default function Calculator() {
       <section className="rounded-lg bg-white p-5 shadow-sm">
         <h2 className="font-display text-lg font-semibold text-rig-900">Your numbers</h2>
 
-        <p className="field-label mt-4">Your trade (optional)</p>
+        <p className="field-label mt-4">Your business (optional)</p>
         <div className="flex flex-wrap gap-2">
           {TRADE_PRESETS.map((preset) => (
             <button

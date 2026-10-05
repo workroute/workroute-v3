@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "WorkRoute",
     short_name: "WorkRoute",
-    description: "Job capture and run sheet for tradies — log the job before you forget it.",
+    description: "AI receptionist, diary and run sheet for tradies and local services.",
     start_url: "/app",
     scope: "/app",
     display: "standalone",

@@ -17,7 +17,10 @@ export default async function PlaceholderHome() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-rig-900 px-4 text-center text-paper-50">
       <p className="font-mono text-xs uppercase tracking-widest text-amber-500">WorkRoute</p>
-      <h1 className="font-display text-3xl font-bold">Job capture for tradies.</h1>
+      <h1 className="font-display text-3xl font-bold">Never miss a booking.</h1>
+      <p className="max-w-sm text-paper-50/75">
+        An AI receptionist and diary for tradies and local services.
+      </p>
       <div className="flex gap-4">
         <a href="/signup" className="btn-primary px-6 py-3">
           JOIN NOW

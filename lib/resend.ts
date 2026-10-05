@@ -350,11 +350,11 @@ export async function sendMissedCallReportEmail(
           </table>
 
           <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0;">
-            WorkRoute's AI receptionist, Sarah, answers the calls you can't get to and books the job straight into your WorkRoute diary.
+            WorkRoute's AI receptionist, Sarah, answers the calls you can't get to and books it straight into your WorkRoute diary.
             It's $${WORKROUTE_MONTHLY_PRICE} a month${r.jobsToCoverPrice > 0 ? `, so it pays for itself if it saves you ${r.jobsToCoverPrice} job${r.jobsToCoverPrice === 1 ? "" : "s"} a month` : ""}.
           </p>
           <p style="font-size: 15px; line-height: 1.6;">
-            Want to hear her first? Ring <a href="tel:${demoPhone.replace(/\s/g, "")}" style="color: #3B5166; font-weight: 600;">${demoPhone}</a> and try booking a job.
+            Want to hear her first? Ring <a href="tel:${demoPhone.replace(/\s/g, "")}" style="color: #3B5166; font-weight: 600;">${demoPhone}</a> and try booking in.
           </p>
           <p style="margin: 24px 0;">
             <a href="${signupUrl}" style="background:#F2A900; color:#14171C; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:600; display:inline-block;">

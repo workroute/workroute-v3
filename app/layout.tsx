@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "WorkRoute",
-  description: "Job capture for tradies — log the job before you forget it.",
+  description: "An AI receptionist and diary for tradies and local services. Never miss a booking.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

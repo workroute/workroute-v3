@@ -8,12 +8,12 @@ import { WORKROUTE_DEMO_PHONE } from "@/lib/missed-call-cost";
 // lead for Steve. Linked from workroute.com.au and the cold-outreach texts.
 
 export const metadata: Metadata = {
-  title: "What do missed calls cost your trade business? | WorkRoute",
+  title: "What do missed calls cost your business? | WorkRoute",
   description:
-    "Free calculator for Australian tradies: put in your calls, job value and how many you miss, and see roughly how much work goes to someone else each year.",
+    "Free calculator for Australian tradies and local services: put in your calls, job value and how many you miss, and see roughly how much work goes to someone else each year.",
   openGraph: {
     title: "What are missed calls costing you?",
-    description: "A free 1-minute calculator for tradies. See how much work goes to the next number on Google.",
+    description: "A free 1-minute calculator for tradies and local services. See how much work goes to the next number on Google.",
     url: "https://app.workroute.com.au/missed-calls",
     siteName: "WorkRoute",
     type: "website",
@@ -32,8 +32,8 @@ export default function MissedCallsPage() {
             What are missed calls costing you?
           </h1>
           <p className="mt-3 max-w-xl text-paper-50/75">
-            When you&apos;re up a ladder or under a house, the phone rings out. Most new customers won&apos;t leave a
-            message. They just ring the next tradie on Google. Put in your own numbers and see what that adds up to.
+            When you&apos;re up a ladder, under a house or halfway through a cut, the phone rings out. Most new customers
+            won&apos;t leave a message. They just ring the next business on Google. Put in your own numbers and see what that adds up to.
           </p>
         </div>
       </header>
@@ -46,7 +46,7 @@ export default function MissedCallsPage() {
           <a href={`tel:${WORKROUTE_DEMO_PHONE.replace(/\s/g, "")}`} className="font-medium text-steel-500 underline">
             {WORKROUTE_DEMO_PHONE}
           </a>{" "}
-          and try booking a job.
+          and try booking in.
         </p>
         <p className="mt-2">These figures are estimates from the numbers you enter, not a guarantee.</p>
       </footer>
