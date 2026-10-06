@@ -237,6 +237,7 @@ export function SiteFooter() {
           <Link href="/#faq" className="block py-2 hover:text-white">FAQ</Link>
           <a href={`tel:${DEMO_PHONE_TEL}`} className="block py-2 hover:text-white">Ring Sarah: {DEMO_PHONE_DISPLAY}</a>
           <a href="mailto:steve@workroute.com.au" className="block py-2 hover:text-white">steve@workroute.com.au</a>
+          <Link href="/guides" className="block py-2 hover:text-white">Guides</Link>
           <Link href="/contact" className="block py-2 hover:text-white">Contact</Link>
           <Link href="/privacy-policy" className="block py-2 hover:text-white">Privacy Policy</Link>
           <Link href="/terms-and-conditions" className="block py-2 hover:text-white">Terms and Conditions</Link>

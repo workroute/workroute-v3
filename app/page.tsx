@@ -19,6 +19,7 @@ import {
   SiteFooter,
 } from "./_site/sections";
 import { TRADE_PAGES } from "./_site/trades";
+import { JsonLd, ORGANIZATION, SOFTWARE, WEBSITE, faqPage } from "./_site/jsonld";
 import { DEMO_PHONE_DISPLAY, DEMO_PHONE_TEL, Eyebrow, Icon, SIGNUP_HREF, SectionHeading } from "./_site/ui";
 
 export const metadata: Metadata = {
@@ -87,6 +88,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-white text-brand-ink">
+      <JsonLd data={[ORGANIZATION, WEBSITE, SOFTWARE, faqPage(BASE_FAQ)]} />
       <Nav />
 
       <main>

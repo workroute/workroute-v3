@@ -6,6 +6,8 @@ import Nav from "../../_site/nav";
 import Demo from "../../_site/demo";
 import { COMMON_FAQ, FaqSection, FinalCta, HowItWorks, PricingSection, SarahChat, SiteFooter } from "../../_site/sections";
 import { TRADE_PAGES, findTradePage } from "../../_site/trades";
+import { GUIDES } from "../../_site/guides";
+import { JsonLd, breadcrumbs, faqPage } from "../../_site/jsonld";
 import { DEMO_PHONE_DISPLAY, DEMO_PHONE_TEL, Eyebrow, Icon, SIGNUP_HREF, SectionHeading } from "../../_site/ui";
 
 // One page per trade (/for/pool-care, /for/mechanics, ...), all driven by
@@ -42,8 +44,16 @@ export default function TradePage({ params }: { params: { slug: string } }) {
   const others = TRADE_PAGES.filter((t) => t.slug !== page.slug);
   const roadOrChair = page.kind === "chair" ? "Built for the chair" : "Built for the road";
 
+  const guides = (page.guides ?? []).map((s) => GUIDES.find((g) => g.slug === s)).filter((g): g is NonNullable<typeof g> => !!g);
+
   return (
     <div className="bg-white text-brand-ink">
+      <JsonLd
+        data={[
+          faqPage([...page.faq, ...COMMON_FAQ]),
+          breadcrumbs([{ name: "Home", path: "/" }, { name: page.name, path: `/for/${page.slug}` }]),
+        ]}
+      />
       <Nav />
 
       <main>
@@ -183,6 +193,26 @@ export default function TradePage({ params }: { params: { slug: string } }) {
         <HowItWorks />
         <PricingSection />
         <FaqSection items={[...page.faq, ...COMMON_FAQ]} />
+
+        {guides.length > 0 && (
+          <section className="bg-white py-14">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+              <Eyebrow>Guides</Eyebrow>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                {guides.map((g) => (
+                  <Link
+                    key={g.slug}
+                    href={`/guides/${g.slug}`}
+                    className="rounded-2xl border border-brand-navy/10 p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <p className="font-display text-lg font-semibold leading-snug text-brand-ink">{g.title}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-brand-ink/70">{g.description}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Other trades */}
         <section className="bg-brand-ice py-14">

@@ -17,6 +17,7 @@ const MARKETING_HOSTS = new Set(["workroute.com.au", "www.workroute.com.au"]);
 const MARKETING_EXACT = new Set([
   "/",
   "/missed-calls",
+  "/guides",
   "/contact",
   "/privacy-policy",
   "/terms-and-conditions",
@@ -29,7 +30,7 @@ const MARKETING_EXACT = new Set([
   "/robots.txt",
   "/sitemap.xml",
 ]);
-const MARKETING_PREFIXES = ["/for/", "/_next/", "/icons/", "/api/missed-call-report"];
+const MARKETING_PREFIXES = ["/for/", "/guides/", "/_next/", "/icons/", "/api/missed-call-report"];
 // Addresses that belong to the product itself. On the marketing domain these are
 // sent to the app address; any other unknown address just shows "page not found".
 const APP_PREFIXES = ["/app", "/login", "/signup", "/forgot-password", "/reset-password", "/auth", "/api", "/book", "/m/", "/slot", "/widget-frame", "/qr", "/steve.vcf"];

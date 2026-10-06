@@ -23,6 +23,7 @@ export type TradePage = {
   benefits: { icon: IconName; title: string; text: string }[];
   features: string[];
   faq: { q: string; a: string }[];
+  guides?: string[]; // slugs of /guides pages worth linking from this trade page
 };
 
 export const TRADE_PAGES: TradePage[] = [
@@ -150,6 +151,7 @@ export const TRADE_PAGES: TradePage[] = [
     kind: "chair",
     title: "AI receptionist for hairdressers and barbers | WorkRoute",
     description: "Sarah answers the phone while you're mid-cut, books men's, women's and kids' cuts and colour, handles several chairs and fills cancellations.",
+    guides: ["missed-calls-cost-hair-salon", "ai-receptionist-for-hair-salons", "fill-last-minute-salon-cancellations"],
     h1a: "You do the hair.",
     h1b: "Sarah answers the phone.",
     lead: "No more stopping mid-cut to answer the phone. Sarah books the appointment, notes the preferred stylist and texts the client a confirmation.",
