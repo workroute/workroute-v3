@@ -47,6 +47,8 @@ export default function AppointmentForm({
   staffNames,
   initialClient = null,
   initialAnswers = {},
+  initialDate,
+  initialTime,
 }: {
   businessId: string;
   trade: string;
@@ -54,6 +56,9 @@ export default function AppointmentForm({
   staffNames: string[];
   initialClient?: InitialClient;
   initialAnswers?: Record<string, any>;
+  // Set when arriving from a tapped slot on the Appointments day view.
+  initialDate?: string;
+  initialTime?: string;
 }) {
   const questions = TRADE_QUESTIONS[trade] ?? [];
   const pref = staffPreference(trade);
@@ -67,8 +72,8 @@ export default function AppointmentForm({
   const [duration, setDuration] = useState<number | "">("");
   const [price, setPrice] = useState<number | null>(null);
 
-  const [date, setDate] = useState(localDate(new Date()));
-  const [time, setTime] = useState("09:00");
+  const [date, setDate] = useState(initialDate ?? localDate(new Date()));
+  const [time, setTime] = useState(initialTime ?? "09:00");
 
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState("");
@@ -181,8 +186,11 @@ export default function AppointmentForm({
         <button onClick={reset} className="btn-primary mt-4 w-full">
           Book another
         </button>
-        <Link href="/app/run-sheet" className="mt-3 inline-block text-sm font-medium text-steel-500 hover:underline">
-          Back to today
+        <Link
+          href={`/app/appointments?date=${date}`}
+          className="mt-3 inline-block text-sm font-medium text-steel-500 hover:underline"
+        >
+          Back to appointments
         </Link>
       </div>
     );

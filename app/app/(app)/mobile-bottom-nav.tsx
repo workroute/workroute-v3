@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconRunSheet, IconMessages, IconCalendar, IconPlus, IconMore } from "./nav-icons";
+import { IconRunSheet, IconMessages, IconCalendar, IconPlus, IconMore, IconClock } from "./nav-icons";
 
 // §32 — mobile-only nav (desktop keeps the full Sidebar). Deliberately just
 // the 4 daily-use destinations + quick-add, per the redesign's "every
@@ -7,20 +7,27 @@ import { IconRunSheet, IconMessages, IconCalendar, IconPlus, IconMore } from "./
 // live one tap away under More rather than crowding this bar.
 const ITEMS = [
   { href: "/app/run-sheet", label: "Run Sheet", Icon: IconRunSheet },
+  { href: "/app/appointments", label: "Appointments", Icon: IconClock },
   { href: "/app/messages", label: "Messages", Icon: IconMessages },
 ] as const;
 
 // hideMessages: salons / massage don't use the customer message inbox.
+// showAppointments: salons / massage only, the half-hour day view.
 export default function MobileBottomNav({
   needsAttentionCount,
   hideMessages = false,
+  showAppointments = false,
 }: {
   needsAttentionCount: number;
   hideMessages?: boolean;
+  showAppointments?: boolean;
 }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-rig-900/10 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
-      {ITEMS.filter((item) => !(hideMessages && item.href === "/app/messages")).map(({ href, label, Icon }) => {
+      {ITEMS.filter(
+        (item) =>
+          !(hideMessages && item.href === "/app/messages") && !(!showAppointments && item.href === "/app/appointments")
+      ).map(({ href, label, Icon }) => {
         const badge = href === "/app/messages" && needsAttentionCount > 0 ? needsAttentionCount : null;
         return (
           <Link

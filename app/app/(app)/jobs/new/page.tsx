@@ -9,7 +9,7 @@ import AppointmentForm from "./appointment-form";
 export default async function NewJobPage({
   searchParams,
 }: {
-  searchParams: { clientId?: string; rebookFrom?: string };
+  searchParams: { clientId?: string; rebookFrom?: string; date?: string; time?: string };
 }) {
   const supabase = createClient();
 
@@ -112,6 +112,8 @@ export default async function NewJobPage({
               staffNames={profile.staff_names ?? []}
               initialClient={clientForForm}
               initialAnswers={previousAnswers}
+              initialDate={/^\d{4}-\d{2}-\d{2}$/.test(searchParams.date ?? "") ? searchParams.date : undefined}
+              initialTime={/^([01]\d|2[0-3]):[0-5]\d$/.test(searchParams.time ?? "") ? searchParams.time : undefined}
             />
           </div>
         </div>

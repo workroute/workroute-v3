@@ -10,10 +10,12 @@ import {
   IconReports,
   IconSettings,
   IconSparkle,
+  IconClock,
 } from "./nav-icons";
 
 const NAV_ITEMS = [
   { href: "/app/run-sheet", label: "Run Sheet", Icon: IconRunSheet },
+  { href: "/app/appointments", label: "Appointments", Icon: IconClock },
   { href: "/app/messages", label: "Messages", Icon: IconMessages },
   { href: "/app/clients", label: "Customers", Icon: IconCustomers },
   { href: "/app/jobs", label: "Jobs", Icon: IconJobs },
@@ -28,6 +30,7 @@ export default function Sidebar({
   needsAttentionCount,
   hideReports = false,
   hideMessages = false,
+  showAppointments = false,
 }: {
   businessName: string;
   firstName: string | null;
@@ -35,6 +38,8 @@ export default function Sidebar({
   // Hidden for salons until Reports has something useful for them.
   hideReports?: boolean;
   hideMessages?: boolean;
+  // Salons / massage only: the half-hour day view.
+  showAppointments?: boolean;
 }) {
   return (
     // §32 — desktop-only now; mobile gets MobileBottomNav instead (see
@@ -46,7 +51,10 @@ export default function Sidebar({
 
       <nav className="flex-1 space-y-1 px-3 py-4">
         {NAV_ITEMS.filter(
-          (item) => !(hideReports && item.href === "/app/reports") && !(hideMessages && item.href === "/app/messages")
+          (item) =>
+            !(hideReports && item.href === "/app/reports") &&
+            !(hideMessages && item.href === "/app/messages") &&
+            !(!showAppointments && item.href === "/app/appointments")
         ).map(({ href, label, Icon }) => {
           const badge = href === "/app/messages" && needsAttentionCount > 0 ? needsAttentionCount : null;
           return (

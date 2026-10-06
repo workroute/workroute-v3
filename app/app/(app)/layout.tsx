@@ -78,6 +78,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         needsAttentionCount={count ?? 0}
         hideReports={fixedLocation}
         hideMessages={hideMessages}
+        showAppointments={fixedLocation}
       />
       {/* §32 — bottom padding keeps content clear of the fixed mobile nav;
           desktop doesn't render that nav at all, so no padding needed there. */}
@@ -94,7 +95,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         )}
         {children}
       </div>
-      <MobileBottomNav needsAttentionCount={count ?? 0} hideMessages={hideMessages} />
+      <MobileBottomNav needsAttentionCount={count ?? 0} hideMessages={hideMessages} showAppointments={fixedLocation} />
     </div>
   );
 }
