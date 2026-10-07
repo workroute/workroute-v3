@@ -204,6 +204,19 @@ export default function PricingForm({
 
   const example = computeExampleTotal(basePrice, baseDurationMinutes, questions, rows, exampleSelections);
 
+  // The "Vary by" dropdown (an option whose price changes depending on another
+  // answer) is hidden until asked for: most tradies never need it and it's the
+  // most confusing part of this page. It's always shown if one is already set,
+  // so an existing setting can never be hidden from the person who made it.
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const hasDependency = Object.values(rows).some((qRows) =>
+    Object.values(qRows).some((r) => r.dependsOnQuestionId)
+  );
+  const advancedVisible = showAdvanced || hasDependency;
+  const anyAllowsDependency = questions.some((q) =>
+    rowsForQuestion(q, questions, simple).some((r) => r.allowDependency)
+  );
+
   function updateRow(questionId: string, rowKey: string, patch: Partial<RowDraft>) {
     setRows((prev) => ({
       ...prev,
@@ -276,6 +289,43 @@ export default function PricingForm({
         </p>
       )}
       {!simple && (
+        <div className="rounded-lg bg-paper-100 p-3 text-sm text-rig-700">
+          <p>
+            <b>How this works:</b> start with what a normal job costs, then say how much extra each thing adds.
+            Sarah adds it up on the call.
+          </p>
+          <details className="mt-2">
+            <summary className="cursor-pointer font-medium text-steel-500">See a worked example</summary>
+            <div className="mt-2 space-y-2 text-xs">
+              <p>
+                Say a normal lawn mow costs $60 and takes 45 minutes. That&apos;s your <b>base</b>. Then:
+              </p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>
+                  <b>Lawn size</b> is a single choice. Large adds $40 and 30 minutes.
+                </li>
+                <li>
+                  <b>Time since last mow</b> is a single choice. Overgrown adds $30 and 20 minutes.
+                </li>
+                <li>
+                  <b>Known obstacles</b> can be several at once. Trees add $10 and 10 minutes. &ldquo;None&rdquo;
+                  just means no obstacles, so leave it at $0.
+                </li>
+              </ul>
+              <p>
+                A customer with a large, overgrown lawn and some trees: $60 + $40 + $30 + $10 = <b>$140</b>. That&apos;s
+                what Sarah quotes, and she books the extra time too.
+              </p>
+              <p>
+                Leave a box at 0 if something doesn&apos;t change the price. Tick &ldquo;Requires quote&rdquo; on
+                anything you&apos;d rather price after seeing it. The &ldquo;Try an example&rdquo; box at the bottom
+                does this sum for you, so you can check your numbers.
+              </p>
+            </div>
+          </details>
+        </div>
+      )}
+      {!simple && (
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="field-label">Base price</label>
@@ -305,6 +355,20 @@ export default function PricingForm({
         Every {trade} job starts here — each answer below adds or subtracts from it.
       </p>
       )}
+      {anyAllowsDependency && !hasDependency && (
+        <label className="flex items-start gap-2 text-xs text-rig-700">
+          <input
+            type="checkbox"
+            checked={showAdvanced}
+            onChange={(e) => setShowAdvanced(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-rig-700/30"
+          />
+          <span>
+            <b>Show advanced options.</b> Lets an extra cost a different amount depending on another answer (for
+            example, trees costing more on a big lawn). Most people don&apos;t need this.
+          </span>
+        </label>
+      )}
 
       {questions.map((q) => {
         const qRows = rowsForQuestion(q, questions, simple);
@@ -323,7 +387,7 @@ export default function PricingForm({
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium text-rig-900">{row.label}</p>
                       <div className="flex items-center gap-3">
-                        {row.allowDependency && !draft.requiresQuote && (
+                        {row.allowDependency && advancedVisible && !draft.requiresQuote && (
                           <label className="flex items-center gap-2 text-xs text-rig-700">
                             Vary by
                             <select
