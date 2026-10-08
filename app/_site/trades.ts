@@ -159,12 +159,12 @@ export const TRADE_PAGES: TradePage[] = [
     benefits: [
       { icon: "phone", title: "Nobody stops cutting", text: "In a busy salon someone always has to drop what they're doing to answer. Now nobody does." },
       { icon: "dollar", title: "A price for every service", text: "Men's, women's and kids' cuts, colour, foils and treatments, each with a price and a time." },
-      { icon: "users", title: "Your regulars, your way", text: "Clients can ask for a preferred stylist, and you can rebook a regular in two taps." },
+      { icon: "users", title: "Your regulars, your way", text: "Clients can ask for a preferred stylist, and you can rebook a regular quickly." },
     ],
     features: [
       "Several chairs at once. Set how many people can work and Sarah books up to that many",
       "A cancellation? Sarah offers the time to clients booked later in the week, and the first to tap gets it",
-      "Walk-ins in one tap, and Book again for regulars after their cut",
+      "Quick walk-ins, and a Book again button for regulars after their cut",
       "A shareable booking page for Instagram, your door or your website",
       "No addresses, no travel and no route, because clients come to you",
     ],
@@ -194,7 +194,7 @@ export const TRADE_PAGES: TradePage[] = [
       "Several treatment rooms or therapists at once, with a limit you set",
       "A cancellation? Sarah offers the time to clients booked later in the week",
       "A confirmation text to every client, and a booking page they can use themselves",
-      "Book again in two taps for regulars, and walk-ins in one",
+      "A Book again button for regulars, and quick walk-ins",
       "No addresses and no travel, because clients come to you",
     ],
     faq: [

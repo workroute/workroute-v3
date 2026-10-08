@@ -150,7 +150,7 @@ export const GUIDES: Guide[] = [
         "Don't offer a time to someone whose service takes longer than the gap.",
       ] },
       { type: "h2", text: "Doing it automatically" },
-      { type: "p", text: "WorkRoute does exactly this. When you cancel an appointment in the diary, it can text up to three clients with later bookings who'd fit the gap, with a one-tap link to move up. The first person to tap gets it, their old time can be offered on, and you get a notification. It only sends between 7am and 8pm, only for times at least 90 minutes away, and people can switch these offers off." },
+      { type: "p", text: "WorkRoute does exactly this. When you cancel an appointment in the diary, it can text up to three clients with later bookings who'd fit the gap, with a link to tap and move up. The first person to accept gets it, their old time can be offered on, and you get a notification. It only sends between 7am and 8pm, only for times at least 90 minutes away, and people can switch these offers off." },
       { type: "note", title: "Currently for salons and massage", text: "This is built for appointment businesses using WorkRoute's diary. It works from the bookings in WorkRoute, so it doesn't see appointments kept in other booking software." },
     ],
     faq: [

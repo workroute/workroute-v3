@@ -47,7 +47,7 @@ const SALON_POINTS = [
   "Sarah answers while you're mid-cut, so nobody has to stop and grab the phone",
   "A price and a time for every service: men's, women's, kids', colour and more",
   "Preferred stylist, and several chairs booked at the same time",
-  "Book again in two taps, and walk-ins in one",
+  "Rebook a regular quickly, and add walk-ins in a moment",
   "A cancellation? Sarah offers the time to clients booked later in the week. First to tap gets it.",
 ];
 
