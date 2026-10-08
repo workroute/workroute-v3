@@ -157,6 +157,11 @@ function systemPrompt(
   const fixedLocation = isFixedLocationTrade(business.trade);
   const tradieName = fixedLocation ? "the team" : business.firstName ?? "the tradie";
   const heOrThey = fixedLocation ? "they" : "he";
+  // Lawn mowing quotes don't change with one-off vs regular, so a new caller
+  // isn't asked (owner's call, 2026-10-08) — only someone Sarah already knows
+  // is a returning customer, or a caller who raises it themselves. Every other
+  // trade still asks upfront.
+  const askRegularUpfront = business.trade !== "Lawn Mowing" || !!matchedClient;
   const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const hasPricingQuestions = pricingQuestionIds.length > 0;
   const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds);
@@ -237,7 +242,7 @@ update_job_draft's result includes \`addressValid\` whenever you've just given i
 This is for a brand NEW enquiry only — if the caller is asking about an existing job or appointment already booked, tell them you'll get ${tradieName} to check on that and call flag_for_attention with priority "medium", then finish the call.
 ${pricingSection}
 ${hasAlwaysAskQuestions ? `\nAlso ask about this naturally at some point during the call: ${alwaysAskText}. This is purely so ${tradieName} knows what to expect and can prepare — it never changes the price, so don't mention any charge or adjustment related to it, and don't let it hold up the booking. Call update_job_draft with the answer the same way as anything else.\n` : ""}
-${fixedLocation ? "" : `Always ask whether they want this as a one-off or an ongoing/regular service — this matters regardless of whether it happens to be one of the pricing questions above, since it decides whether just this one visit gets booked or a whole recurring series. If they want it ongoing, ask how often: weekly, fortnightly, or monthly. Keep this in mind for booking below.`}
+${fixedLocation ? "" : askRegularUpfront ? `Always ask whether they want this as a one-off or an ongoing/regular service — this matters regardless of whether it happens to be one of the pricing questions above, since it decides whether just this one visit gets booked or a whole recurring series. If they want it ongoing, ask how often: weekly, fortnightly, or monthly. Keep this in mind for booking below.` : `Don't ask whether this is a one-off or a regular service — it doesn't change the price, and a new caller just wants a quote. But if the caller says they want it done regularly or on an ongoing basis, ask how often: weekly, fortnightly, or monthly, and keep that in mind for booking below.`}
 
 Once you've either given a price or explained a quote visit is needed, ask if they'd like to lock in a day/time now — actively offer this, don't wait to be asked, since booking the job is the actual goal of the call. If they give you one:
 - Call check_availability with that date and either a time or a Morning/Afternoon/Evening block.

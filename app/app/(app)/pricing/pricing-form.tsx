@@ -108,6 +108,27 @@ function hydrate(
     }
     // "text" — no rows, nothing to hydrate.
 
+    // A saved "vary by" can point at a question that's since been removed
+    // from this trade's list; there's nothing left to key it off, so it falls
+    // back to a plain flat row (reset to $0) instead of silently saving a
+    // dangling rule that would never match anything.
+    const varyTargets = new Set(questions.filter((other) => other.type === "select").map((other) => other.id));
+    for (const key of Object.keys(rows)) {
+      const dep = rows[key].dependsOnQuestionId;
+      if (dep && !varyTargets.has(dep)) rows[key] = ZERO_ROW;
+    }
+
+    // First time a business prices this question: start it off varying by the
+    // question named in defaultVaryBy (e.g. Edging by Lawn size). A business
+    // that has already saved prices for it keeps exactly what it saved.
+    const varyBy = q.defaultVaryBy ? questions.find((other) => other.id === q.defaultVaryBy) : undefined;
+    if (!qp && varyBy && varyBy.type === "select") {
+      const zeros = Object.fromEntries(varyBy.options.map((o) => [o.value, { priceDelta: 0, durationDelta: 0 }]));
+      for (const key of Object.keys(rows)) {
+        rows[key] = { ...ZERO_ROW, dependsOnQuestionId: varyBy.id, dependentValues: { ...zeros } };
+      }
+    }
+
     result[q.id] = rows;
   }
 
@@ -206,13 +227,9 @@ export default function PricingForm({
 
   // The "Vary by" dropdown (an option whose price changes depending on another
   // answer) is hidden until asked for: most tradies never need it and it's the
-  // most confusing part of this page. It's always shown if one is already set,
-  // so an existing setting can never be hidden from the person who made it.
+  // most confusing part of this page. It's always shown on a row that already
+  // uses it, so an existing setting can never be hidden from whoever made it.
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const hasDependency = Object.values(rows).some((qRows) =>
-    Object.values(qRows).some((r) => r.dependsOnQuestionId)
-  );
-  const advancedVisible = showAdvanced || hasDependency;
   const anyAllowsDependency = questions.some((q) =>
     rowsForQuestion(q, questions, simple).some((r) => r.allowDependency)
   );
@@ -308,13 +325,13 @@ export default function PricingForm({
                   <b>Time since last mow</b> is a single choice. Overgrown adds $30 and 20 minutes.
                 </li>
                 <li>
-                  <b>Known obstacles</b> can be several at once. Trees add $10 and 10 minutes. &ldquo;None&rdquo;
-                  just means no obstacles, so leave it at $0.
+                  <b>Edging</b> is a tick. If they want it, it adds an amount for their lawn size, say $15 and 15
+                  minutes on a large lawn.
                 </li>
               </ul>
               <p>
-                A customer with a large, overgrown lawn and some trees: $60 + $40 + $30 + $10 = <b>$140</b>. That&apos;s
-                what Sarah quotes, and she books the extra time too.
+                A customer with a large, overgrown lawn who wants edging: $60 + $40 + $30 + $15 = <b>$145</b>.
+                That&apos;s what Sarah quotes, and she books the extra time too.
               </p>
               <p>
                 Leave a box at 0 if something doesn&apos;t change the price. Tick &ldquo;Requires quote&rdquo; on
@@ -355,7 +372,7 @@ export default function PricingForm({
         Every {trade} job starts here — each answer below adds or subtracts from it.
       </p>
       )}
-      {anyAllowsDependency && !hasDependency && (
+      {anyAllowsDependency && (
         <label className="flex items-start gap-2 text-xs text-rig-700">
           <input
             type="checkbox"
@@ -365,7 +382,7 @@ export default function PricingForm({
           />
           <span>
             <b>Show advanced options.</b> Lets an extra cost a different amount depending on another answer (for
-            example, trees costing more on a big lawn). Most people don&apos;t need this.
+            example, an extra that costs more on a bigger job). Most people don&apos;t need this.
           </span>
         </label>
       )}
@@ -387,7 +404,7 @@ export default function PricingForm({
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium text-rig-900">{row.label}</p>
                       <div className="flex items-center gap-3">
-                        {row.allowDependency && advancedVisible && !draft.requiresQuote && (
+                        {row.allowDependency && (showAdvanced || draft.dependsOnQuestionId) && !draft.requiresQuote && (
                           <label className="flex items-center gap-2 text-xs text-rig-700">
                             Vary by
                             <select

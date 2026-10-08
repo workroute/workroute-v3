@@ -24,12 +24,16 @@ export type QuestionOption = { value: string; label: string };
 // pricing by vehicle brand tier: asking "what price tier is your car?"
 // would be bizarre, but Sarah already knows the make from a normal
 // question and can classify it herself.
+// defaultVaryBy: on the Pricing page this question's price starts out varying
+// by the answer to another select question (named by id) instead of one flat
+// number, e.g. Edging by Lawn size. Only a starting point for a business that
+// hasn't saved prices for this question yet.
 export type Question =
-  | { id: string; label: string; type: "text"; placeholder?: string; alwaysAsk?: boolean; aiClassifiedFrom?: string }
-  | { id: string; label: string; type: "select"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string }
-  | { id: string; label: string; type: "multiselect"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string }
-  | { id: string; label: string; type: "boolean"; alwaysAsk?: boolean; aiClassifiedFrom?: string }
-  | { id: string; label: string; type: "quantity"; unit: string; min?: number; max?: number; alwaysAsk?: boolean; aiClassifiedFrom?: string };
+  | { id: string; label: string; type: "text"; placeholder?: string; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
+  | { id: string; label: string; type: "select"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
+  | { id: string; label: string; type: "multiselect"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
+  | { id: string; label: string; type: "boolean"; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
+  | { id: string; label: string; type: "quantity"; unit: string; min?: number; max?: number; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string };
 
 // Shorthand for option lists where value === label (the common case).
 function opts(labels: string[]): QuestionOption[] {
@@ -40,18 +44,12 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
   "Lawn Mowing": [
     {
       // §26 — the one genuinely missing piece for the deterministic pricing
-      // calculator: base price/duration are keyed off this, Slope and
-      // Edging (already below) layer on top as adjustments.
+      // calculator: base price/duration are keyed off this, and the
+      // questions below layer on top as adjustments.
       id: "size",
       label: "Lawn size",
       type: "select",
       options: opts(["Small", "Medium", "Large"]),
-    },
-    {
-      id: "service_type",
-      label: "One-off or regular service?",
-      type: "select",
-      options: opts(["One-off", "Regular"]),
     },
     {
       id: "grass_height",
@@ -62,12 +60,6 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
         "2–4 weeks — medium",
         "1–2 months+ — long / overgrown",
       ]),
-    },
-    {
-      id: "obstacles",
-      label: "Known obstacles",
-      type: "multiselect",
-      options: opts(["Rocks", "Branches", "Trees", "Bushes", "Slopes", "None"]),
     },
     {
       // Deliberately alwaysAsk, not priced — per the business owner, this is
@@ -81,22 +73,17 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       options: opts(["Side gate", "Gate locked — key/code needed", "Pets on property"]),
     },
     {
+      // Kept deliberately simple (owner's call, 2026-10-08): obstacles,
+      // edging complexity, weed spraying and a one-off/regular price were all
+      // dropped as over-engineering the quote. Edging is one tick, and its
+      // price starts out varying by lawn size (a big lawn has more edge).
+      // The id stays "add_ons" so any previously saved Edging price carries
+      // over.
       id: "add_ons",
-      label: "Add-on interest",
+      label: "Edging as well?",
       type: "multiselect",
-      options: opts(["Edging", "Weed spraying"]),
-    },
-    {
-      // Distinct from "obstacles" above (which is about mowing hazards —
-      // rocks/branches/slopes) — this is specifically how much there is to
-      // trim around, since that's the real time driver for edging, not the
-      // mowing itself. Added per the business owner's own real-quoting
-      // experience: a plain fence line takes a fraction of the time of a
-      // yard with several trees/garden beds to work around.
-      id: "edging_complexity",
-      label: "Edging complexity",
-      type: "select",
-      options: opts(["Fence line only", "A few trees or garden beds", "Lots of obstacles"]),
+      options: opts(["Edging"]),
+      defaultVaryBy: "size",
     },
   ],
 
