@@ -72,11 +72,11 @@ export const TRADE_PAGES: TradePage[] = [
     scenario: CLEAN,
     benefits: [
       { icon: "phone", title: "Never miss an enquiry", text: "Most people ring a few cleaners and book the first one who answers. Sarah makes sure that's you." },
-      { icon: "dollar", title: "Quotes by home size", text: "Bedrooms, bathrooms, levels and the type of clean (general, deep or end of lease), plus extras like the oven." },
+      { icon: "dollar", title: "Quotes by home size", text: "Bedrooms, bathrooms and the type of clean (general, deep or end of lease), plus extras like the oven." },
       { icon: "refresh", title: "Regulars booked ahead", text: "A weekly, fortnightly or monthly client gets their next visits booked in one go." },
     ],
     features: [
-      "Built-in questions for pets indoors, entry method and who supplies the products",
+      "Built-in questions for bedrooms, bathrooms, the type of clean, extras like the oven, and pets indoors",
       "Recurring visits booked ahead, skipping any day that clashes",
       "Returning clients recognised by number, with their usual service",
       "Numbered invoices, unpaid-invoice chasing and Google review requests",
@@ -93,10 +93,10 @@ export const TRADE_PAGES: TradePage[] = [
     icon: "wave",
     kind: "road",
     title: "AI receptionist for pool cleaning and pool care businesses | WorkRoute",
-    description: "Sarah answers the phone while you're at a pool, quotes by pool size, type and condition, and books regular services into your run.",
+    description: "Sarah answers the phone while you're at a pool, quotes by pool size and condition, and books regular services into your run.",
     h1a: "You look after the pools.",
     h1b: "Sarah runs the office.",
-    lead: "Sarah picks up while you're elbow-deep in a filter, quotes by pool size, type and condition, and books regulars into your run.",
+    lead: "Sarah picks up while you're elbow-deep in a filter, quotes by pool size and condition, and books regulars into your run.",
     scenario: POOL,
     benefits: [
       { icon: "phone", title: "Pick up the green-pool panic calls", text: "The urgent calls come when you're at another pool. Sarah answers and books them in." },
@@ -104,7 +104,7 @@ export const TRADE_PAGES: TradePage[] = [
       { icon: "refresh", title: "Regular services on autopilot", text: "Weekly and fortnightly clients are booked ahead, so your run fills itself." },
     ],
     features: [
-      "Built-in questions for pool size, chlorine, saltwater or mineral, and above-ground or in-ground",
+      "Built-in questions for pool size, current condition, and above-ground or in-ground",
       "Add-ons like a filter clean, equipment check or acid wash",
       "Notes any access issues and known equipment problems for you to see before you arrive",
       "Smart Route plans the day around real driving time",

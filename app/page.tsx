@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 const WHO_TEXT: Record<string, string> = {
   "lawn-care": "Real prices from your lawn-size rates and a day's run planned around real driving time. Landscaping projects get a site visit booked for a quote.",
   cleaning: "Quotes by home size and extras, with regular visits booked weeks ahead.",
-  "pool-care": "Quoted by pool size, type and condition, with regulars booked in automatically.",
+  "pool-care": "Quoted by pool size and condition, with regulars booked in automatically.",
   mechanics: "Your price for each job, adjusted for brand, fuel and vehicle type.",
   hairdressers: "Men's, women's and kids' cuts, colour and more, with a price and a time for each. Preferred stylist, several chairs at once.",
   massage: "Session lengths, preferred therapist and health notes. No address and no travel.",

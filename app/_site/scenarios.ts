@@ -48,8 +48,8 @@ export const CLEAN: Scenario = {
   lines: [
     { who: "sarah", text: "Hi, Sparkle Home Cleaning. I'm Sarah, the AI office manager. How can I help?" },
     { who: "caller", text: "Can I get a quote for a three-bedroom clean?" },
-    { who: "sarah", text: "Of course. Is it a one-off or regular, and are there any extras like the oven or windows?" },
-    { who: "caller", text: "Fortnightly please, with the oven." },
+    { who: "sarah", text: "Of course. How many bathrooms are there?" },
+    { who: "caller", text: "Two. We'd like it fortnightly please, with the oven done." },
     { who: "sarah", text: "A fortnightly clean with the oven is about $190. I can do Tuesdays at 9 and book your next five visits now. Shall I?" },
     { who: "caller", text: "That would be perfect." },
   ],
@@ -78,12 +78,12 @@ export const POOL: Scenario = {
   lines: [
     { who: "sarah", text: "Hi, Crystal Clear Pools. I'm Sarah, the AI office manager. How can I help?" },
     { who: "caller", text: "My pool's gone a bit green and I need it sorted." },
-    { who: "sarah", text: "No worries. Is it a chlorine or saltwater pool, and roughly how big: small, medium or large?" },
-    { who: "caller", text: "Saltwater, medium." },
-    { who: "sarah", text: "Thanks. A green pool recovery on a medium saltwater pool is about $240. It's an estimate, Dave will confirm once he's seen it. Wednesday morning is free. Shall I book it?" },
+    { who: "sarah", text: "No worries. Roughly how big is the pool: small, medium or large?" },
+    { who: "caller", text: "Medium, and it's in-ground." },
+    { who: "sarah", text: "Thanks. A green pool recovery on a medium in-ground pool is about $240. It's an estimate, Dave will confirm once he's seen it. Wednesday morning is free. Shall I book it?" },
     { who: "caller", text: "Yes please." },
   ],
-  booked: { when: "Wed morning", what: "Green pool recovery", extra: "Medium saltwater · est. $240" },
+  booked: { when: "Wed morning", what: "Green pool recovery", extra: "Medium in-ground · est. $240" },
 };
 
 export const MECHANIC: Scenario = {
