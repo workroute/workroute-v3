@@ -115,6 +115,9 @@ export default async function HomePage() {
                 Meet Sarah, your AI office manager. She answers every call, quotes a real price, books a real time in your
                 diary and keeps clients in the loop, while you cut, mow, landscape, clean or fix.
               </p>
+              <p className="mt-3 max-w-xl text-lg font-medium leading-relaxed text-white">
+                Sarah picks up the call and books the job straight away, so your customer never waits for a text back.
+              </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href={SIGNUP_HREF}
