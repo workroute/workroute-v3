@@ -37,6 +37,13 @@ function dependencyCandidates(questions: Question[], excludeQuestionId: string):
   return questions.filter((q) => q.id !== excludeQuestionId && q.type === "select");
 }
 
+// The select question a given question's price starts out varying by (named
+// by defaultVaryBy in lib/trade-questions.ts), if there is one.
+function varyTargetFor(question: Question, questions: Question[]): Extract<Question, { type: "select" }> | undefined {
+  const target = question.defaultVaryBy ? questions.find((other) => other.id === question.defaultVaryBy) : undefined;
+  return target && target.type === "select" ? target : undefined;
+}
+
 function rowsForQuestion(question: Question, questions: Question[], simple: boolean): Row[] {
   // simple (salons): a plain price list, so no "vary by another answer" option.
   const hasDependencyCandidates = !simple && dependencyCandidates(questions, question.id).length > 0;
@@ -399,12 +406,50 @@ export default function PricingForm({
                 const dependencyQuestion = draft.dependsOnQuestionId
                   ? questions.find((other) => other.id === draft.dependsOnQuestionId)
                   : undefined;
+                // A question with an obvious "depends on" partner (Edging by
+                // lawn size) gets a plain tick instead of the advanced dropdown.
+                const varyTarget = varyTargetFor(q, questions);
+                const showVaryDropdown =
+                  row.allowDependency &&
+                  !draft.requiresQuote &&
+                  (varyTarget
+                    ? !!draft.dependsOnQuestionId && draft.dependsOnQuestionId !== varyTarget.id
+                    : showAdvanced || !!draft.dependsOnQuestionId);
                 return (
                   <div key={row.key} className="rounded border border-rig-700/10 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium text-rig-900">{row.label}</p>
                       <div className="flex items-center gap-3">
-                        {row.allowDependency && (showAdvanced || draft.dependsOnQuestionId) && !draft.requiresQuote && (
+                        {row.allowDependency && varyTarget && !draft.requiresQuote && (
+                          <label className="flex items-center gap-2 text-xs text-rig-700">
+                            <input
+                              type="checkbox"
+                              checked={draft.dependsOnQuestionId === varyTarget.id}
+                              onChange={(e) =>
+                                updateRow(
+                                  q.id,
+                                  row.key,
+                                  e.target.checked
+                                    ? {
+                                        dependsOnQuestionId: varyTarget.id,
+                                        // Start each size at what's already typed, so
+                                        // turning this on never wipes a price.
+                                        dependentValues: Object.fromEntries(
+                                          varyTarget.options.map((o) => [
+                                            o.value,
+                                            { priceDelta: draft.priceDelta, durationDelta: draft.durationDelta },
+                                          ])
+                                        ),
+                                      }
+                                    : { dependsOnQuestionId: null, dependentValues: {} }
+                                )
+                              }
+                              className="h-4 w-4 rounded border-rig-700/30"
+                            />
+                            Price depends on {varyTarget.label.toLowerCase()}
+                          </label>
+                        )}
+                        {showVaryDropdown && (
                           <label className="flex items-center gap-2 text-xs text-rig-700">
                             Vary by
                             <select
