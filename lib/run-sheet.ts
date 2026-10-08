@@ -21,7 +21,31 @@ export type Job = {
   ai_paused: boolean;
   attention_priority: "low" | "medium" | "high" | null;
   created_at: string;
+  // Only loaded where the card needs it (run-sheet-data.ts), for entry tags.
+  trade_answers?: Record<string, unknown> | null;
 };
+
+// Small heads-up tags for the Run Sheet card, so a tradie scanning the day
+// sees "Locked gate" or "Pets" without opening each job. Read from the
+// answers Sarah (or the job form) already saved: the gate/pets question on
+// lawn and pool, and "pets indoors" on home cleaning. None of these affect
+// the price.
+export type EntryTag = { label: string; tone: "warn" | "info" };
+
+export function entryTags(answers: Record<string, unknown> | null | undefined): EntryTag[] {
+  if (!answers) return [];
+  const tags: EntryTag[] = [];
+  const access = Array.isArray(answers.access) ? (answers.access as unknown[]) : [];
+
+  if (access.some((a) => typeof a === "string" && a.startsWith("Gate locked"))) {
+    tags.push({ label: "Locked gate", tone: "warn" });
+  }
+  if (access.includes("Side gate")) tags.push({ label: "Side gate", tone: "info" });
+  if (access.includes("Pets on property") || answers.pets_indoors === true) {
+    tags.push({ label: "Pets", tone: "warn" });
+  }
+  return tags;
+}
 
 export type BucketKey = "unscheduled" | "today";
 

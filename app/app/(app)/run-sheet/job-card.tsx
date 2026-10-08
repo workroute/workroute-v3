@@ -9,6 +9,7 @@ import {
   STATUS_STYLES,
   OUTCOME_STYLES,
   derivedOutcome,
+  entryTags,
   isOverdue,
   statusLabel,
 } from "@/lib/run-sheet";
@@ -105,6 +106,16 @@ export default function JobCard({
             Quote visit
           </span>
         )}
+        {entryTags(job.trade_answers).map((tag) => (
+          <span
+            key={tag.label}
+            className={`rounded px-2 py-0.5 text-xs font-medium ${
+              tag.tone === "warn" ? "bg-rust-500/15 text-rust-500" : "bg-steel-500/15 text-steel-500"
+            }`}
+          >
+            {tag.label}
+          </span>
+        ))}
         {job.recurring_frequency && (
           <span className="rounded bg-steel-500/15 px-2 py-0.5 text-xs font-medium text-steel-500">
             🔁 {job.recurring_frequency}
