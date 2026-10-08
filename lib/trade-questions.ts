@@ -88,32 +88,24 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
   ],
 
   "Home Cleaning": [
+    // Kept simple (owner's call, 2026-10-08): single vs multi-level and who
+    // supplies the products were dropped so a basic price is quick to set up.
     { id: "bedrooms", label: "Bedrooms", type: "select", options: opts(["1", "2", "3", "4", "5+"]) },
     { id: "bathrooms", label: "Bathrooms", type: "select", options: opts(["1", "2", "3", "4+"]) },
-    {
-      id: "levels",
-      label: "Single-story or multi-level?",
-      type: "select",
-      options: opts(["Single-story", "Multi-level"]),
-    },
     {
       id: "clean_type",
       label: "Clean type",
       type: "select",
       options: opts(["General", "Deep", "End of lease"]),
     },
-    { id: "pets_indoors", label: "Pets indoors?", type: "boolean" },
+    // A heads-up for the cleaner, not a price: asked on every call, never
+    // shown on the Pricing page.
+    { id: "pets_indoors", label: "Pets indoors?", type: "boolean", alwaysAsk: true },
     {
       id: "add_ons",
-      label: "Add-on interest",
+      label: "Extras",
       type: "multiselect",
       options: opts(["Oven", "Fridge", "Windows"]),
-    },
-    {
-      id: "products_supplied_by",
-      label: "Products supplied by",
-      type: "select",
-      options: opts(["Customer", "Cleaner"]),
     },
     { id: "entry_method", label: "Entry method", type: "text", placeholder: "e.g. key under mat, customer home" },
   ],
@@ -207,25 +199,16 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       options: opts(["Small (under 30,000L)", "Medium (30,000–50,000L)", "Large (50,000L+)"]),
     },
     {
-      id: "service_type",
-      label: "One-off or regular service?",
-      type: "select",
-      options: opts(["One-off", "Regular"]),
-    },
-    {
       // The real time/chemical-cost driver, same role as Lawn Mowing's
       // grass_height — a green recovery is a different job entirely from
       // routine maintenance, not just a bigger version of the same one.
+      // Kept simple (owner's call, 2026-10-08): one-off/regular and pool type
+      // were dropped so a basic price is quick to set up. Above-ground vs
+      // in-ground stays: it genuinely changes the job.
       id: "pool_condition",
       label: "Current condition",
       type: "select",
       options: opts(["Clean — routine maintenance", "Cloudy / algae starting", "Green — needs a full recovery"]),
-    },
-    {
-      id: "pool_type",
-      label: "Pool type",
-      type: "select",
-      options: opts(["Chlorine", "Saltwater", "Mineral"]),
     },
     {
       id: "pool_style",
@@ -244,7 +227,7 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
     },
     {
       id: "add_ons",
-      label: "Add-on interest",
+      label: "Extras",
       type: "multiselect",
       options: opts(["Filter clean", "Equipment check", "Acid wash"]),
     },

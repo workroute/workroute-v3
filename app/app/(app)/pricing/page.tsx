@@ -23,7 +23,9 @@ export default async function PricingPage() {
     .maybeSingle();
 
   const trade = profile?.trade ?? "";
-  const questions = TRADE_QUESTIONS[trade] ?? [];
+  // Questions Sarah asks only as a heads-up (gates, pets) never change the
+  // price, so they don't belong on the pricing screen at all.
+  const questions = (TRADE_QUESTIONS[trade] ?? []).filter((q) => !q.alwaysAsk);
 
   const { data: existingConfig } = await supabase
     .from("trade_pricing_configs")

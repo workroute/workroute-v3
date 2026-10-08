@@ -157,11 +157,11 @@ function systemPrompt(
   const fixedLocation = isFixedLocationTrade(business.trade);
   const tradieName = fixedLocation ? "the team" : business.firstName ?? "the tradie";
   const heOrThey = fixedLocation ? "they" : "he";
-  // Lawn mowing quotes don't change with one-off vs regular, so a new caller
-  // isn't asked (owner's call, 2026-10-08) — only someone Sarah already knows
-  // is a returning customer, or a caller who raises it themselves. Every other
+  // These quotes don't change with one-off vs regular, so a new caller isn't
+  // asked (owner's call, 2026-10-08) — only someone Sarah already knows is a
+  // returning customer, or a caller who raises it themselves. Every other
   // trade still asks upfront.
-  const askRegularUpfront = business.trade !== "Lawn Mowing" || !!matchedClient;
+  const askRegularUpfront = !["Lawn Mowing", "Pool Cleaning", "Home Cleaning"].includes(business.trade) || !!matchedClient;
   const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const hasPricingQuestions = pricingQuestionIds.length > 0;
   const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds);
