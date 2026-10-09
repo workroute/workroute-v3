@@ -10,8 +10,8 @@ import {
   type MissedCallInputs,
 } from "./missed-call-cost";
 
-// TODO: swap for the real unlisted YouTube link once the video is recorded.
-const WELCOME_VIDEO_URL = "https://www.youtube.com/watch?v=PLACEHOLDER_UNLISTED_VIDEO_ID";
+// Sarah-narrated setup walkthrough (unlisted on YouTube).
+const WELCOME_VIDEO_URL = "https://www.youtube.com/watch?v=4YctnKvkkgY";
 
 function welcomeEmailHtml(firstName: string | null): string {
   const greeting = firstName ? `Hey ${firstName},` : "Hey,";
@@ -20,12 +20,12 @@ function welcomeEmailHtml(firstName: string | null): string {
       <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute</p>
       <h1 style="font-size: 22px; margin: 8px 0 16px;">${greeting} welcome aboard.</h1>
       <p style="font-size: 15px; line-height: 1.6;">
-        Your account's ready to go. Here's a quick (~3 min) video walking through the basics —
-        capturing your first job, how the run sheet works, and how Messenger replies to customers for you.
+        Your account's ready to go. Here's a short video where Sarah walks you through setting up your
+        account and your pricing, step by step.
       </p>
       <p style="margin: 24px 0;">
         <a href="${WELCOME_VIDEO_URL}" style="background:#F2A900; color:#14171C; padding:12px 20px; border-radius:6px; text-decoration:none; font-weight:600; display:inline-block;">
-          Watch the quick start video
+          Watch the setup video
         </a>
       </p>
       <p style="font-size: 15px; line-height: 1.6;">
