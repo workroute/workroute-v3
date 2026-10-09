@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { TABLET_OFFER_PARAGRAPHS, TABLET_OFFER_VERSION } from "@/lib/tablet-offer";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [tabletOffer, setTabletOffer] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -21,6 +23,12 @@ export default function SignupPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/app/welcome`,
+        // Carried on the account until the business profile is created on the
+        // welcome screen, which copies it onto the business (see
+        // app/app/welcome/page.tsx).
+        data: tabletOffer
+          ? { tablet_offer_accepted_at: new Date().toISOString(), tablet_offer_version: TABLET_OFFER_VERSION }
+          : undefined,
       },
     });
 
@@ -87,6 +95,29 @@ export default function SignupPage() {
                   className="field-input"
                   placeholder="At least 6 characters"
                 />
+              </div>
+
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+                <label className="flex items-start gap-2 text-sm text-rig-900">
+                  <input
+                    type="checkbox"
+                    checked={tabletOffer}
+                    onChange={(e) => setTabletOffer(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-rig-700/30"
+                  />
+                  <span>
+                    <b>Yes, I&apos;d like the free tablet offer.</b> Stay with WorkRoute for 6 months and the tablet is
+                    yours. Cancel before then and you send it back.
+                  </span>
+                </label>
+                <details className="mt-2 text-xs text-rig-700">
+                  <summary className="cursor-pointer font-medium text-steel-500">Read the full offer</summary>
+                  <div className="mt-2 space-y-2">
+                    {TABLET_OFFER_PARAGRAPHS.map((p) => (
+                      <p key={p}>{p}</p>
+                    ))}
+                  </div>
+                </details>
               </div>
 
               {status === "error" && (

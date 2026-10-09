@@ -21,7 +21,13 @@ export default async function WelcomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-rig-900 px-4 text-center text-paper-50">
-      <WelcomeFlow userId={user.id} hasProfile={!!profile} firstName={profile?.first_name ?? null} />
+      <WelcomeFlow
+        userId={user.id}
+        hasProfile={!!profile}
+        firstName={profile?.first_name ?? null}
+        tabletOfferAcceptedAt={user.user_metadata?.tablet_offer_accepted_at ?? null}
+        tabletOfferVersion={user.user_metadata?.tablet_offer_version ?? null}
+      />
     </main>
   );
 }

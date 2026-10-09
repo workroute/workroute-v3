@@ -31,7 +31,7 @@ export default async function OwnerOverviewPage() {
 
   const { data: businesses } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, trade, first_name, created_at, vapi_phone_number, starting_price, is_paying")
+    .select("user_id, business_name, trade, first_name, created_at, vapi_phone_number, starting_price, is_paying, tablet_offer_accepted_at")
     .order("created_at", { ascending: true });
 
   const businessIds = (businesses ?? []).map((b) => b.user_id);
@@ -281,6 +281,12 @@ export default async function OwnerOverviewPage() {
                       {b.trialStatus.label}
                     </span>
                     {!b.is_paying && <MarkPayingButton businessId={b.user_id} />}
+                    {b.tablet_offer_accepted_at && (
+                      <span className="rounded-full bg-steel-500/15 px-2.5 py-1 font-medium text-steel-500">
+                        Tablet offer ·{" "}
+                        {new Date(b.tablet_offer_accepted_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
+                      </span>
+                    )}
                     <span
                       className={`rounded-full px-2.5 py-1 font-medium ${
                         b.vapi_phone_number ? "bg-moss-500/10 text-moss-500" : "bg-rig-700/10 text-rig-700"

@@ -13,9 +13,14 @@ import { TRADE_NAMES } from "@/lib/trade-questions";
 export default function WelcomeQuickstartForm({
   userId,
   onDone,
+  tabletOfferAcceptedAt = null,
+  tabletOfferVersion = null,
 }: {
   userId: string;
   onDone: () => void;
+  // Ticked at sign-up; copied onto the business the first time it's created.
+  tabletOfferAcceptedAt?: string | null;
+  tabletOfferVersion?: string | null;
 }) {
   const [firstName, setFirstName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -36,6 +41,9 @@ export default function WelcomeQuickstartForm({
       business_name: businessName,
       trade,
       starting_price: startingPrice.trim() === "" ? null : Number(startingPrice),
+      ...(tabletOfferAcceptedAt
+        ? { tablet_offer_accepted_at: tabletOfferAcceptedAt, tablet_offer_version: tabletOfferVersion }
+        : {}),
       updated_at: new Date().toISOString(),
     });
 

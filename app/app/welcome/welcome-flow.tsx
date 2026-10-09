@@ -16,10 +16,14 @@ export default function WelcomeFlow({
   userId,
   hasProfile,
   firstName,
+  tabletOfferAcceptedAt = null,
+  tabletOfferVersion = null,
 }: {
   userId: string;
   hasProfile: boolean;
   firstName: string | null;
+  tabletOfferAcceptedAt?: string | null;
+  tabletOfferVersion?: string | null;
 }) {
   const [done, setDone] = useState(hasProfile);
 
@@ -28,7 +32,12 @@ export default function WelcomeFlow({
       <>
         <p className="font-mono text-xs uppercase tracking-widest text-amber-500">WorkRoute</p>
         <h1 className="mt-2 font-display text-3xl font-bold">Let's get Sarah ready.</h1>
-        <WelcomeQuickstartForm userId={userId} onDone={() => setDone(true)} />
+        <WelcomeQuickstartForm
+          userId={userId}
+          onDone={() => setDone(true)}
+          tabletOfferAcceptedAt={tabletOfferAcceptedAt}
+          tabletOfferVersion={tabletOfferVersion}
+        />
       </>
     );
   }
