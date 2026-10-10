@@ -25,8 +25,11 @@ type AvailableNumber = {
 // tradie, search DIDLogic's real AU inventory, buy and wire it up in one
 // click. Tradies never see this — it only renders on the owner's own
 // account.
+const SPARE = "__spare__";
+
 export default function AdminNumberProvisioner({ businesses }: { businesses: Business[] }) {
-  const [selectedBusinessId, setSelectedBusinessId] = useState(businesses[0]?.user_id ?? "");
+  // SPARE means "buy into the spare stock", to be given to the next sign-up.
+  const [selectedBusinessId, setSelectedBusinessId] = useState(SPARE);
   const [city, setCity] = useState("");
   const [searchStatus, setSearchStatus] = useState<"idle" | "searching" | "done" | "error">("idle");
   const [searchError, setSearchError] = useState("");
@@ -70,7 +73,7 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        businessUserId: selectedBusinessId,
+        ...(selectedBusinessId === SPARE ? { spare: true } : { businessUserId: selectedBusinessId }),
         didId: n.id,
         didNumber: n.number,
         monthlyFee: n.monthlyFee,
@@ -83,13 +86,19 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
       setBuyResult({ ok: false, message: `Failed at "${data.step ?? "unknown step"}": ${data.error}` });
       return;
     }
-    setBuyResult({ ok: true, message: `${data.number} is now connected to ${data.business}.` });
+    setBuyResult({
+      ok: true,
+      message:
+        selectedBusinessId === SPARE
+          ? `${data.number} is in your spare stock. The next sign-up will get it automatically.`
+          : `${data.number} is now connected to ${data.business}.`,
+    });
   }
 
   return (
     <div>
       <p className="font-mono text-xs uppercase tracking-widest text-amber-600">Owner only</p>
-      <h2 className="mt-1 font-display text-lg font-semibold text-rig-900">Buy a number for a tradie</h2>
+      <h2 className="mt-1 font-display text-lg font-semibold text-rig-900">Buy a number</h2>
       <p className="mt-1 text-sm text-rig-700">
         Searches DIDLogic's real Australian number inventory and wires the one you pick straight to Vapi — no
         manual curl calls, no copy-pasting an ID.
@@ -102,6 +111,7 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
           onChange={(e) => setSelectedBusinessId(e.target.value)}
           className="field-input"
         >
+          <option value={SPARE}>Spare number (keep in stock for the next sign-up)</option>
           {businesses.map((b) => (
             <option key={b.user_id} value={b.user_id}>
               {b.business_name} ({b.trade}) — {b.vapi_phone_number || "no number yet"}
@@ -163,10 +173,10 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
                     <button
                       type="button"
                       onClick={() => handleBuy(n)}
-                      disabled={buyingId !== null || !selectedBusinessId}
+                      disabled={buyingId !== null}
                       className="rounded border border-rig-700/20 bg-white px-3 py-1.5 text-xs font-medium text-rig-900 hover:bg-paper-100 disabled:opacity-50"
                     >
-                      {buyingId === n.id ? "Buying…" : "Buy & connect"}
+                      {buyingId === n.id ? "Buying…" : selectedBusinessId === SPARE ? "Buy as spare" : "Buy & connect"}
                     </button>
                   </td>
                 </tr>

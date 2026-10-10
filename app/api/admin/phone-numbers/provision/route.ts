@@ -27,26 +27,27 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
+  // spare: true buys the number into the spare stock instead of a business.
+  const spare = body?.spare === true;
   const businessUserId = body?.businessUserId;
   const didId = body?.didId;
   const didNumber = body?.didNumber;
   const monthlyFee = typeof body?.monthlyFee === "number" ? body.monthlyFee : null;
 
-  if (typeof businessUserId !== "string" || typeof didId !== "number" || typeof didNumber !== "string") {
+  if ((!spare && typeof businessUserId !== "string") || typeof didId !== "number" || typeof didNumber !== "string") {
     return NextResponse.json({ ok: false, error: "Missing businessUserId/didId/didNumber." }, { status: 400 });
   }
 
   const serviceRole = createServiceRoleClient();
 
-  const { data: targetBusiness } = await serviceRole
-    .from("business_profiles")
-    .select("business_name")
-    .eq("user_id", businessUserId)
-    .maybeSingle();
+  const { data: foundBusiness } = spare
+    ? { data: { business_name: `spare ${didNumber}` } }
+    : await serviceRole.from("business_profiles").select("business_name").eq("user_id", businessUserId).maybeSingle();
 
-  if (!targetBusiness) {
+  if (!foundBusiness) {
     return NextResponse.json({ ok: false, error: "That business account doesn't exist." }, { status: 404 });
   }
+  const targetBusiness = foundBusiness;
 
   let step = "balance check";
   try {
@@ -90,6 +91,22 @@ export async function POST(request: Request) {
       credentialId: vapiCredential.id,
       webhookUrl: "https://workroute-v3.vercel.app/api/vapi/webhook",
     });
+
+    if (spare) {
+      step = "save to spare numbers";
+      const { error: spareError } = await serviceRole.from("spare_phone_numbers").insert({
+        number: purchase.number,
+        vapi_phone_number_id: vapiPhoneNumber.id,
+        didlogic_did_id: purchase.purchaseId,
+      });
+      if (spareError) {
+        return NextResponse.json(
+          { ok: false, step, error: `The number was bought and connected, but saving it to the spare list failed: ${spareError.message}. Vapi phone number ID: ${vapiPhoneNumber.id}.` },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({ ok: true, number: purchase.number, business: "the spare stock", vapiPhoneNumberId: vapiPhoneNumber.id });
+    }
 
     step = "save to business profile";
     const { error: updateError } = await serviceRole

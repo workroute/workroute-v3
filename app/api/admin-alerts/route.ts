@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { notifyAdmin } from "@/lib/push-notifications";
+import { assignSpareNumber, countAvailableSpares } from "@/lib/spare-numbers";
 
 // Tells the WorkRoute owner (by push) when a business signs up, and when a
 // business that wants the free tablet has saved its pricing. The browser calls
@@ -45,17 +46,23 @@ export async function POST(request: Request) {
   const origin = new URL(request.url).origin;
 
   if (event === "signup" && !profile.signup_alerted_at) {
-    const todo = [
-      "needs a phone number",
-      profile.tablet_offer_accepted_at ? "wants the free tablet" : null,
-    ].filter(Boolean);
     await admin.from("business_profiles").update({ signup_alerted_at: new Date().toISOString() }).eq("user_id", user.id);
-    await notifyAdmin(
-      admin,
-      "New WorkRoute sign-up",
-      `${profile.business_name} (${profile.trade}) just signed up${profile.vapi_phone_number ? "" : ` — ${todo.join(", ")}`}.`,
-      origin
-    );
+
+    // Give them one of the spare numbers straight away, so Sarah can answer
+    // without waiting for the owner. If none is in stock the owner is told.
+    let assignedNumber: string | null = null;
+    if (!profile.vapi_phone_number) {
+      assignedNumber = await assignSpareNumber(admin, user.id);
+    }
+    const sparesLeft = await countAvailableSpares(admin);
+
+    const parts = [`${profile.business_name} (${profile.trade}) just signed up.`];
+    if (assignedNumber) parts.push(`Number ${assignedNumber} connected automatically.`);
+    else if (!profile.vapi_phone_number) parts.push("They need a phone number and there's no spare in stock.");
+    if (profile.tablet_offer_accepted_at) parts.push("Wants the free tablet.");
+    if (sparesLeft === 0) parts.push("No spare numbers left — buy another.");
+
+    await notifyAdmin(admin, "New WorkRoute sign-up", parts.join(" "), origin);
     return NextResponse.json({ ok: true, sent: true });
   }
 

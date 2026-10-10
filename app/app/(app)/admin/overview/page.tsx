@@ -5,6 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { totalCallCosts, COST_ESTIMATES, type CallCostRow } from "@/lib/call-costs";
 import MarkPayingButton from "./mark-paying-button";
 import TabletSentButton from "./tablet-sent-button";
+import NumberButton from "./number-button";
 
 const TRIAL_DAYS = 14;
 const TRIAL_CALL_CAP = 150;
@@ -74,6 +75,17 @@ export default async function OwnerOverviewPage() {
   const monthTotals = costsFor(monthCostRows);
   const allTimeTotals = costsFor(allCostRows);
   const usd = (n: number) => `$${n.toFixed(2)}`;
+
+  // Spare phone numbers (migration 0045). Its own query so a missing table
+  // only affects this section.
+  const { data: spareRows, error: spareError } = await createServiceRoleClient()
+    .from("spare_phone_numbers")
+    .select("number, status, available_after")
+    .eq("status", "spare")
+    .order("available_after", { ascending: true });
+  const nowMs = Date.now();
+  const readySpares = (spareRows ?? []).filter((r) => new Date(r.available_after).getTime() <= nowMs);
+  const restingSpares = (spareRows ?? []).filter((r) => new Date(r.available_after).getTime() > nowMs);
 
   const weekAgo = Date.now() - 7 * 86400000;
   const pricingSet = new Set((pricingConfigs ?? []).map((p) => p.business_id));
@@ -145,6 +157,9 @@ export default async function OwnerOverviewPage() {
       label: "Trial over, not paying",
       names: others.filter((b) => b.trialStatus.tone === "rust").map((b) => b.business_name),
     },
+    ...(!spareError && readySpares.length === 0
+      ? [{ label: "Spare numbers", names: ["none in stock — buy one in Settings > Phone AI"] }]
+      : []),
   ].filter((item) => item.names.length > 0);
 
   // §WorkRoute sales chat — people who left their details with Sarah on
@@ -195,6 +210,19 @@ export default async function OwnerOverviewPage() {
             ))}
           </div>
         )}
+
+        <p className="mt-2 text-xs text-rig-700/70">
+          {spareError ? (
+            <>Spare numbers aren&apos;t set up yet. Run supabase/migrations/0045_spare_phone_numbers.sql in Supabase.</>
+          ) : (
+            <>
+              Spare numbers: <b className="text-rig-900">{readySpares.length}</b> ready
+              {readySpares.length > 0 && ` (${readySpares.map((r) => r.number).join(", ")})`}
+              {restingSpares.length > 0 &&
+                ` · ${restingSpares.length} resting until ${new Date(restingSpares[0].available_after).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}`}
+            </>
+          )}
+        </p>
 
         <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">What calls cost you</h2>
         {costError ? (
@@ -356,6 +384,7 @@ export default async function OwnerOverviewPage() {
                     >
                       {b.vapi_phone_number ? "Number connected" : "No number yet"}
                     </span>
+                    {b.user_id !== user.id && <NumberButton businessId={b.user_id} hasNumber={!!b.vapi_phone_number} />}
                     <span
                       className={`rounded-full px-2.5 py-1 font-medium ${
                         b.hasPricing ? "bg-moss-500/10 text-moss-500" : "bg-amber-500/15 text-amber-600"
