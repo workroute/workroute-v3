@@ -82,7 +82,7 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
   const { data: profile } = await supabase
     .from("business_profiles")
     .select(
-      "user_id, business_name, trade, first_name, service_area, ai_voice_id, ai_persona_name, starting_price, created_at, is_paying, trial_limit_notified_at, trial_warning_sent_at, pronunciation_overrides, staff_names"
+      "user_id, business_name, trade, first_name, service_area, ai_voice_id, ai_persona_name, starting_price, created_at, trial_started_at, is_paying, trial_limit_notified_at, trial_warning_sent_at, pronunciation_overrides, staff_names"
     )
     .eq("vapi_phone_number_id", phoneNumberId)
     .maybeSingle();
@@ -127,7 +127,10 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
     const TRIAL_WARNING_DAYS_LEFT = 3;
     const TRIAL_WARNING_CALLS_LEFT = 50;
 
-    const daysSinceSignup = (Date.now() - new Date(profile.created_at).getTime()) / 86400000;
+    // trial_started_at is set when a tablet is posted, so the trial begins
+    // when it arrives rather than at signup. Before that date this is
+    // negative, which is fine: neither check below trips.
+    const daysSinceSignup = (Date.now() - new Date(profile.trial_started_at ?? profile.created_at).getTime()) / 86400000;
     const { count: callCount } = await supabase
       .from("phone_call_captures")
       .select("*", { count: "exact", head: true })

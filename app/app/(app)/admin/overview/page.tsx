@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { totalCallCosts, COST_ESTIMATES, type CallCostRow } from "@/lib/call-costs";
 import MarkPayingButton from "./mark-paying-button";
+import TabletSentButton from "./tablet-sent-button";
 
 const TRIAL_DAYS = 14;
 const TRIAL_CALL_CAP = 150;
@@ -31,7 +32,7 @@ export default async function OwnerOverviewPage() {
 
   const { data: businesses } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, trade, first_name, created_at, vapi_phone_number, starting_price, is_paying, tablet_offer_accepted_at")
+    .select("user_id, business_name, trade, first_name, created_at, vapi_phone_number, starting_price, is_paying, tablet_offer_accepted_at, trial_started_at, tablet_sent_at")
     .order("created_at", { ascending: true });
 
   const businessIds = (businesses ?? []).map((b) => b.user_id);
@@ -87,7 +88,10 @@ export default async function OwnerOverviewPage() {
     // §trial-limits — same 14-day/150-call rule enforced live in
     // app/api/vapi/webhook/route.ts's handleAssistantRequest, recomputed
     // here just for display.
-    const daysSinceSignup = (Date.now() - new Date(b.created_at).getTime()) / 86400000;
+    // The trial runs from signup, or from the tablet's delivery date once a
+    // tablet has been posted (trial_started_at).
+    const trialStart = new Date(b.trial_started_at ?? b.created_at);
+    const daysSinceSignup = (Date.now() - trialStart.getTime()) / 86400000;
     const daysLeft = Math.max(0, Math.ceil(TRIAL_DAYS - daysSinceSignup));
     const trialStatus = b.is_paying
       ? { label: "Paying", tone: "moss" as const }
@@ -95,7 +99,23 @@ export default async function OwnerOverviewPage() {
         ? { label: "Trial — call limit reached", tone: "rust" as const }
         : daysSinceSignup > TRIAL_DAYS
           ? { label: "Trial — expired", tone: "rust" as const }
-          : { label: `Trial — ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`, tone: "amber" as const };
+          : daysSinceSignup < 0
+            ? {
+                label: `Trial starts ${trialStart.toLocaleDateString("en-AU", { day: "numeric", month: "short" })} (tablet arriving)`,
+                tone: "amber" as const,
+              }
+            : { label: `Trial — ${Math.min(TRIAL_DAYS, daysLeft)} day${daysLeft === 1 ? "" : "s"} left`, tone: "amber" as const };
+
+    // Ready for a tablet once they've saved their pricing: that's the sign
+    // they're really setting up, not just ticking the box.
+    const setupDone = pricingSet.has(b.user_id);
+    const tabletState = !b.tablet_offer_accepted_at
+      ? null
+      : b.tablet_sent_at
+        ? ("sent" as const)
+        : setupDone
+          ? ("to_send" as const)
+          : ("waiting" as const);
 
     return {
       ...b,
@@ -107,8 +127,25 @@ export default async function OwnerOverviewPage() {
       hasPricing: pricingSet.has(b.user_id) || !!b.starting_price,
       lastActivity,
       trialStatus,
+      setupDone,
+      tabletState,
     };
   });
+
+  // The short list of things only the owner can do, so nothing waits
+  // unnoticed while he's at work. Skips the owner's own account.
+  const others = stats.filter((b) => b.user_id !== user.id);
+  const needsYou = [
+    { label: "Tablets to post", names: others.filter((b) => b.tabletState === "to_send").map((b) => b.business_name) },
+    {
+      label: "Need a phone number",
+      names: others.filter((b) => !b.vapi_phone_number && !b.is_paying).map((b) => b.business_name),
+    },
+    {
+      label: "Trial over, not paying",
+      names: others.filter((b) => b.trialStatus.tone === "rust").map((b) => b.business_name),
+    },
+  ].filter((item) => item.names.length > 0);
 
   // §WorkRoute sales chat — people who left their details with Sarah on
   // workroute.com.au (lib/workroute-sales-ai.ts), matched by email against
@@ -145,6 +182,19 @@ export default async function OwnerOverviewPage() {
         <p className="mt-1 text-sm text-rig-700">
           {stats.length} business{stats.length === 1 ? "" : "es"} on WorkRoute.
         </p>
+
+        <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Needs you</h2>
+        {needsYou.length === 0 ? (
+          <p className="mt-3 rounded-lg bg-white p-4 text-sm text-rig-700/70 shadow-sm">Nothing waiting on you right now.</p>
+        ) : (
+          <div className="mt-3 space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+            {needsYou.map((item) => (
+              <p key={item.label} className="text-sm text-rig-900">
+                <b>{item.label}:</b> {item.names.join(", ")}
+              </p>
+            ))}
+          </div>
+        )}
 
         <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">What calls cost you</h2>
         {costError ? (
@@ -281,10 +331,22 @@ export default async function OwnerOverviewPage() {
                       {b.trialStatus.label}
                     </span>
                     {!b.is_paying && <MarkPayingButton businessId={b.user_id} />}
-                    {b.tablet_offer_accepted_at && (
+                    {b.tabletState === "waiting" && (
                       <span className="rounded-full bg-steel-500/15 px-2.5 py-1 font-medium text-steel-500">
-                        Tablet offer ·{" "}
-                        {new Date(b.tablet_offer_accepted_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
+                        Tablet wanted · waiting for them to finish setup
+                      </span>
+                    )}
+                    {b.tabletState === "to_send" && (
+                      <>
+                        <span className="rounded-full bg-amber-500/15 px-2.5 py-1 font-medium text-amber-600">
+                          Tablet to post
+                        </span>
+                        <TabletSentButton businessId={b.user_id} />
+                      </>
+                    )}
+                    {b.tabletState === "sent" && b.tablet_sent_at && (
+                      <span className="rounded-full bg-moss-500/10 px-2.5 py-1 font-medium text-moss-500">
+                        Tablet posted {new Date(b.tablet_sent_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })}
                       </span>
                     )}
                     <span
