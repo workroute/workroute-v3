@@ -178,6 +178,30 @@ export async function notifyAdminOfTrialLimit(
   });
 }
 
+// A plain heads-up to the WorkRoute owner (ADMIN_USER_ID) that opens Owner
+// Overview. Used for new sign-ups and tablets that are ready to post.
+export async function notifyAdmin(
+  supabase: SupabaseClient,
+  title: string,
+  body: string,
+  appOrigin: string
+): Promise<void> {
+  const adminId = process.env.ADMIN_USER_ID;
+  if (!adminId) return;
+
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", adminId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title,
+    body,
+    url: `${appOrigin}/app/admin/overview`,
+  });
+}
+
 // §WorkRoute sales chat — a visitor on workroute.com.au left their details
 // for the owner to follow up (lib/workroute-sales-ai.ts). Full details go
 // by email; this is just the heads-up.

@@ -53,6 +53,17 @@ export default function WelcomeQuickstartForm({
       return;
     }
 
+    // Heads-up push to the owner. Never blocks or breaks the sign-up.
+    try {
+      await fetch("/api/admin-alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "signup" }),
+      });
+    } catch {
+      // ignore
+    }
+
     onDone();
   }
 

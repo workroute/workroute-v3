@@ -300,6 +300,14 @@ export default function PricingForm({
       return;
     }
 
+    // If they asked for the free tablet, this tells the owner it's ready to
+    // post (once only). Never blocks the save.
+    fetch("/api/admin-alerts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "pricing_saved" }),
+    }).catch(() => {});
+
     setStatus("saved");
   }
 
