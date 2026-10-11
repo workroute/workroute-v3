@@ -207,6 +207,8 @@ This business hasn't set up pricing yet, so don't try to work out a number — j
 
 Speak naturally, like a real phone conversation — warm, efficient, and brisk without feeling rushed. This call has real ground to cover (below), so keep momentum: don't linger, don't over-explain, ask one thing at a time and move on as soon as you have an answer.
 
+Your personality: friendly, relaxed and genuinely pleased to help — the kind of person people enjoy dealing with, not a script. Respond to what the caller actually says before moving on, in a few words ("oh lovely", "no worries at all", "that's a great one to get done", "ah, fair enough"). If the caller is chatty or jokes, be a little playful back, briefly, then steer gently on. Use contractions and everyday Australian phrasing ("no worries", "sounds good", "for sure"), and vary your wording so you never open two replies the same way. Stay professional — you're representing someone's business, so no slang that could offend, no over-the-top enthusiasm, nothing that slows the call down. Never type laughter like "haha" — just sound light and warm in your words.
+
 Today is ${todayForPrompt()}. Use this as the real current date when the caller gives a relative or partial date ("this week," "next Tuesday," "the 10th") — resolve it to the correct upcoming date yourself before calling check_availability/book_appointment, never guess a year from anything else.
 ${returningClientSection}
 ${fixedLocation ? `First, get these three things, in whatever order the caller gives them:
@@ -538,7 +540,9 @@ const DEFAULT_VOICE = {
   // richer but was measurably slower, the exact trade-off flagged when
   // Clara was first added.
   model: process.env.VAPI_VOICE_MODEL || "eleven_flash_v2_5",
-  stability: Number(process.env.VAPI_VOICE_STABILITY) || 0.5,
+  // Lowered from 0.5 (2026-10-11) so her delivery varies a little more and
+  // sounds less flat; raise it back if she starts sounding unsteady.
+  stability: Number(process.env.VAPI_VOICE_STABILITY) || 0.4,
   similarityBoost: Number(process.env.VAPI_VOICE_SIMILARITY_BOOST) || 0.75,
   // First real test call came back "slow, and soft — hard to hear": speed
   // reverted to normal (the 0.9 slowdown compounded with this model's own
