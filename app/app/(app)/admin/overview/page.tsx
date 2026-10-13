@@ -31,7 +31,13 @@ export default async function OwnerOverviewPage() {
     notFound();
   }
 
-  const { data: businesses } = await supabase
+  // The owner check above has passed, so from here on this page reads every
+  // business with the server's own access. The database only lets a signed-in
+  // account read its own business, so the owner's normal login would see
+  // nothing but their own row.
+  const admin = createServiceRoleClient();
+
+  const { data: businesses } = await admin
     .from("business_profiles")
     .select("user_id, business_name, trade, first_name, created_at, vapi_phone_number, starting_price, is_paying, tablet_offer_accepted_at, trial_started_at, tablet_sent_at")
     .order("created_at", { ascending: true });
@@ -40,16 +46,16 @@ export default async function OwnerOverviewPage() {
 
   const [{ data: allJobs }, { data: pricingConfigs }, { data: allCalls }] = await Promise.all([
     businessIds.length
-      ? supabase
+      ? admin
           .from("jobs")
           .select("business_id, created_at, attention_priority")
           .in("business_id", businessIds)
       : Promise.resolve({ data: [] }),
     businessIds.length
-      ? supabase.from("trade_pricing_configs").select("business_id").in("business_id", businessIds)
+      ? admin.from("trade_pricing_configs").select("business_id").in("business_id", businessIds)
       : Promise.resolve({ data: [] }),
     businessIds.length
-      ? supabase
+      ? admin
           .from("phone_call_captures")
           .select("business_id, created_at")
           .in("business_id", businessIds)
@@ -167,7 +173,6 @@ export default async function OwnerOverviewPage() {
   // real sign-ups so the owner can see who's converted and who to chase.
   // Service-role on both: the leads table has no RLS policies, and auth
   // emails aren't readable any other way.
-  const admin = createServiceRoleClient();
   const [{ data: leadRows, error: leadsError }, { data: authData }] = await Promise.all([
     admin
       .from("workroute_sales_leads")

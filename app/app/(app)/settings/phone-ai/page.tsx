@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { isFixedLocationTrade } from "@/lib/trade-questions";
 import PhoneAiForm from "./phone-ai-form";
 import AdminNumberProvisioner from "./admin-number-provisioner";
@@ -34,7 +35,7 @@ export default async function PhoneAiSettingsPage() {
       .eq("business_id", user.id)
       .order("created_at", { ascending: true }),
     isAdmin
-      ? supabase
+      ? createServiceRoleClient()
           .from("business_profiles")
           .select("user_id, business_name, trade, city, vapi_phone_number")
           .order("business_name", { ascending: true })
