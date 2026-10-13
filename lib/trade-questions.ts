@@ -288,6 +288,10 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       label: "Service",
       type: "select",
       options: opts(["Mens cut", "Womens cut", "Kids cut", "Colour", "Cut and colour", "Foils / highlights", "Treatment", "Other"]),
+      // Most salon services cost more on longer hair, so each service's price
+      // starts out set per hair length (a tick on the Pricing page turns it
+      // off for services that cost the same whatever the length).
+      defaultVaryBy: "hair_length",
     },
     {
       id: "hair_length",

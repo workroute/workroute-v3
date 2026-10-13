@@ -45,8 +45,11 @@ function varyTargetFor(question: Question, questions: Question[]): Extract<Quest
 }
 
 function rowsForQuestion(question: Question, questions: Question[], simple: boolean): Row[] {
-  // simple (salons): a plain price list, so no "vary by another answer" option.
-  const hasDependencyCandidates = !simple && dependencyCandidates(questions, question.id).length > 0;
+  // simple (salons): a plain price list, so no free-choice "vary by another
+  // answer" dropdown. The one exception is a question with a named partner
+  // (a salon service by hair length), which gets the plain tick.
+  const hasDependencyCandidates =
+    (!simple || !!varyTargetFor(question, questions)) && dependencyCandidates(questions, question.id).length > 0;
   if (question.type === "select" || question.type === "multiselect") {
     return question.options.map((opt) => ({
       key: opt.value,
@@ -237,8 +240,10 @@ export default function PricingForm({
   // most confusing part of this page. It's always shown on a row that already
   // uses it, so an existing setting can never be hidden from whoever made it.
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const anyAllowsDependency = questions.some((q) =>
-    rowsForQuestion(q, questions, simple).some((r) => r.allowDependency)
+  // Questions with a named partner get their own tick instead, so they don't
+  // count towards showing the advanced-options checkbox.
+  const anyAllowsDependency = questions.some(
+    (q) => !varyTargetFor(q, questions) && rowsForQuestion(q, questions, simple).some((r) => r.allowDependency)
   );
 
   function updateRow(questionId: string, rowKey: string, patch: Partial<RowDraft>) {
@@ -318,6 +323,13 @@ export default function PricingForm({
           Type what you charge for each job and how long it takes. Anything listed after that is an <b>extra</b>{" "}
           that adds on top. Leave a box at 0 if it doesn&apos;t change the price, and tick &ldquo;Requires quote&rdquo;
           for anything you&apos;d rather price once you&apos;ve seen it.
+          {questions.some((q) => varyTargetFor(q, questions)) && (
+            <>
+              {" "}
+              Where a price changes with something else, like hair length, each service has a tick for it. Tick it
+              and you get a price and time for each option. Untick it for a service that costs the same either way.
+            </>
+          )}
         </p>
       )}
       {!simple && (
@@ -405,6 +417,19 @@ export default function PricingForm({
       {questions.map((q) => {
         const qRows = rowsForQuestion(q, questions, simple);
         if (qRows.length === 0) return null;
+        // A salon's hair length is priced inside each service (the tick on each
+        // service), so its own list is hidden, unless it already has a
+        // saved price on it, which must stay visible so it can't hide a charge.
+        if (
+          simple &&
+          questions.some((other) => other.defaultVaryBy === q.id) &&
+          qRows.every((row) => {
+            const d = rows[q.id]?.[row.key] ?? ZERO_ROW;
+            return !d.requiresQuote && !d.dependsOnQuestionId && d.priceDelta === 0 && d.durationDelta === 0;
+          })
+        ) {
+          return null;
+        }
         return (
           <div key={q.id} className="border-t border-rig-900/10 pt-4">
             <p className="font-mono text-xs uppercase tracking-widest text-steel-500">{q.label}</p>
