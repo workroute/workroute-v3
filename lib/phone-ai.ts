@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   TRADE_QUESTIONS,
+  questionsForBusiness,
   describePricingQuestionsForPrompt,
   describeAiClassifiedQuestionsForPrompt,
   describeAlwaysAskQuestionsForPrompt,
@@ -59,6 +60,9 @@ export type PhoneBusinessContext = {
   // Salons / massage: names a client can ask for. Optional so every other
   // PhoneBusinessContext builder (cron jobs, outbound calls) is unaffected.
   staffNames?: string[];
+  // Salons / massage: the business's own service list (business_profiles
+  // .custom_services), or null/absent for the built-in one.
+  customServices?: string[] | null;
   // §pronunciation-fixes — a business name, suburb, or trade term the
   // text-to-speech engine mispronounces, paired with a phonetic respelling
   // that comes out sounding right (e.g. "Woombye" → "Woom-bye"). Empty
@@ -164,7 +168,7 @@ function systemPrompt(
   const askRegularUpfront = !["Lawn Mowing", "Pool Cleaning", "Home Cleaning"].includes(business.trade) || !!matchedClient;
   const spokenBusinessName = applyPronunciationOverrides(business.businessName, business.pronunciationOverrides);
   const hasPricingQuestions = pricingQuestionIds.length > 0;
-  const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds);
+  const pricingQuestionsText = describePricingQuestionsForPrompt(business.trade, pricingQuestionIds, business.customServices);
   const aiClassifiedText = describeAiClassifiedQuestionsForPrompt(business.trade, pricingQuestionIds);
   const alwaysAskText = describeAlwaysAskQuestionsForPrompt(business.trade);
   const hasAlwaysAskQuestions = alwaysAskQuestionIds(business.trade).length > 0;
@@ -650,8 +654,8 @@ const OUTBOUND_END_CALL_PHRASE = "Thanks, have a great day!";
 // Deepgram's `keywords` field wants single tokens (word or word:intensifier
 // — see docs.vapi.ai/customization/custom-keywords), so multi-word labels
 // like "Side gate" get split into their individual words.
-function buildTranscriberKeywords(trade: string, serviceArea: string | null): string[] {
-  const questions = TRADE_QUESTIONS[trade] ?? [];
+function buildTranscriberKeywords(trade: string, serviceArea: string | null, customServices?: string[] | null): string[] {
+  const questions = questionsForBusiness(trade, customServices);
   const words = new Set<string>();
 
   // §48 — boosting "Lawn Mowing" only adds "lawn" and "mowing" verbatim —
@@ -769,7 +773,7 @@ export function buildAssistantConfig(
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea),
+      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
     },
   };
 }
@@ -828,7 +832,7 @@ export function buildOutboundAssistantConfig(business: PhoneBusinessContext, cli
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea),
+      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
     },
   };
 }
@@ -881,7 +885,7 @@ export function buildQuoteFollowupAssistantConfig(business: PhoneBusinessContext
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea),
+      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
     },
   };
 }
@@ -904,7 +908,7 @@ export function buildPaymentChaseAssistantConfig(business: PhoneBusinessContext,
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea),
+      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
     },
   };
 }

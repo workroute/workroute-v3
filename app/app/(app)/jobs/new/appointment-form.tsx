@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { TRADE_QUESTIONS, staffPreference } from "@/lib/trade-questions";
+import { questionsForBusiness, staffPreference } from "@/lib/trade-questions";
 import { computeEstimate, type TradePricingConfig } from "@/lib/trade-pricing";
 import TradeQuestionField from "./trade-question-field";
 import ClientSearch, { type ClientOption } from "./client-search";
@@ -45,6 +45,7 @@ export default function AppointmentForm({
   trade,
   pricingConfig,
   staffNames,
+  customServices,
   initialClient = null,
   initialAnswers = {},
   initialDate,
@@ -54,13 +55,14 @@ export default function AppointmentForm({
   trade: string;
   pricingConfig: TradePricingConfig | null;
   staffNames: string[];
+  customServices?: string[] | null;
   initialClient?: InitialClient;
   initialAnswers?: Record<string, any>;
   // Set when arriving from a tapped slot on the Appointments day view.
   initialDate?: string;
   initialTime?: string;
 }) {
-  const questions = TRADE_QUESTIONS[trade] ?? [];
+  const questions = questionsForBusiness(trade, customServices);
   const pref = staffPreference(trade);
 
   const [clientMode, setClientMode] = useState<"search" | "picked">(initialClient ? "picked" : "search");

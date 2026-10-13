@@ -23,7 +23,7 @@ export default async function NewJobPage({
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("trade, business_name, staff_names")
+    .select("trade, business_name, staff_names, custom_services")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -110,6 +110,7 @@ export default async function NewJobPage({
               trade={profile.trade}
               pricingConfig={pricingConfig}
               staffNames={profile.staff_names ?? []}
+              customServices={Array.isArray(profile.custom_services) ? profile.custom_services : null}
               initialClient={clientForForm}
               initialAnswers={previousAnswers}
               initialDate={/^\d{4}-\d{2}-\d{2}$/.test(searchParams.date ?? "") ? searchParams.date : undefined}

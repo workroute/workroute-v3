@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { TRADE_QUESTIONS, isFixedLocationTrade, usesPriceList } from "@/lib/trade-questions";
+import { questionsForBusiness, customServiceQuestionId, usesPriceList } from "@/lib/trade-questions";
 import type { TradePricingConfig } from "@/lib/trade-pricing";
 import PricingForm from "./pricing-form";
 
@@ -18,14 +18,16 @@ export default async function PricingPage() {
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("trade")
+    .select("trade, custom_services")
     .eq("user_id", user.id)
     .maybeSingle();
 
   const trade = profile?.trade ?? "";
   // Questions Sarah asks only as a heads-up (gates, pets) never change the
   // price, so they don't belong on the pricing screen at all.
-  const questions = (TRADE_QUESTIONS[trade] ?? []).filter((q) => !q.alwaysAsk);
+  // A salon's own service list (if it has set one) replaces the built-in one.
+  const customServices = Array.isArray(profile?.custom_services) ? (profile?.custom_services as string[]) : null;
+  const questions = questionsForBusiness(trade, customServices).filter((q) => !q.alwaysAsk);
 
   const { data: existingConfig } = await supabase
     .from("trade_pricing_configs")
@@ -72,6 +74,7 @@ export default async function PricingPage() {
               questions={questions}
               initialConfig={initialConfig}
               simple={usesPriceList(trade)}
+              customServiceQuestionId={customServiceQuestionId(trade)}
             />
           ) : (
             <p className="text-sm text-rig-700">

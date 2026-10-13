@@ -351,6 +351,30 @@ export const TRADE_NAMES = Object.keys(TRADE_QUESTIONS);
 // at the same time. Everything else is a mobile trade, exactly as before.
 export const FIXED_LOCATION_TRADES = new Set(["Hairdressing", "Massage"]);
 
+// Trades where the business sets up its own list of services (business_profiles
+// .custom_services) in place of the built-in options, and the id of the select
+// question that list replaces.
+const CUSTOM_SERVICE_QUESTION: Record<string, string> = {
+  Hairdressing: "service",
+  Massage: "massage_type",
+};
+
+export function customServiceQuestionId(trade: string | null | undefined): string | null {
+  return (trade && CUSTOM_SERVICE_QUESTION[trade]) || null;
+}
+
+// The trade's questions with the business's own service list swapped in, if it
+// has one. A service's name is also its value, so saved prices and booked jobs
+// keep matching by name.
+export function questionsForBusiness(trade: string, customServices?: string[] | null): Question[] {
+  const base = TRADE_QUESTIONS[trade] ?? [];
+  const questionId = customServiceQuestionId(trade);
+  if (!questionId || !customServices || customServices.length === 0) return base;
+  return base.map((q) =>
+    q.id === questionId && q.type === "select" ? { ...q, options: opts(customServices) } : q
+  );
+}
+
 // The trade_answers key and spoken word for "ask for a particular person" —
 // null for mobile trades, which have no staff picker.
 export function staffPreference(trade: string | null | undefined): { questionId: string; role: string } | null {
@@ -403,8 +427,8 @@ function formatQuestionList(questions: Question[]): string {
     .join("; ");
 }
 
-export function describeQuestionsForPrompt(trade: string): string {
-  return formatQuestionList(TRADE_QUESTIONS[trade] ?? []);
+export function describeQuestionsForPrompt(trade: string, customServices?: string[] | null): string {
+  return formatQuestionList(questionsForBusiness(trade, customServices));
 }
 
 // §phone-AI-depth — same exact-value-matching purpose as describeQuestionsForPrompt
@@ -415,12 +439,16 @@ export function describeQuestionsForPrompt(trade: string): string {
 // full generic question set — asking through every question regardless of
 // whether it affects price is exactly what made an earlier version of the
 // phone AI slow and frustrating on real calls.
-export function describePricingQuestionsForPrompt(trade: string, pricingQuestionIds: string[]): string {
+export function describePricingQuestionsForPrompt(
+  trade: string,
+  pricingQuestionIds: string[],
+  customServices?: string[] | null
+): string {
   const idSet = new Set(pricingQuestionIds);
   // §brand-tier — an aiClassifiedFrom question is never asked directly, so
   // it's excluded here and surfaced instead via
   // describeAiClassifiedQuestionsForPrompt below.
-  const questions = (TRADE_QUESTIONS[trade] ?? []).filter((q) => idSet.has(q.id) && !q.aiClassifiedFrom);
+  const questions = questionsForBusiness(trade, customServices).filter((q) => idSet.has(q.id) && !q.aiClassifiedFrom);
   return formatQuestionList(questions);
 }
 

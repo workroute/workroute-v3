@@ -213,27 +213,56 @@ function computeExampleTotal(
 export default function PricingForm({
   businessId,
   trade,
-  questions,
+  questions: baseQuestions,
   initialConfig,
   simple = false,
+  customServiceQuestionId = null,
 }: {
   businessId: string;
   trade: string;
   questions: Question[];
   initialConfig: TradePricingConfig | null;
+  // Salons / massage: the id of the question whose options are the business's
+  // own editable list of services. null for every other trade.
+  customServiceQuestionId?: string | null;
   // Salons / massage: shown as a plain price list (a price and a time for each
   // service) instead of base price + adjustments. Same numbers underneath.
   simple?: boolean;
 }) {
+  // The business's own list of services (salons / massage), editable here. A
+  // service's name is also the key its price is saved under, so renaming moves
+  // its price along with it.
+  const serviceQuestion = baseQuestions.find((q) => q.id === customServiceQuestionId);
+  const [serviceLabels, setServiceLabels] = useState<string[]>(() =>
+    serviceQuestion && serviceQuestion.type === "select" ? serviceQuestion.options.map((o) => o.value) : []
+  );
+  const [newServiceName, setNewServiceName] = useState("");
+  const [serviceError, setServiceError] = useState("");
+  const questions: Question[] = customServiceQuestionId
+    ? baseQuestions.map((q) =>
+        q.id === customServiceQuestionId && q.type === "select"
+          ? { ...q, options: serviceLabels.map((label) => ({ value: label, label })) }
+          : q
+      )
+    : baseQuestions;
+
   const mainQuestionId = questions.find((q) => q.type === "select")?.id;
   const [basePrice, setBasePrice] = useState(initialConfig?.basePrice ?? 0);
   const [baseDurationMinutes, setBaseDurationMinutes] = useState(initialConfig?.baseDurationMinutes ?? 0);
-  const [rows, setRows] = useState(() => hydrate(questions, initialConfig));
-  const [exampleSelections, setExampleSelections] = useState(() => defaultExampleSelections(questions));
+  const [rows, setRows] = useState(() => hydrate(baseQuestions, initialConfig));
+  const [exampleSelections, setExampleSelections] = useState(() => defaultExampleSelections(baseQuestions));
+
+  // If the example's chosen service was renamed or removed, fall back to the first one.
+  const effectiveSelections: ExampleSelections =
+    customServiceQuestionId &&
+    serviceLabels.length > 0 &&
+    !serviceLabels.includes(exampleSelections[customServiceQuestionId] as string)
+      ? { ...exampleSelections, [customServiceQuestionId]: serviceLabels[0] }
+      : exampleSelections;
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const example = computeExampleTotal(basePrice, baseDurationMinutes, questions, rows, exampleSelections);
+  const example = computeExampleTotal(basePrice, baseDurationMinutes, questions, rows, effectiveSelections);
 
   // The "Vary by" dropdown (an option whose price changes depending on another
   // answer) is hidden until asked for: most tradies never need it and it's the
@@ -245,6 +274,76 @@ export default function PricingForm({
   const anyAllowsDependency = questions.some(
     (q) => !varyTargetFor(q, questions) && rowsForQuestion(q, questions, simple).some((r) => r.allowDependency)
   );
+
+  // Renaming, adding and removing services. Names must be non-empty and unique
+  // (ignoring capitals); a new service starts the same way a first-time service
+  // does (priced by hair length where that applies).
+  function serviceNameProblem(name: string, ignoreIndex: number | null): string {
+    if (!name) return "A service needs a name.";
+    if (name.length > 60) return "Keep service names under 60 characters.";
+    if (serviceLabels.some((l, i) => i !== ignoreIndex && l.toLowerCase() === name.toLowerCase())) {
+      return `You already have a service called "${name}".`;
+    }
+    return "";
+  }
+
+  function newServiceRow(): RowDraft {
+    const q = questions.find((x) => x.id === customServiceQuestionId);
+    const target = q ? varyTargetFor(q, questions) : undefined;
+    if (!target) return ZERO_ROW;
+    const zeros = Object.fromEntries(target.options.map((o) => [o.value, { priceDelta: 0, durationDelta: 0 }]));
+    return { ...ZERO_ROW, dependsOnQuestionId: target.id, dependentValues: zeros };
+  }
+
+  function addService() {
+    if (!customServiceQuestionId) return;
+    const name = newServiceName.trim();
+    const problem = serviceNameProblem(name, null);
+    if (problem) return setServiceError(problem);
+    if (serviceLabels.length >= 40) return setServiceError("That's the most services we can hold (40).");
+    setServiceError("");
+    setServiceLabels((prev) => [...prev, name]);
+    setRows((prev) => ({
+      ...prev,
+      [customServiceQuestionId]: { ...prev[customServiceQuestionId], [name]: newServiceRow() },
+    }));
+    setNewServiceName("");
+  }
+
+  function renameService(index: number, input: HTMLInputElement) {
+    if (!customServiceQuestionId) return;
+    const old = serviceLabels[index];
+    const name = input.value.trim();
+    if (name === old) return;
+    const problem = serviceNameProblem(name, index);
+    if (problem) {
+      setServiceError(problem);
+      input.value = old;
+      return;
+    }
+    setServiceError("");
+    setServiceLabels((prev) => prev.map((l, i) => (i === index ? name : l)));
+    setRows((prev) => {
+      const questionRows = { ...prev[customServiceQuestionId] };
+      questionRows[name] = questionRows[old] ?? ZERO_ROW;
+      delete questionRows[old];
+      return { ...prev, [customServiceQuestionId]: questionRows };
+    });
+  }
+
+  function removeService(index: number) {
+    if (!customServiceQuestionId) return;
+    if (serviceLabels.length <= 1) return setServiceError("Keep at least one service.");
+    const name = serviceLabels[index];
+    if (!window.confirm(`Remove "${name}" from your services? Past bookings keep their details.`)) return;
+    setServiceError("");
+    setServiceLabels((prev) => prev.filter((_, i) => i !== index));
+    setRows((prev) => {
+      const questionRows = { ...prev[customServiceQuestionId] };
+      delete questionRows[name];
+      return { ...prev, [customServiceQuestionId]: questionRows };
+    });
+  }
 
   function updateRow(questionId: string, rowKey: string, patch: Partial<RowDraft>) {
     setRows((prev) => ({
@@ -287,6 +386,20 @@ export default function PricingForm({
     }
 
     const supabase = createClient();
+
+    // The service list lives on the business, the prices in the pricing config.
+    if (customServiceQuestionId) {
+      const { error: servicesError } = await supabase
+        .from("business_profiles")
+        .update({ custom_services: serviceLabels })
+        .eq("user_id", businessId);
+      if (servicesError) {
+        setStatus("error");
+        setErrorMessage(servicesError.message);
+        return;
+      }
+    }
+
     const { error } = await supabase.from("trade_pricing_configs").upsert(
       {
         business_id: businessId,
@@ -451,7 +564,27 @@ export default function PricingForm({
                 return (
                   <div key={row.key} className="rounded border border-rig-700/10 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-rig-900">{row.label}</p>
+                      {q.id === customServiceQuestionId ? (
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <input
+                            key={row.key}
+                            defaultValue={row.label}
+                            onBlur={(e) => renameService(serviceLabels.indexOf(row.key), e.currentTarget)}
+                            aria-label="Service name"
+                            maxLength={60}
+                            className="field-input min-w-0 flex-1 !py-1 text-sm font-medium"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeService(serviceLabels.indexOf(row.key))}
+                            className="whitespace-nowrap text-xs font-medium text-rust-500 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-medium text-rig-900">{row.label}</p>
+                      )}
                       <div className="flex items-center gap-3">
                         {row.allowDependency && varyTarget && !draft.requiresQuote && (
                           <label className="flex items-center gap-2 text-xs text-rig-700">
@@ -591,6 +724,33 @@ export default function PricingForm({
                 );
               })}
             </div>
+            {q.id === customServiceQuestionId && (
+              <div className="mt-3">
+                <div className="flex gap-2">
+                  <input
+                    value={newServiceName}
+                    onChange={(e) => setNewServiceName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addService();
+                      }
+                    }}
+                    maxLength={60}
+                    placeholder="Add a service, e.g. Balayage"
+                    className="field-input flex-1 text-sm"
+                  />
+                  <button type="button" onClick={addService} className="btn-secondary whitespace-nowrap text-xs">
+                    Add service
+                  </button>
+                </div>
+                {serviceError && <p className="mt-2 text-xs text-rust-500">{serviceError}</p>}
+                <p className="mt-2 text-xs text-rig-700/70">
+                  These are the services Sarah offers. Rename or remove any of them, or add your own. Tap
+                  &ldquo;Save pricing&rdquo; at the bottom to keep your changes.
+                </p>
+              </div>
+            )}
           </div>
         );
       })}
@@ -609,7 +769,7 @@ export default function PricingForm({
                 <div key={q.id}>
                   <label className="text-xs font-medium text-rig-700">{q.label}</label>
                   <select
-                    value={(exampleSelections[q.id] as string) ?? ""}
+                    value={(effectiveSelections[q.id] as string) ?? ""}
                     onChange={(e) => setExampleSelections((prev) => ({ ...prev, [q.id]: e.target.value }))}
                     className="field-input mt-1"
                   >

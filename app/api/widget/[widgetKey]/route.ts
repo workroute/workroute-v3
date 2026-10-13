@@ -86,7 +86,7 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("user_id, business_name, first_name, trade")
+    .select("user_id, business_name, first_name, trade, custom_services")
     .eq("widget_key", params.widgetKey)
     .maybeSingle();
 
@@ -127,7 +127,13 @@ export async function POST(request: Request, { params }: { params: { widgetKey: 
   const appOrigin = new URL(request.url).origin;
   const result = await generateWidgetReply(
     supabase,
-    { businessId: profile.user_id, businessName: profile.business_name, firstName: profile.first_name, trade: profile.trade },
+    {
+      businessId: profile.user_id,
+      businessName: profile.business_name,
+      firstName: profile.first_name,
+      trade: profile.trade,
+      customServices: Array.isArray(profile.custom_services) ? profile.custom_services : null,
+    },
     sessionId,
     existingCapture?.job_id ?? null,
     transcript,

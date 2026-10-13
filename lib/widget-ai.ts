@@ -22,6 +22,8 @@ export type WidgetBusinessContext = {
   businessName: string;
   firstName: string | null;
   trade: string;
+  // Salons / massage: the business's own service list, or null for the built-in one.
+  customServices?: string[] | null;
 };
 
 export type WidgetHistoryItem = { sender: "visitor" | "ai"; body: string };
@@ -62,7 +64,7 @@ function todayForPrompt(): string {
 
 function systemPrompt(business: WidgetBusinessContext): string {
   const tradieName = business.firstName ?? "the team";
-  const questionDescriptions = describeQuestionsForPrompt(business.trade);
+  const questionDescriptions = describeQuestionsForPrompt(business.trade, business.customServices);
 
   return `You are Sarah, the AI Office Manager for ${business.businessName} — chatting with a visitor on ${business.businessName}'s own website. Never mention "WorkRoute" in any form; you work for ${business.businessName}, not a platform. If asked directly whether you're an AI, don't deny it — but don't lead with it either.
 
