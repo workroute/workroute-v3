@@ -29,6 +29,11 @@ function welcomeEmailHtml(firstName: string | null): string {
         </a>
       </p>
       <p style="font-size: 15px; line-height: 1.6;">
+        One more quick win: when someone messages your Facebook or Instagram, you can have it reply straight
+        away with a link to book themselves in. We've written the reply for you, just
+        <a href="https://app.workroute.com.au/app/settings/website-chat" style="color:#F2A900;">copy and paste it</a>.
+      </p>
+      <p style="font-size: 15px; line-height: 1.6;">
         Any questions, just reply to this email.
       </p>
     </div>
