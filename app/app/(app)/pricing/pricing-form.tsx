@@ -565,7 +565,7 @@ export default function PricingForm({
                   <div key={row.key} className="rounded border border-rig-700/10 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       {q.id === customServiceQuestionId ? (
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <div className="flex w-full min-w-0 items-center gap-3">
                           <input
                             key={row.key}
                             defaultValue={row.label}
