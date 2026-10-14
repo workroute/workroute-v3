@@ -23,13 +23,13 @@ import { JsonLd, ORGANIZATION, SOFTWARE, WEBSITE, faqPage } from "./_site/jsonld
 import { DEMO_PHONE_DISPLAY, DEMO_PHONE_TEL, Eyebrow, Icon, SIGNUP_HREF, SectionHeading } from "./_site/ui";
 
 export const metadata: Metadata = {
-  title: "WorkRoute | AI receptionist for tradies and local services",
+  title: "WorkRoute | AI receptionist for tradies, salons and local services",
   alternates: { canonical: "/" },
   description:
     "Sarah answers every call, quotes a real price and books a real time in your diary. Built for tradies, hairdressers, massage and other local services. 14-day free trial.",
   openGraph: {
     title: "WorkRoute | You do the work. Sarah runs the office.",
-    description: "An AI receptionist and diary for tradies and local services. Never miss a booking.",
+    description: "An AI receptionist and diary for tradies, salons and local services. Never miss a booking.",
     type: "website",
   },
 };
@@ -105,7 +105,7 @@ export default async function HomePage() {
           <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-10 h-96 w-96 rounded-full bg-brand-sky/20 blur-3xl" />
           <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr,0.95fr] lg:py-24">
             <div>
-              <Eyebrow light>AI receptionist for tradies and local services</Eyebrow>
+              <Eyebrow light>AI receptionist for tradies, salons and local services</Eyebrow>
               <h1 className="mt-4 font-display text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
                 You do the work.
                 <br />
@@ -116,7 +116,7 @@ export default async function HomePage() {
                 diary and keeps clients in the loop, while you cut, mow, landscape, clean or fix.
               </p>
               <p className="mt-3 max-w-xl text-lg font-medium leading-relaxed text-white">
-                Sarah picks up the call and books the job straight away, so your customer never waits for a text back.
+                Sarah picks up the call and books the appointment or job straight away, so your customer never waits for a text back.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -135,6 +135,12 @@ export default async function HomePage() {
                 </a>
               </div>
               <p className="mt-4 text-sm text-white/60">14-day free trial · No lock-in · Australian voice</p>
+              <p className="mt-2 text-sm text-white/60">
+                Hairdresser, barber or massage?{" "}
+                <Link href="/for/hairdressers" className="font-medium text-white underline underline-offset-2 hover:text-brand-sky">
+                  See how it works for you
+                </Link>
+              </p>
             </div>
 
             <Demo />

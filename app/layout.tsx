@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   // Google treats workroute.com.au (not app.workroute.com.au) as the real one.
   metadataBase: new URL("https://workroute.com.au"),
   title: "WorkRoute",
-  description: "An AI receptionist and diary for tradies and local services. Never miss a booking.",
+  description: "An AI receptionist and diary for tradies, salons and local services. Never miss a booking.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
