@@ -36,6 +36,13 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
   const [results, setResults] = useState<AvailableNumber[]>([]);
   const [balance, setBalance] = useState<number | null>(null);
 
+  // "I bought this on DIDLogic myself": adds a hand-bought number to the stock.
+  const [adoptNumber, setAdoptNumber] = useState("");
+  const [adoptUser, setAdoptUser] = useState("");
+  const [adoptPassword, setAdoptPassword] = useState("");
+  const [adopting, setAdopting] = useState(false);
+  const [adoptResult, setAdoptResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   const [buyingId, setBuyingId] = useState<number | null>(null);
   const [buyResult, setBuyResult] = useState<{ ok: boolean; message: string } | null>(null);
 
@@ -62,6 +69,27 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
     setResults(data.numbers ?? []);
     setBalance(data.balance ?? null);
     setSearchStatus("done");
+  }
+
+  async function handleAdopt(e: React.FormEvent) {
+    e.preventDefault();
+    setAdopting(true);
+    setAdoptResult(null);
+    const res = await fetch("/api/admin/phone-numbers/adopt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ number: adoptNumber, sipUsername: adoptUser, sipPassword: adoptPassword }),
+    });
+    const data = await res.json();
+    setAdopting(false);
+    if (!data.ok) {
+      setAdoptResult({ ok: false, message: data.step ? `Failed at "${data.step}": ${data.error}` : data.error });
+      return;
+    }
+    setAdoptResult({ ok: true, message: `${data.number} is in your spare stock. The next sign-up will get it automatically.` });
+    setAdoptNumber("");
+    setAdoptUser("");
+    setAdoptPassword("");
   }
 
   async function handleBuy(n: AvailableNumber) {
@@ -185,6 +213,64 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
           </table>
         </div>
       )}
+
+      <details className="mt-6 rounded-lg border border-rig-900/10 p-4">
+        <summary className="cursor-pointer text-sm font-medium text-steel-500">
+          Bought a number on DIDLogic yourself? Add it to your stock
+        </summary>
+        <p className="mt-2 text-xs text-rig-700/70">
+          Use this if the buy button above says &ldquo;Access denied&rdquo;. Buy the number on DIDLogic&apos;s own site,
+          make a SIP login for it there and point the number at that login, then enter the number and the login here.
+          It gets connected to Vapi and added to your spare stock.
+        </p>
+        <form onSubmit={handleAdopt} className="mt-3 space-y-3">
+          <div>
+            <label className="field-label">The number</label>
+            <input
+              value={adoptNumber}
+              onChange={(e) => setAdoptNumber(e.target.value)}
+              className="field-input"
+              placeholder="+61 7 1234 5678"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="field-label">SIP username</label>
+              <input
+                value={adoptUser}
+                onChange={(e) => setAdoptUser(e.target.value)}
+                className="field-input"
+                autoComplete="off"
+                required
+              />
+            </div>
+            <div>
+              <label className="field-label">SIP password</label>
+              <input
+                type="password"
+                value={adoptPassword}
+                onChange={(e) => setAdoptPassword(e.target.value)}
+                className="field-input"
+                autoComplete="new-password"
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" disabled={adopting} className="btn-secondary text-sm">
+            {adopting ? "Adding…" : "Add to my stock"}
+          </button>
+        </form>
+        {adoptResult && (
+          <p
+            className={`mt-3 rounded px-3 py-2 text-sm ${
+              adoptResult.ok ? "bg-moss-500/10 text-moss-500" : "bg-rust-500/10 text-rust-500"
+            }`}
+          >
+            {adoptResult.message}
+          </p>
+        )}
+      </details>
     </div>
   );
 }
