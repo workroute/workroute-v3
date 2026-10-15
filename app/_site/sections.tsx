@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Script from "next/script";
 import { WORKROUTE_SALES_WIDGET_KEY } from "@/lib/workroute-sales-ai";
+import { FAIR_USE_CALLS_PER_MONTH } from "@/lib/fair-use-config";
 import { DEMO_PHONE_DISPLAY, DEMO_PHONE_TEL, Icon, LOGIN_HREF, Logo, SIGNUP_HREF, SectionHeading } from "./ui";
 
 // Sections shared by the homepage and every /for/<trade> page, so they can't
@@ -87,6 +88,9 @@ export function PricingSection() {
               $199<span className="text-lg font-medium text-brand-ink/60"> / month</span>
             </p>
             <p className="mt-2 text-sm text-brand-ink/70">Everything included, on one simple monthly subscription.</p>
+            <p className="mt-1 text-xs text-brand-ink/60">
+              Includes up to {FAIR_USE_CALLS_PER_MONTH} calls a month. Busier than that? We&apos;ll talk to you first, never a surprise bill.
+            </p>
             <ul className="mt-6 space-y-2.5 text-sm text-brand-ink/80">
               {["Sarah answering calls, chat and texts", "Real prices and booking", "Route planning, invoices and review requests", "Every feature listed above"].map((t) => (
                 <li key={t} className="flex gap-2.5">

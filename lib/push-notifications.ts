@@ -151,6 +151,60 @@ export async function notifyTradieApproachingTrialLimit(
   });
 }
 
+// §fair-usage — a paying business nearing, or past, its monthly call
+// allowance (lib/fair-use.ts). Friendly on purpose: Sarah keeps answering, and
+// nothing is charged without talking first.
+export async function notifyTradieFairUse(
+  supabase: SupabaseClient,
+  businessId: string,
+  used: number,
+  limit: number,
+  appOrigin: string,
+  reached: boolean
+): Promise<void> {
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", businessId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: reached ? "Busy month, Sarah's still answering" : "A busy month so far",
+    body: reached
+      ? `Sarah has answered ${used} calls this month. Your plan includes about ${limit}. She's still taking every call, and we'll be in touch to make sure your plan fits.`
+      : `Sarah has answered ${used} calls this month. Your plan includes about ${limit}, and she's still taking every call.`,
+    url: `${appOrigin}/app/settings`,
+  });
+}
+
+// §fair-usage — the owner's own heads-up for the same event, so he can reach
+// out before it becomes an issue.
+export async function notifyAdminFairUse(
+  supabase: SupabaseClient,
+  tradieBusinessName: string,
+  used: number,
+  limit: number,
+  appOrigin: string,
+  reached: boolean
+): Promise<void> {
+  const adminId = process.env.ADMIN_USER_ID;
+  if (!adminId) return;
+
+  const { data: subs } = await supabase
+    .from("owner_push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("business_id", adminId);
+  if (!subs?.length) return;
+
+  await sendToAll(supabase, "owner_push_subscriptions", subs, {
+    title: reached ? "Fair usage limit reached" : "Nearing the fair usage limit",
+    body: reached
+      ? `${tradieBusinessName} has had ${used} calls this month (limit ${limit}). Sarah's still answering. Time for a friendly chat.`
+      : `${tradieBusinessName} has had ${used} of ${limit} calls this month.`,
+    url: `${appOrigin}/app/admin/overview`,
+  });
+}
+
 // §trial-limits — deliberately notifies the WorkRoute owner (ADMIN_USER_ID),
 // not the tradie whose trial just ran out. Same shape as
 // notifyOwnerVoiceFailure above, just pointed at a different business_id —

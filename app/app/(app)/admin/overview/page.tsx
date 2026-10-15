@@ -6,6 +6,8 @@ import { totalCallCosts, COST_ESTIMATES, type CallCostRow } from "@/lib/call-cos
 import MarkPayingButton from "./mark-paying-button";
 import TabletSentButton from "./tablet-sent-button";
 import NumberButton from "./number-button";
+import { FAIR_USE_CALLS_PER_MONTH, FAIR_USE_WARNING_AT } from "@/lib/fair-use-config";
+import { brisbaneMonth } from "@/lib/fair-use";
 
 const TRIAL_DAYS = 14;
 const TRIAL_CALL_CAP = 150;
@@ -57,7 +59,7 @@ export default async function OwnerOverviewPage() {
     businessIds.length
       ? admin
           .from("phone_call_captures")
-          .select("business_id, created_at")
+          .select("business_id, created_at, call_purpose")
           .in("business_id", businessIds)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
@@ -99,6 +101,11 @@ export default async function OwnerOverviewPage() {
   const stats = (businesses ?? []).map((b) => {
     const jobs = (allJobs ?? []).filter((j) => j.business_id === b.user_id);
     const calls = (allCalls ?? []).filter((c) => c.business_id === b.user_id);
+    // Inbound calls this calendar month, against the fair usage allowance.
+    const monthStartMs = new Date(brisbaneMonth().startIso).getTime();
+    const monthCalls = calls.filter(
+      (c) => c.call_purpose === "inbound" && new Date(c.created_at).getTime() >= monthStartMs
+    ).length;
     const jobsThisWeek = jobs.filter((j) => new Date(j.created_at).getTime() > weekAgo).length;
     const needsAttention = jobs.filter((j) => j.attention_priority !== null).length;
     const lastActivity = [jobs[0]?.created_at, calls[0]?.created_at].filter(Boolean).sort().reverse()[0] ?? null;
@@ -147,6 +154,7 @@ export default async function OwnerOverviewPage() {
       trialStatus,
       setupDone,
       tabletState,
+      monthCalls,
     };
   });
 
@@ -364,6 +372,11 @@ export default async function OwnerOverviewPage() {
                       {b.trialStatus.label}
                     </span>
                     {!b.is_paying && <MarkPayingButton businessId={b.user_id} />}
+                    {b.is_paying && b.monthCalls >= Math.ceil(FAIR_USE_CALLS_PER_MONTH * FAIR_USE_WARNING_AT) && (
+                      <span className="rounded-full bg-rust-500/10 px-2.5 py-1 font-medium text-rust-500">
+                        {b.monthCalls >= FAIR_USE_CALLS_PER_MONTH ? "Over fair usage" : "Nearing fair usage"}
+                      </span>
+                    )}
                     {b.tabletState === "waiting" && (
                       <span className="rounded-full bg-steel-500/15 px-2.5 py-1 font-medium text-steel-500">
                         Tablet wanted · waiting for them to finish setup
@@ -415,6 +428,11 @@ export default async function OwnerOverviewPage() {
                   <span>
                     <b className="text-rig-900">{b.totalCalls}</b> calls total
                   </span>
+                  {b.is_paying && (
+                    <span>
+                      <b className="text-rig-900">{b.monthCalls}</b> of {FAIR_USE_CALLS_PER_MONTH} calls this month
+                    </span>
+                  )}
                   {b.monthCosts.calls > 0 && (
                     <span>
                       This month: <b className="text-rig-900">{b.monthCosts.minutes.toFixed(1)}</b> min ·{" "}

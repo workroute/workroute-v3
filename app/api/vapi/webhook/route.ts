@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkFairUse } from "@/lib/fair-use";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   buildAssistantConfig,
@@ -334,6 +335,9 @@ async function handleEndOfCallReport(supabase: SupabaseClient, message: any, app
   } catch (error) {
     console.error("[vapi-webhook] call cost tracking failed —", error);
   }
+
+  // §fair-usage — after the call, never during it, so it can't slow one down.
+  await checkFairUse(supabase, capture.business_id, appOrigin);
 
   // §25 — a broken voice ID doesn't error, it just goes dead-air (see
   // isVoiceFailure's comment in lib/phone-ai.ts) — surface it loudly here
