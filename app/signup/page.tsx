@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { TABLET_OFFER_PARAGRAPHS, TABLET_OFFER_VERSION } from "@/lib/tablet-offer";
+import { TABLET_OFFER_ENABLED, TABLET_OFFER_PARAGRAPHS, TABLET_OFFER_VERSION } from "@/lib/tablet-offer";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -26,7 +26,7 @@ export default function SignupPage() {
         // Carried on the account until the business profile is created on the
         // welcome screen, which copies it onto the business (see
         // app/app/welcome/page.tsx).
-        data: tabletOffer
+        data: TABLET_OFFER_ENABLED && tabletOffer
           ? { tablet_offer_accepted_at: new Date().toISOString(), tablet_offer_version: TABLET_OFFER_VERSION }
           : undefined,
       },
@@ -97,6 +97,7 @@ export default function SignupPage() {
                 />
               </div>
 
+              {TABLET_OFFER_ENABLED && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
                 <label className="flex items-start gap-2 text-sm text-rig-900">
                   <input
@@ -119,6 +120,7 @@ export default function SignupPage() {
                   </div>
                 </details>
               </div>
+              )}
 
               {status === "error" && (
                 <p className="rounded bg-rust-500/10 px-3 py-2 text-sm text-rust-500">

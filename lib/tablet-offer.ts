@@ -2,6 +2,12 @@
 // changes, bump TABLET_OFFER_VERSION so each acceptance records exactly which
 // version of the offer that person agreed to.
 
+// Whether the tablet tick box is shown on the sign-up page. Turned off
+// 2026-10-16: the tablet is now offered by hand, case by case, as a sweetener
+// for someone on the fence, rather than to everyone who signs up. Set to true
+// to bring the tick box back (the rest of the tablet tracking still works).
+export const TABLET_OFFER_ENABLED = false;
+
 export const TABLET_OFFER_VERSION = "2026-10-09";
 
 export const TABLET_OFFER_VALUE = 174;
