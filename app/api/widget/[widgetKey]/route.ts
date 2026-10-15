@@ -36,11 +36,15 @@ const PER_SESSION_WINDOW_MS = 30 * 60 * 1000;
 const PER_SESSION_MAX = 20;
 const PER_BUSINESS_WINDOW_MS = 60 * 60 * 1000;
 const PER_BUSINESS_MAX = 150;
+// WorkRoute's own sales chat is public and every message costs money, so it
+// gets a lower hourly cap than a tradie's widget.
+const SALES_CHAT_PER_HOUR_MAX = 60;
 
 async function isRateLimited(
   supabase: ReturnType<typeof createServiceRoleClient>,
   businessId: string,
-  sessionId: string
+  sessionId: string,
+  businessMax: number = PER_BUSINESS_MAX
 ): Promise<boolean> {
   const now = Date.now();
 
@@ -56,7 +60,7 @@ async function isRateLimited(
     .select("id", { count: "exact", head: true })
     .eq("business_id", businessId)
     .gte("created_at", new Date(now - PER_BUSINESS_WINDOW_MS).toISOString());
-  if ((businessCount ?? 0) >= PER_BUSINESS_MAX) return true;
+  if ((businessCount ?? 0) >= businessMax) return true;
 
   return false;
 }
@@ -179,7 +183,7 @@ async function handleSalesChat(
     return json({ ok: false, error: "Chat isn't available right now." }, 503);
   }
 
-  if (await isRateLimited(supabase, ownerId, sessionId)) {
+  if (await isRateLimited(supabase, ownerId, sessionId, SALES_CHAT_PER_HOUR_MAX)) {
     return json({ ok: false, error: "Too many messages — please try again shortly." }, 429);
   }
 

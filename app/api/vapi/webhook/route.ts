@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkFairUse } from "@/lib/fair-use";
+import { isSalesCallerLimited, recordSalesLineCall, finishSalesLineCall } from "@/lib/sales-line-limits";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   buildAssistantConfig,
@@ -21,6 +22,7 @@ import {
 import {
   WORKROUTE_SALES_PHONE_NUMBER_ID,
   buildSalesPhoneAssistantConfig,
+  buildSalesLineLimitAssistantConfig,
   handleSalesPhoneTool,
 } from "@/lib/workroute-sales-ai";
 import { loadTradePricingConfig } from "@/lib/trade-pricing";
@@ -111,6 +113,12 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
   // (lib/workroute-sales-ai.ts), keeping only the business's chosen voice.
   // No capture row: nothing about a sales call belongs in a tradie's jobs.
   if (phoneNumberId === WORKROUTE_SALES_PHONE_NUMBER_ID) {
+    // The demo line is public and costs money on every call, so one caller
+    // can only ring it a few times a day (see lib/sales-line-limits.ts).
+    if (await isSalesCallerLimited(supabase, callerNumber ?? null)) {
+      return NextResponse.json({ assistant: buildSalesLineLimitAssistantConfig(resolveVoice(business)) });
+    }
+    await recordSalesLineCall(supabase, callId, callerNumber ?? null);
     return NextResponse.json({ assistant: buildSalesPhoneAssistantConfig(resolveVoice(business)) });
   }
 
@@ -229,6 +237,17 @@ function parseToolArguments(raw: unknown): any {
 
 async function handleToolCalls(supabase: SupabaseClient, message: any, appOrigin: string) {
   const vapiCallId: string | undefined = message.call?.id;
+
+  // The WorkRoute demo line has no business capture row; record what the
+  // call cost and warn the owner if the month is busy, then stop here.
+  if (
+    message.call?.type !== "outboundPhoneCall" &&
+    WORKROUTE_SALES_PHONE_NUMBER_ID &&
+    message.call?.phoneNumberId === WORKROUTE_SALES_PHONE_NUMBER_ID
+  ) {
+    await finishSalesLineCall(supabase, message, appOrigin);
+    return;
+  }
   const callerNumber: string | null = message.call?.customer?.number ?? null;
   const toolCalls: { id: string; function?: { name: string; arguments: unknown } }[] = message.toolCallList ?? [];
 

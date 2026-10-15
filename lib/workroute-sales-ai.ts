@@ -6,6 +6,7 @@ import { sendSms } from "./mobile-message";
 import type { VapiTool } from "./phone-ai";
 import type { WidgetHistoryItem } from "./widget-ai";
 import { FAIR_USE_CALLS_PER_MONTH } from "./fair-use-config";
+import { SALES_LINE_MAX_CALL_SECONDS } from "./sales-line-limits";
 
 // §WorkRoute sales chat — the website chat widget on WorkRoute's OWN
 // marketing site (workroute.com.au), as opposed to lib/widget-ai.ts, which
@@ -277,6 +278,7 @@ This is a phone call, so sound like a real person chatting, not someone reading 
 - Talk casually, with contractions and everyday words: "yeah", "no worries", "too easy", "so basically". Vary how you phrase things; never repeat the same sentence twice in a call.
 - Warm and relaxed, no hard sell. Ask one question at a time. If they interrupt or go off on a tangent, roll with it.
 - The steps below are a rough guide, not a script — say things in your own words.
+- This line is for short demos, about three to four minutes. If the call is running long, wrap up warmly and offer to text them the free trial link or have Steve call them back, rather than talking on.
 
 What you know about WorkRoute (only state facts from this list — if asked something not covered, say you're not sure and offer to have Steve call them back):
 - An Australian app for tradies and local service businesses that take bookings by phone. Pricing questions are already set up for lawn mowing, landscaping, home cleaning, pool cleaning, mobile mechanics, hairdressing and massage. Landscaping is project-based: its questions cover soft or hard landscaping, new build or renovation, access, slope, budget and timeline, and most landscapers have Sarah book a site visit and confirm the price in person. For other businesses, say Steve can set it up for them and offer to have him call.
@@ -354,6 +356,27 @@ export function buildSalesPhoneAssistantConfig(voice: Record<string, unknown>) {
     endCallPhrases: [PHONE_END_CALL_PHRASE],
     endCallMessage: PHONE_END_CALL_PHRASE,
     transcriber: { provider: "deepgram", model: "nova-3", language: "en-AU", smartFormat: true },
+    // Hard stop, so one very long call can't run up the bill.
+    maxDurationSeconds: SALES_LINE_MAX_CALL_SECONDS,
+  };
+}
+
+// Played, then the call ends, when one caller has already rung the demo line
+// the maximum number of times today (lib/sales-line-limits.ts).
+export function buildSalesLineLimitAssistantConfig(voice: Record<string, unknown>) {
+  const message =
+    "Thanks for calling WorkRoute. It looks like we've already spoken a few times today, so I'll let you go for now. You can start your free trial at workroute dot com dot au, or ring back tomorrow. Take care!";
+  return {
+    firstMessage: message,
+    firstMessageMode: "assistant-speaks-first",
+    model: {
+      provider: "anthropic",
+      model: PHONE_MODEL,
+      messages: [{ role: "system", content: `Say exactly this, word for word, then stop: "${message}"` }],
+    },
+    voice,
+    endCallPhrases: [message],
+    endCallMessage: message,
   };
 }
 

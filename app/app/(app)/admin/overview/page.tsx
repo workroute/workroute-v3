@@ -8,6 +8,11 @@ import TabletSentButton from "./tablet-sent-button";
 import NumberButton from "./number-button";
 import { FAIR_USE_CALLS_PER_MONTH, FAIR_USE_WARNING_AT } from "@/lib/fair-use-config";
 import { brisbaneMonth } from "@/lib/fair-use";
+import {
+  SALES_LINE_MAX_CALL_SECONDS,
+  SALES_LINE_MAX_CALLS_PER_CALLER_PER_DAY,
+  SALES_LINE_MONTHLY_ALERT_CALLS,
+} from "@/lib/sales-line-limits";
 
 const TRIAL_DAYS = 14;
 const TRIAL_CALL_CAP = 150;
@@ -94,6 +99,17 @@ export default async function OwnerOverviewPage() {
   const nowMs = Date.now();
   const readySpares = (spareRows ?? []).filter((r) => new Date(r.available_after).getTime() <= nowMs);
   const restingSpares = (spareRows ?? []).filter((r) => new Date(r.available_after).getTime() > nowMs);
+
+  // The WorkRoute demo phone line (migration 0048). Its own query so a missing
+  // table only affects this section.
+  const { data: demoRows, error: demoError } = await admin
+    .from("sales_line_calls")
+    .select("created_at, duration_seconds, vapi_cost_usd, tts_characters")
+    .gte("created_at", brisbaneMonth().startIso);
+  const demoCalls = (demoRows ?? []).length;
+  const demoTotals = totalCallCosts(
+    ((demoRows ?? []) as (CallCostRow & { created_at: string })[]).filter((r) => r.vapi_cost_usd != null)
+  );
 
   const weekAgo = Date.now() - 7 * 86400000;
   const pricingSet = new Set((pricingConfigs ?? []).map((p) => p.business_id));
@@ -277,6 +293,29 @@ export default async function OwnerOverviewPage() {
               characters spoken) and the phone line (about ${COST_ESTIMATES.telephonyUsdPerMinute.toFixed(2)} a
               minute), which are billed to you separately. Update those two rates in lib/call-costs.ts when your
               real invoices say otherwise. Texts and Google Maps aren&apos;t counted.
+            </p>
+          </div>
+        )}
+
+        <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Demo line</h2>
+        {demoError ? (
+          <p className="mt-3 rounded-lg border border-rig-900/10 bg-white p-4 text-sm text-rust-500 shadow-sm">
+            Demo line tracking isn&apos;t set up yet. Run supabase/migrations/0048_sales_line_limits.sql in Supabase.
+          </p>
+        ) : (
+          <div className="mt-3 rounded-lg bg-white p-4 text-sm text-rig-700 shadow-sm">
+            <p>
+              This month: <b className="text-rig-900">{demoCalls}</b> calls to your public demo line
+              {demoTotals.calls > 0 && (
+                <>
+                  {" "}
+                  · <b className="text-rig-900">{demoTotals.minutes.toFixed(1)}</b> min · all-in estimate{" "}
+                  <b className="text-rig-900">{usd(demoTotals.allInEstimateUsd)}</b>
+                </>
+              )}
+              . This comes straight out of your profit, so it&apos;s limited: each call stops at{" "}
+              {Math.round(SALES_LINE_MAX_CALL_SECONDS / 60)} minutes, and one caller can ring {SALES_LINE_MAX_CALLS_PER_CALLER_PER_DAY}{" "}
+              times a day. You get a push when the month passes {SALES_LINE_MONTHLY_ALERT_CALLS} calls.
             </p>
           </div>
         )}
