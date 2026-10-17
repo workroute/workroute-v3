@@ -294,9 +294,11 @@ export default function RunSheetBoard({
       <section className="rounded-lg border border-dashed border-rig-700/25 bg-paper-100 p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="font-mono text-xs uppercase tracking-widest text-rig-700">
-            Quotes · {buckets.unscheduled.length}
+            {fixedLocation ? "To book" : "Quotes"} · {buckets.unscheduled.length}
           </p>
-          <p className="text-xs text-rig-700/70">Follow these up and give them a date</p>
+          <p className="text-xs text-rig-700/70">
+            {fixedLocation ? "Follow these up and give them a time" : "Follow these up and give them a date"}
+          </p>
         </div>
         {buckets.unscheduled.length === 0 ? (
           <p className="text-sm text-rig-700/60">
@@ -323,7 +325,7 @@ export default function RunSheetBoard({
           order (§12), not a real calculated route (§32b). */}
       <div className="mb-3 mt-8 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-mono text-xs uppercase tracking-widest text-steel-500">Today's run</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-steel-500">{fixedLocation ? "Today" : "Today's run"}</p>
           <p className="text-sm text-rig-700">
             {todayJobs.length} {fixedLocation ? (todayJobs.length === 1 ? "appointment" : "appointments") : todayJobs.length === 1 ? "job" : "jobs"}
             {!fixedLocation && locationCount > 0

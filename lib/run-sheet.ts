@@ -116,7 +116,9 @@ export const STATUS_LABELS: Partial<Record<Job["status"], string>> = {
   Unscheduled: "Quote",
 };
 
-export function statusLabel(status: Job["status"]): string {
+export function statusLabel(status: Job["status"], fixedLocation = false): string {
+  // A salon's unbooked enquiry is something to book in, not a quote.
+  if (fixedLocation && status === "Unscheduled") return "To book";
   return STATUS_LABELS[status] ?? status;
 }
 

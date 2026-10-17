@@ -91,7 +91,7 @@ export default function JobCard({
         <span
           className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[job.status]}`}
         >
-          {statusLabel(job.status)}
+          {statusLabel(job.status, fixedLocation)}
         </span>
       </div>
 

@@ -5,6 +5,7 @@ import { getAuthedUser, getBusinessProfile } from "@/lib/supabase/auth";
 import { getWeather } from "@/lib/weather";
 import { getRunSheetBuckets } from "@/lib/run-sheet-data";
 import { loadTradePricingConfig } from "@/lib/trade-pricing";
+import { isFixedLocationTrade } from "@/lib/trade-questions";
 import RunSheetBoard from "./run-sheet/run-sheet-board";
 import InstallPrompt from "./install-prompt";
 
@@ -74,7 +75,7 @@ export default async function HomePage() {
           )}
         </div>
 
-        <RunSheetBoard initialBuckets={buckets} />
+        <RunSheetBoard initialBuckets={buckets} fixedLocation={isFixedLocationTrade(profile?.trade)} />
       </div>
     </main>
   );
