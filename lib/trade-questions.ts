@@ -300,7 +300,7 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       options: opts(["Short", "Medium", "Long"]),
       // The price depends on how long the hair is NOW, not how short they want
       // it cut, and callers (and the AI) mix those up.
-      askAs: "How long is your hair at the moment: short, medium or long? (this is its current length, not how short they want it cut)",
+      askAs: "What's the length of your hair at the moment? Ask it just like that, in those open words, without listing short, medium and long. It's the current length, not how short they want it cut. Work out the closest value from what they say: short is cropped, above the ears or collar; medium is up to about shoulder length; long is past the shoulders. Only ask a follow-up if you genuinely can't tell.",
     },
     {
       // alwaysAsk, not priced — worth knowing so the right person is
