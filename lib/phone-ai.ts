@@ -9,7 +9,7 @@ import {
   isFixedLocationTrade,
   staffPreference,
 } from "./trade-questions";
-import { computeEstimate, loadTradePricingConfig, type EstimateResult } from "./trade-pricing";
+import { computeEstimate, loadTradePricingConfig, missingDependencyQuestionIds, type EstimateResult } from "./trade-pricing";
 import { sendSms, sendCustomerSms } from "./mobile-message";
 import { notifyOwnerHighPriority, notifyOwnerNewPhoneEnquiry, notifyOwnerPhoneBooking } from "./push-notifications";
 import type { MatchedClient } from "./returning-client";
@@ -198,6 +198,7 @@ After the four basics, work out a real price before offering a booking — this 
 
 Once you've covered these (or done what you reasonably can), call get_price_estimate — for the caller's very last answer, pass it directly in get_price_estimate's own trade_answers instead of calling update_job_draft first and then get_price_estimate separately; that just slows things down for no benefit.
 - If it returns a real price, tell the caller naturally — e.g. "Based on that, you're looking at around $X." Make clear it's an estimate, not fixed — ${tradieName} may adjust it once ${heOrThey} ${fixedLocation ? "have" : "has"} seen what's needed. Then move straight to offering a booking (below).
+- If it comes back with needMoreInfo: true, a price can't be worked out yet because you haven't asked something it depends on (it lists what's missing, for example the hair length). Ask the caller for that in everyday words, then call get_price_estimate again. Never tell the caller the team will confirm the price just because you skipped a question.
 - If it comes back needing a quote instead (quoteRequired: true), that's completely normal — it just means this particular job needs ${tradieName}'s eyes on it in person. Tell the caller he'll confirm the price when he's out there, then move straight to offering a booking anyway — a quote visit is still a real booking, and still fills the diary.
 
 Never say a dollar figure that didn't come from get_price_estimate's actual result — never estimate, calculate, round, or guess one yourself, even roughly.${aiClassifiedText ? `\n\nSome pricing factors are never asked directly — you work them out yourself from what the caller already told you, using your own judgment, and still call update_job_draft with the value before get_price_estimate: ${aiClassifiedText}.` : ""}`
@@ -1451,7 +1452,7 @@ export async function handleGetPriceEstimate(
   if (!call?.job_id) return JSON.stringify({ ok: false, error: "No job captured yet." });
 
   const [{ data: profile }, { data: job }] = await Promise.all([
-    supabase.from("business_profiles").select("trade").eq("user_id", call.business_id).maybeSingle(),
+    supabase.from("business_profiles").select("trade, custom_services").eq("user_id", call.business_id).maybeSingle(),
     supabase.from("jobs").select("trade_answers").eq("id", call.job_id).maybeSingle(),
   ]);
   if (!profile || !job) return JSON.stringify({ ok: false, error: "Job not found." });
@@ -1465,6 +1466,31 @@ export async function handleGetPriceEstimate(
   if (!pricing) {
     await supabase.from("jobs").update({ trade_answers: tradeAnswers, quote_required: true }).eq("id", call.job_id);
     return JSON.stringify({ quoteRequired: true });
+  }
+
+  // A price that depends on another answer (a service by hair length) can't be
+  // worked out until that answer is given. Say what's missing so the caller is
+  // asked for it, rather than quoting $0 or telling them the team will confirm.
+  const missingIds = missingDependencyQuestionIds(tradeAnswers, pricing);
+  if (missingIds.length > 0) {
+    await supabase.from("jobs").update({ trade_answers: tradeAnswers }).eq("id", call.job_id);
+    const customServices = Array.isArray(profile.custom_services) ? (profile.custom_services as string[]) : null;
+    const known = questionsForBusiness(profile.trade, customServices);
+    const missing = missingIds.map((id) => {
+      const q = known.find((x) => x.id === id);
+      return {
+        id,
+        label: q?.label ?? id,
+        validValues: q && (q.type === "select" || q.type === "multiselect") ? q.options.map((o) => o.value) : undefined,
+      };
+    });
+    return JSON.stringify({
+      ok: false,
+      needMoreInfo: true,
+      missing,
+      instruction:
+        "You can't give a price yet because you haven't asked this. Ask the caller for it now (in everyday words), record it with update_job_draft or pass it in trade_answers on your next get_price_estimate call, then call get_price_estimate again. Don't say the team will confirm the price, and don't skip it.",
+    });
   }
 
   const result = computeEstimate(tradeAnswers, pricing);
@@ -1539,6 +1565,13 @@ export async function recalculateEstimate(
 
   const pricing = await loadTradePricingConfig(supabase, businessId, profile.trade);
   if (!pricing) {
+    await supabase.from("jobs").update({ quote_required: true }).eq("id", jobId);
+    return { quoteRequired: true };
+  }
+
+  // If the price depends on an answer that was never given, don't save a
+  // misleading $0: mark it for a quote so the tradie follows it up.
+  if (missingDependencyQuestionIds(job.trade_answers ?? {}, pricing).length > 0) {
     await supabase.from("jobs").update({ quote_required: true }).eq("id", jobId);
     return { quoteRequired: true };
   }

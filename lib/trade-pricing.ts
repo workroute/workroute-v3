@@ -66,6 +66,33 @@ function resolveAdjustment(
   return opt;
 }
 
+// §missing-dependency — a price that varies by another answer (a salon
+// service by hair length, edging by lawn size) comes out wrong, usually $0,
+// if that other answer was never given. This lists the question ids that are
+// still missing for the options the caller has already chosen, so the phone AI
+// can ask for them instead of quoting nothing.
+export function missingDependencyQuestionIds(
+  answers: Record<string, string | string[] | boolean | number | undefined>,
+  pricing: TradePricingConfig
+): string[] {
+  const missing = new Set<string>();
+  const check = (opt: OptionPricing | undefined) => {
+    if (!opt || !isDependent(opt)) return;
+    if (typeof answers[opt.dependsOnQuestionId] !== "string" || answers[opt.dependsOnQuestionId] === "") {
+      missing.add(opt.dependsOnQuestionId);
+    }
+  };
+
+  for (const [questionId, qp] of Object.entries(pricing.questions)) {
+    const answer = answers[questionId];
+    if (answer === undefined || answer === null) continue;
+    if (qp.type === "select" && typeof answer === "string") check(qp.options[answer]);
+    else if (qp.type === "multiselect" && Array.isArray(answer)) answer.forEach((v) => check(qp.options[v]));
+    else if (qp.type === "boolean") check(answer === true || answer === "true" ? qp.onTrue : qp.onFalse);
+  }
+  return [...missing];
+}
+
 export type EstimateResult =
   | { quoteRequired: true }
   | { quoteRequired: false; price: number; durationMinutes: number };
