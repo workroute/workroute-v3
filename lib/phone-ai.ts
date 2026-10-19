@@ -13,7 +13,7 @@ import { computeEstimate, loadTradePricingConfig, missingDependencyQuestionIds, 
 import { sendSms, sendCustomerSms } from "./mobile-message";
 import { notifyOwnerHighPriority, notifyOwnerNewPhoneEnquiry, notifyOwnerPhoneBooking } from "./push-notifications";
 import type { MatchedClient } from "./returning-client";
-import { checkAvailability, rescheduleJob } from "./messenger-scheduling";
+import { checkAvailability, rescheduleJob, suggestNearestTimes } from "./messenger-scheduling";
 import { createRecurringSeries, type RecurringFrequency } from "./recurring-jobs";
 import { geocodeAddress, haversineKm, SERVICE_AREA_SANITY_RADIUS_KM } from "./google-maps";
 import { messageFor, formatAppointmentLabel } from "./notifications";
@@ -219,7 +219,7 @@ Keep the booking quick. A salon caller wants to be finished in about a minute an
 - Ask who they'd like to see straight after you know the service, before the price. Put it as a choice, not a yes-or-no.
 - After you quote the price, don't ask "would you like to book?" as a separate question. Go straight to "What day and time suits you?", asking for both at once. If they only wanted a price, just finish warmly.
 - Don't read answers back to them unless something sounded unclear. A short "lovely" or "great" is enough before the next question.
-- Use as few update_job_draft calls as you sensibly can: the first one (with their name) starts the booking, then save the service, hair length and stylist together rather than one at a time. Every call is a pause the caller sits through.`
+- Keep tool calls to a minimum, because each one is a pause the caller sits through. Call update_job_draft once, as soon as you have their name and the service; that starts the booking. After that, do NOT call it again for the stylist or the hair length. Hold those answers and pass service, hair_length and stylist_preference together in the trade_answers of your get_price_estimate call, which saves them too.`
     : "Speak naturally, like a real phone conversation — warm, efficient, and brisk without feeling rushed. This call has real ground to cover (below), so keep momentum: don't linger, don't over-explain, ask one thing at a time and move on as soon as you have an answer."
 }
 
@@ -268,7 +268,7 @@ ${fixedLocation ? "" : askRegularUpfront ? `Always ask whether they want this as
 Once you've either given a price or explained a quote visit is needed, ask if they'd like to lock in a day/time now — actively offer this, don't wait to be asked, since booking the job is the actual goal of the call. If they give you one:
 - Call check_availability with that date and either a time or a Morning/Afternoon/Evening block.
 - If it's free, call book_appointment with the same date/time/block — and if they want an ongoing service, also pass \`recurring\` set to whichever frequency they told you (this books a batch of future visits too, not just this one). The result tells you whether this became a "quote visit" or a job booking — if quoteRequired is true, tell them you've booked in a time for ${tradieName} to come out and quote it; if false, tell them you've booked them in for the job itself. If you passed \`recurring\`, the result also tells you how many future visits got booked — mention that too (e.g. "and I've locked in your next four fortnightly visits as well"). If any got skipped because that day was already taken, just say ${tradieName} will sort out those specific dates with them, don't dwell on it.
-- If it's not free, say so and ask for a different day/time — try up to twice more. If the result has \`travelConflict\` true, ${tradieName} has another job too far away to reach in time around that slot — just say something natural like "that time's a bit tight with another job ${tradieName}'s already got booked nearby, have you got another time that suits?" without mentioning the other customer's name or getting technical about drive times.
+- If it's not free, say so. If the result includes \`suggestedTimes\`, offer two or three of them straight away ("I can do 10:30, 11, or 11:30, which suits?") and, once they pick one, call book_appointment with that exact time (it's already confirmed free). Otherwise ask for a different day/time — try up to twice more. If the result has \`travelConflict\` true, ${tradieName} has another job too far away to reach in time around that slot — just say something natural like "that time's a bit tight with another job ${tradieName}'s already got booked nearby, have you got another time that suits?" without mentioning the other customer's name or getting technical about drive times.
 - If they only gave you a block (Morning/Afternoon/Evening), not a specific time, the result may come back with \`suggestedTimes\` instead — real times within that block that are already confirmed free, travel time included. Read out two or three of them naturally ("I could do 1, 3, or 4:30 — which suits?") and once they pick one, call book_appointment directly with that exact time — no need to check availability again, it's already confirmed. An empty \`suggestedTimes\` list means genuinely nothing free in that block; ask for a different block or day instead.
 - If nothing works out, or the caller doesn't want to commit to a time on the call, tell them exactly this: "I'll get ${tradieName} to call you back as soon as ${heOrThey} can."
 
@@ -1329,6 +1329,17 @@ export async function handleCheckAvailability(
     time: input.time ?? null,
     block: input.block ?? null,
   });
+
+  // A specific time that's taken: for salons, hand back the nearest free times
+  // so the caller can pick one straight away.
+  if (result.available === false && input.time) {
+    try {
+      const suggestedTimes = await suggestNearestTimes(supabase, call.business_id, call.job_id, input.date, input.time);
+      if (suggestedTimes.length > 0) return JSON.stringify({ ...result, suggestedTimes });
+    } catch (error) {
+      console.error("[phone-ai] nearest-times lookup failed —", error);
+    }
+  }
   return JSON.stringify(result);
 }
 

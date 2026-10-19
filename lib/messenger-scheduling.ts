@@ -256,6 +256,51 @@ export async function suggestAvailableTimes(
   return suggestions;
 }
 
+// Picks up to `count` free half-hour start times nearest a requested time
+// (later ones first when two are equally close), returned in clock order.
+// Pure, so it can be tested without a database: `isFree` says whether a start
+// time (minutes since midnight) has a chair free.
+export function pickNearestFreeTimes(
+  requestedMinutes: number,
+  durationMinutes: number,
+  isFree: (minutes: number) => boolean,
+  count = 3,
+  dayStart = toMinutes("07:00"),
+  dayEnd = toMinutes("20:00")
+): number[] {
+  const picked: number[] = [];
+  for (let offset = 30; offset <= 12 * 60 && picked.length < count; offset += 30) {
+    for (const minutes of [requestedMinutes + offset, requestedMinutes - offset]) {
+      if (picked.length >= count) break;
+      if (minutes < dayStart || minutes + Math.max(durationMinutes, 0) > dayEnd) continue;
+      if (isFree(minutes)) picked.push(minutes);
+    }
+  }
+  return picked.sort((a, b) => a - b);
+}
+
+// §salon-quick-booking — for a salon / massage business, when the time a
+// caller asked for is taken, the real free times closest to it, so Sarah can
+// offer them straight away instead of asking the caller to guess again.
+// Returns an empty list for mobile trades, which have their own logic.
+export async function suggestNearestTimes(
+  supabase: SupabaseClient,
+  businessId: string,
+  excludeJobId: string,
+  date: string,
+  time: string,
+  maxSuggestions = 3
+): Promise<string[]> {
+  const ctx = await loadDayContext(supabase, businessId, excludeJobId, date);
+  if (!ctx.fixedLocation) return [];
+  return pickNearestFreeTimes(
+    toMinutes(time),
+    ctx.candidateDuration,
+    (minutes) => overlappingJobs(minutes, ctx).length < ctx.chairs,
+    maxSuggestions
+  ).map(toHHMM);
+}
+
 // §Messenger — the AI's `reschedule_this_job` tool. Only callable after a
 // clean checkAvailability result — that's enforced by the caller in
 // lib/messenger-ai.ts, not re-checked here. Appends to the end of the
