@@ -29,7 +29,7 @@ function formatPrice(job: JobHistoryRow): string {
 export default function JobHistory({ jobs }: { jobs: JobHistoryRow[] }) {
   if (jobs.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-rig-700/25 bg-paper-100 p-4 text-sm text-rig-700/60">
+      <p className="rounded-lg border border-dashed border-rig-700/25 bg-paper-100 p-4 text-sm text-rig-700/80">
         No jobs captured for this client yet.
       </p>
     );
@@ -47,7 +47,7 @@ export default function JobHistory({ jobs }: { jobs: JobHistoryRow[] }) {
             <p className="font-medium text-rig-900">
               {formatDate(job.scheduled_date ?? job.created_at)}
             </p>
-            {job.trade && <p className="text-xs text-rig-700/70">{job.trade}</p>}
+            {job.trade && <p className="text-xs text-rig-700/80">{job.trade}</p>}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-rig-700">{formatPrice(job)}</span>

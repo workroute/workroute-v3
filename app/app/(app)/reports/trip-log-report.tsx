@@ -71,7 +71,7 @@ export default function TripLogReport({ trips }: { trips: TripLog[] }) {
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-rig-900/10 text-xs uppercase tracking-wide text-rig-700/60">
+            <tr className="border-b border-rig-900/10 text-xs uppercase tracking-wide text-rig-700/80">
               <th className="py-2 pr-4">Date</th>
               <th className="py-2 pr-4">From</th>
               <th className="py-2 pr-4">To</th>

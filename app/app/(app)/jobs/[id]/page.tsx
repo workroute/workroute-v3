@@ -190,13 +190,13 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             <div className="space-y-6 rounded-lg bg-white p-6 shadow-sm">
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-rig-700/60">Duration</p>
+                  <p className="text-xs uppercase tracking-wide text-rig-700/80">Duration</p>
                   <p className="mt-0.5 text-rig-900">
                     {job.estimated_duration_minutes ? `${job.estimated_duration_minutes} min` : "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-rig-700/60">Price</p>
+                  <p className="text-xs uppercase tracking-wide text-rig-700/80">Price</p>
                   <p className="mt-0.5 text-rig-900">
                     {job.quote_required && job.quoted_price !== null
                       ? `$${Number(job.quoted_price).toFixed(2)} (quoted)`
@@ -208,14 +208,14 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-rig-700/60">Confidence</p>
+                  <p className="text-xs uppercase tracking-wide text-rig-700/80">Confidence</p>
                   <p className="mt-0.5 text-rig-900">{job.confidence}</p>
                 </div>
               </div>
 
               {job.payment_collected_method && (
                 <div className="border-t border-rig-900/10 pt-4 text-sm">
-                  <p className="text-xs uppercase tracking-wide text-rig-700/60">Payment</p>
+                  <p className="text-xs uppercase tracking-wide text-rig-700/80">Payment</p>
                   <p className="mt-0.5 text-rig-900">
                     {PAYMENT_METHOD_LABELS[job.payment_collected_method] ?? job.payment_collected_method}
                   </p>
@@ -233,7 +233,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
               )}
 
               <div className="border-t border-rig-900/10 pt-4 text-sm">
-                <p className="text-xs uppercase tracking-wide text-rig-700/60">Source</p>
+                <p className="text-xs uppercase tracking-wide text-rig-700/80">Source</p>
                 <p className="mt-0.5 text-rig-900">{job.source}</p>
               </div>
 
@@ -298,11 +298,11 @@ export default async function JobDetailPage({ params }: { params: { id: string }
           customer={
             <div className="space-y-4 rounded-lg bg-white p-6 text-sm shadow-sm">
               <div>
-                <p className="text-xs uppercase tracking-wide text-rig-700/60">Contact</p>
+                <p className="text-xs uppercase tracking-wide text-rig-700/80">Contact</p>
                 <p className="mt-0.5 text-rig-900">{job.customer_phone || "—"}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wide text-rig-700/60">Address</p>
+                <p className="text-xs uppercase tracking-wide text-rig-700/80">Address</p>
                 <p className="mt-0.5 text-rig-900">{address || "—"}</p>
               </div>
               {job.client_id && (
@@ -320,7 +320,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
               {clientNotes ? (
                 <p className="whitespace-pre-wrap text-rig-900">{clientNotes}</p>
               ) : (
-                <p className="text-rig-700/60">
+                <p className="text-rig-700/80">
                   {job.client_id ? "No notes on this customer yet." : "This job isn't linked to a customer record."}
                 </p>
               )}

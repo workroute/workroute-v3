@@ -92,7 +92,7 @@ export default function PhoneAiForm({
       <form onSubmit={handleSaveNumber} className="space-y-4">
         <div>
           <p className="font-display font-semibold text-rig-900">Connected Vapi number</p>
-          <p className="mt-1 text-xs text-rig-700/70">
+          <p className="mt-1 text-xs text-rig-700/80">
             Provision the phone number in your Vapi dashboard first, point its Server URL at this app's
             /api/vapi/webhook endpoint, then paste the number's ID here so WorkRoute knows this number is yours.
           </p>
@@ -132,7 +132,7 @@ export default function PhoneAiForm({
 
       <div className="border-t border-rig-900/10 pt-6">
         <p className="font-display font-semibold text-rig-900">VIP alert numbers</p>
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           The AI still answers these calls like any other — you'll just get an instant SMS heads-up when one of
           these numbers calls.
         </p>
@@ -142,7 +142,7 @@ export default function PhoneAiForm({
             <div key={c.id} className="flex items-center justify-between rounded border border-rig-700/20 px-3 py-2 text-sm">
               <div>
                 <p className="font-medium text-rig-900">{c.name}</p>
-                <p className="text-rig-700/70">{c.phone}</p>
+                <p className="text-rig-700/80">{c.phone}</p>
               </div>
               <button
                 type="button"
@@ -153,7 +153,7 @@ export default function PhoneAiForm({
               </button>
             </div>
           ))}
-          {vipContacts.length === 0 && <p className="text-sm text-rig-700/60">No VIP numbers yet.</p>}
+          {vipContacts.length === 0 && <p className="text-sm text-rig-700/80">No VIP numbers yet.</p>}
         </div>
 
         <form onSubmit={handleAddVip} className="mt-4 space-y-3">

@@ -296,12 +296,12 @@ export default function RunSheetBoard({
           <p className="font-mono text-xs uppercase tracking-widest text-rig-700">
             {fixedLocation ? "To book" : "Quotes"} · {buckets.unscheduled.length}
           </p>
-          <p className="text-xs text-rig-700/70">
+          <p className="text-xs text-rig-700/80">
             {fixedLocation ? "Follow these up and give them a time" : "Follow these up and give them a date"}
           </p>
         </div>
         {buckets.unscheduled.length === 0 ? (
-          <p className="text-sm text-rig-700/60">
+          <p className="text-sm text-rig-700/80">
             Nothing waiting — every captured job has a date.
           </p>
         ) : (
@@ -387,7 +387,7 @@ export default function RunSheetBoard({
               </div>
             ))}
             {todayJobs.length === 0 && (
-              <p className="text-sm text-rig-700/60">
+              <p className="text-sm text-rig-700/80">
                 {fixedLocation ? "No appointments today." : "No jobs scheduled — enjoy the quiet before the next one."}
               </p>
             )}

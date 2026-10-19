@@ -93,7 +93,7 @@ export default function VoiceInputButton({ onTranscript }: { onTranscript: (text
   }
 
   if (!supported) {
-    return <p className="text-xs text-rig-700/50">Voice input needs Chrome</p>;
+    return <p className="text-xs text-rig-700/70">Voice input needs Chrome</p>;
   }
 
   return (
@@ -111,7 +111,7 @@ export default function VoiceInputButton({ onTranscript }: { onTranscript: (text
       >
         🎤
       </button>
-      {listening && <span className="text-xs text-rig-700/70">Listening…</span>}
+      {listening && <span className="text-xs text-rig-700/80">Listening…</span>}
       {error && <span className="text-xs text-rust-500">{error}</span>}
     </div>
   );

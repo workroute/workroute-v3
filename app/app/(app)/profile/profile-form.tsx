@@ -107,7 +107,7 @@ export default function ProfileForm({
           className="field-input"
           placeholder="e.g. John"
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           Used in customer SMS, e.g. "John from Doyle Electrical is on his way."
         </p>
       </div>
@@ -162,7 +162,7 @@ export default function ProfileForm({
             onChange={(e) => setChairs(e.target.value)}
             className="field-input"
           />
-          <p className="mt-1 text-xs text-rig-700/60">
+          <p className="mt-1 text-xs text-rig-700/80">
             e.g. 3 stylists or 3 treatment rooms. Sarah will keep booking a time until this many appointments
             overlap, then offer the next free slot.
           </p>
@@ -176,7 +176,7 @@ export default function ProfileForm({
             className="field-input"
             placeholder="e.g. Jess, Sam, Alex"
           />
-          <p className="mt-1 text-xs text-rig-700/60">
+          <p className="mt-1 text-xs text-rig-700/80">
             Separate names with commas. Clients can pick who they'd like on your booking page, and Sarah asks on
             calls. This records their preference — it doesn't give each person their own calendar yet.
           </p>
@@ -225,7 +225,7 @@ export default function ProfileForm({
           className="field-input"
           placeholder="e.g. Pialba, Urangan, Torquay, Scarness"
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           List the actual suburbs you cover, separated by commas — not just a general area name. Sarah uses
           this to recognise local suburb names correctly when callers give their address.
         </p>
@@ -242,7 +242,7 @@ export default function ProfileForm({
           className="field-input"
           placeholder="e.g. Hervey Bay"
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           Used to show local weather on your dashboard.
         </p>
       </div>
@@ -261,7 +261,7 @@ export default function ProfileForm({
           className="field-input"
           placeholder="https://g.page/r/..."
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           Find this in your Google Business Profile under "Get more reviews." When set, it's added to the
           completion message sent after a job is finished.
         </p>
@@ -278,7 +278,7 @@ export default function ProfileForm({
           className="field-input min-h-[60px]"
           placeholder={"BSB: 123-456\nAccount: 12345678\nName: Steve's Mowing"}
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           Shown to the customer on the completion message so they can pay by bank transfer — plain text,
           shown exactly as typed.
         </p>
@@ -295,7 +295,7 @@ export default function ProfileForm({
           className="field-input"
           placeholder="e.g. your PayID, or a Stripe/Square/PayPal.me link"
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           Whatever you already use to get paid instantly on the spot — WorkRoute doesn't process payments itself, it
           just shows this to the customer alongside your bank details so they can pay you straight away.
         </p>

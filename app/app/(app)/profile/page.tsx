@@ -66,7 +66,7 @@ export default async function ProfilePage() {
         <div className="mt-6 flex items-center justify-between rounded-lg bg-white p-6 shadow-sm">
           <div>
             <p className="font-display font-semibold text-rig-900">
-              Pricing setup {!hasPricing && <span className="font-normal text-rig-700/60">(optional)</span>}
+              Pricing setup {!hasPricing && <span className="font-normal text-rig-700/80">(optional)</span>}
             </p>
             <p className="mt-1 text-sm text-rig-700">
               Set base price/duration and per-answer adjustments so job estimates calculate themselves.

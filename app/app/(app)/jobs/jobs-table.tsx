@@ -105,7 +105,7 @@ export default function JobsTable({ rows }: { rows: JobRow[] }) {
       />
 
       {rows.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
+        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/80 shadow-sm">
           No jobs yet —{" "}
           <Link href="/app/jobs/new" className="font-medium text-steel-500 hover:underline">
             capture your first one
@@ -113,7 +113,7 @@ export default function JobsTable({ rows }: { rows: JobRow[] }) {
           .
         </p>
       ) : filtered.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
+        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/80 shadow-sm">
           {query ? `No jobs match "${query}".` : `No ${category.toLowerCase()} jobs.`}
         </p>
       ) : (
@@ -178,7 +178,7 @@ export default function JobsTable({ rows }: { rows: JobRow[] }) {
           <div className="mt-4 hidden overflow-hidden rounded-lg border border-rig-900/10 bg-white shadow-sm sm:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-rig-900/10 text-xs uppercase tracking-wide text-rig-700/70">
+                <tr className="border-b border-rig-900/10 text-xs uppercase tracking-wide text-rig-700/80">
                   <th className="px-4 py-3 font-medium">Customer</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Outcome</th>
@@ -222,7 +222,7 @@ export default function JobsTable({ rows }: { rows: JobRow[] }) {
                             {outcome}
                           </span>
                         ) : (
-                          <span className="text-rig-700/40">—</span>
+                          <span className="text-rig-700/70">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-rig-700">
@@ -230,7 +230,7 @@ export default function JobsTable({ rows }: { rows: JobRow[] }) {
                         {formatSlot(job) ? ` · ${formatSlot(job)}` : ""}
                       </td>
                       <td className="px-4 py-3 text-rig-700">{formatPrice(job)}</td>
-                      <td className="px-4 py-3 text-right text-rig-700/40" aria-hidden="true">
+                      <td className="px-4 py-3 text-right text-rig-700/70" aria-hidden="true">
                         ›
                       </td>
                     </tr>

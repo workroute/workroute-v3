@@ -64,7 +64,7 @@ export default async function SettingsPage() {
                 <p className="font-display font-semibold text-rig-900">{label}</p>
                 <p className="text-sm text-rig-700">{description}</p>
               </div>
-              <span className="text-rig-700/40" aria-hidden="true">
+              <span className="text-rig-700/70" aria-hidden="true">
                 ›
               </span>
             </Link>

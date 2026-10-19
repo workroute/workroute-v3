@@ -102,7 +102,7 @@ export default function ReactivationForm({
 
       <div className="border-t border-rig-900/10 pt-6">
         <p className="font-display font-semibold text-rig-900">Lapsed clients · {clients.length}</p>
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           No job completed within the threshold above. Calling one places a real phone call right away.
         </p>
 
@@ -114,7 +114,7 @@ export default function ReactivationForm({
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-rig-900">{client.name}</p>
-                    <p className="truncate text-rig-700/70">
+                    <p className="truncate text-rig-700/80">
                       {client.phone} · last job {client.lastJobDate}
                       {client.lastReactivationCallAt && ` · already called ${client.lastReactivationCallAt.slice(0, 10)}`}
                     </p>
@@ -143,7 +143,7 @@ export default function ReactivationForm({
               </div>
             );
           })}
-          {clients.length === 0 && <p className="text-sm text-rig-700/60">No lapsed clients right now.</p>}
+          {clients.length === 0 && <p className="text-sm text-rig-700/80">No lapsed clients right now.</p>}
         </div>
       </div>
     </div>

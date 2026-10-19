@@ -111,7 +111,7 @@ export default async function CalendarPage({
                 <div className="flex min-w-0 items-center gap-3">
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-                      isToday ? "bg-amber-500/20 text-amber-600" : "bg-rig-900/5 text-rig-700/60"
+                      isToday ? "bg-amber-500/20 text-amber-600" : "bg-rig-900/5 text-rig-700/80"
                     }`}
                   >
                     {isToday ? <IconSparkle /> : <IconCalendar />}
@@ -136,7 +136,7 @@ export default async function CalendarPage({
                       )}
                     </div>
                     {isEmpty && weekend && !isToday && (
-                      <p className="mt-0.5 text-xs text-rig-700/50">No jobs scheduled</p>
+                      <p className="mt-0.5 text-xs text-rig-700/70">No jobs scheduled</p>
                     )}
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export default async function CalendarPage({
                   <span className="whitespace-nowrap text-sm text-rig-700">
                     {isEmpty ? "No jobs" : `${day.count} job${day.count === 1 ? "" : "s"}`}
                   </span>
-                  <span className="text-rig-700/40" aria-hidden="true">
+                  <span className="text-rig-700/70" aria-hidden="true">
                     ›
                   </span>
                 </div>

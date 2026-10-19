@@ -104,7 +104,7 @@ export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
       )}
 
       {rows.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
+        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/80 shadow-sm">
           No clients yet — they're added automatically when you capture a job, you can{" "}
           <Link href="/app/clients/new" className="font-medium text-steel-500 hover:underline">
             add one directly
@@ -112,7 +112,7 @@ export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
           , or import your existing customer list using the button above.
         </p>
       ) : filtered.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
+        <p className="mt-4 rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/80 shadow-sm">
           No clients match "{query}".
         </p>
       ) : (
@@ -146,7 +146,7 @@ export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
           <div className="mt-4 hidden overflow-hidden rounded-lg border border-rig-900/10 bg-white shadow-sm sm:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-rig-900/10 text-xs uppercase tracking-wide text-rig-700/70">
+                <tr className="border-b border-rig-900/10 text-xs uppercase tracking-wide text-rig-700/80">
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Suburb</th>
                   <th className="px-4 py-3 font-medium">Phone</th>
@@ -174,7 +174,7 @@ export default function ClientsTable({ rows }: { rows: ClientRow[] }) {
                     <td className="px-4 py-3 text-rig-700">{client.phone || "—"}</td>
                     <td className="px-4 py-3 text-rig-700">{client.job_count}</td>
                     <td className="px-4 py-3 text-rig-700">{formatDate(client.last_job_date)}</td>
-                    <td className="px-4 py-3 text-right text-rig-700/40" aria-hidden="true">
+                    <td className="px-4 py-3 text-right text-rig-700/70" aria-hidden="true">
                       ›
                     </td>
                   </tr>

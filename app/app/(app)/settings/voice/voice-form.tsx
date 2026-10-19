@@ -76,7 +76,7 @@ export default function VoiceForm({
   return (
     <form onSubmit={handleSave} className="space-y-6">
       <div className="space-y-2">
-        <p className="text-xs text-rig-700/70">
+        <p className="text-xs text-rig-700/80">
           Tap ▶ to hear a sample of each voice's tone — it's a generic demo clip, so ignore whatever name it
           says. On a real call, your AI will always introduce itself using the name you set below.
         </p>
@@ -97,7 +97,7 @@ export default function VoiceForm({
             />
             <div className="min-w-0 flex-1">
               <p className="font-display font-semibold text-rig-900">
-                {preset.name} <span className="text-xs font-normal text-rig-700/60">({preset.gender})</span>
+                {preset.name} <span className="text-xs font-normal text-rig-700/80">({preset.gender})</span>
               </p>
               <p className="text-sm text-rig-700">{preset.description}</p>
             </div>
@@ -137,7 +137,7 @@ export default function VoiceForm({
           className="field-input"
           placeholder="Emma"
         />
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           E.g. "Hi, it's {personaName || "…"}, the AI Office Manager for your business."
         </p>
       </div>

@@ -64,7 +64,7 @@ export default function ClientSearch({
         autoComplete="off"
       />
 
-      {loading && <p className="mt-1 text-xs text-rig-700/60">Searching…</p>}
+      {loading && <p className="mt-1 text-xs text-rig-700/80">Searching…</p>}
 
       {!loading && results.length > 0 && (
         <div className="mt-2 divide-y divide-rig-900/10 overflow-hidden rounded border border-rig-700/20 bg-white">
@@ -78,7 +78,7 @@ export default function ClientSearch({
               <span className="font-medium text-rig-900">{c.name}</span>
               {c.phone && <span className="ml-2 text-rig-700">{c.phone}</span>}
               {c.address_suburb && (
-                <span className="block text-xs text-rig-700/70">{c.address_suburb}</span>
+                <span className="block text-xs text-rig-700/80">{c.address_suburb}</span>
               )}
             </button>
           ))}
@@ -86,7 +86,7 @@ export default function ClientSearch({
       )}
 
       {!loading && query.trim().length >= 2 && results.length === 0 && (
-        <p className="mt-1 text-xs text-rig-700/60">No matching clients.</p>
+        <p className="mt-1 text-xs text-rig-700/80">No matching clients.</p>
       )}
 
       <button

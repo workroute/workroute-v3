@@ -165,7 +165,7 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
       )}
 
       {balance !== null && (
-        <p className="mt-2 text-xs text-rig-700/70">DIDLogic balance: ${balance.toFixed(2)}</p>
+        <p className="mt-2 text-xs text-rig-700/80">DIDLogic balance: ${balance.toFixed(2)}</p>
       )}
 
       {buyResult && (
@@ -182,7 +182,7 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
         <div className="mt-4 overflow-hidden rounded-lg border border-rig-900/10">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-rig-900/10 bg-paper-100 text-xs uppercase tracking-wide text-rig-700/70">
+              <tr className="border-b border-rig-900/10 bg-paper-100 text-xs uppercase tracking-wide text-rig-700/80">
                 <th className="px-3 py-2 font-medium">Number</th>
                 <th className="px-3 py-2 font-medium">City</th>
                 <th className="px-3 py-2 font-medium">Monthly</th>
@@ -218,7 +218,7 @@ export default function AdminNumberProvisioner({ businesses }: { businesses: Bus
         <summary className="cursor-pointer text-sm font-medium text-steel-500">
           Bought a number on DIDLogic yourself? Add it to your stock
         </summary>
-        <p className="mt-2 text-xs text-rig-700/70">
+        <p className="mt-2 text-xs text-rig-700/80">
           Use this if the buy button above says &ldquo;Access denied&rdquo;. Buy the number on DIDLogic&apos;s own site,
           make a SIP login for it there and point the number at that login, then enter the number and the login here.
           It gets connected to Vapi and added to your spare stock.

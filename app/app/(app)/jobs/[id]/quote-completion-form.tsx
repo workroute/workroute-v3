@@ -53,7 +53,7 @@ export default function QuoteCompletionForm({ jobId }: { jobId: string }) {
   return (
     <div className="rounded-lg border border-rig-900/10 bg-white p-4">
       <p className="font-display text-sm font-semibold text-rig-900">Give your quote</p>
-      <p className="mt-1 text-xs text-rig-700/70">
+      <p className="mt-1 text-xs text-rig-700/80">
         This visit was to have a look and quote the job — enter the price you're quoting. We'll follow up with the
         customer afterwards to see if they'd like to go ahead.
       </p>

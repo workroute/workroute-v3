@@ -508,7 +508,7 @@ export default function PricingForm({
       </div>
       )}
       {!simple && (
-      <p className="text-xs text-rig-700/60">
+      <p className="text-xs text-rig-700/80">
         Every {trade} job starts here — each answer below adds or subtracts from it.
       </p>
       )}
@@ -655,8 +655,8 @@ export default function PricingForm({
                         {/* Column headings: without these the two boxes per row were just "0" and "0". */}
                         <div className="grid grid-cols-[5.5rem,1fr,1fr] items-end gap-3">
                           <span className="invisible text-xs font-medium">{dependencyQuestion.options[0]?.label}</span>
-                          <span className="text-xs text-rig-700/70">{simple ? "Price ($)" : "Price adj ($)"}</span>
-                          <span className="text-xs text-rig-700/70">{simple ? "Time (minutes)" : "Duration adj (min)"}</span>
+                          <span className="text-xs text-rig-700/80">{simple ? "Price ($)" : "Price adj ($)"}</span>
+                          <span className="text-xs text-rig-700/80">{simple ? "Time (minutes)" : "Duration adj (min)"}</span>
                         </div>
                         {dependencyQuestion.options.map((depOpt) => {
                           const value = draft.dependentValues[depOpt.value] ?? { priceDelta: 0, durationDelta: 0 };
@@ -700,7 +700,7 @@ export default function PricingForm({
                     {!draft.requiresQuote && !dependencyQuestion && (
                       <div className="mt-2 grid grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs text-rig-700/70">{simple ? (q.id === mainQuestionId ? "Price ($)" : "Extra price ($)") : "Price adj ($)"}</label>
+                          <label className="text-xs text-rig-700/80">{simple ? (q.id === mainQuestionId ? "Price ($)" : "Extra price ($)") : "Price adj ($)"}</label>
                           <input
                             type="number"
                             step="0.01"
@@ -710,7 +710,7 @@ export default function PricingForm({
                           />
                         </div>
                         <div>
-                          <label className="text-xs text-rig-700/70">{simple ? (q.id === mainQuestionId ? "Time (minutes)" : "Extra time (minutes)") : "Duration adj (min)"}</label>
+                          <label className="text-xs text-rig-700/80">{simple ? (q.id === mainQuestionId ? "Time (minutes)" : "Extra time (minutes)") : "Duration adj (min)"}</label>
                           <input
                             type="number"
                             value={draft.durationDelta}
@@ -745,7 +745,7 @@ export default function PricingForm({
                   </button>
                 </div>
                 {serviceError && <p className="mt-2 text-xs text-rust-500">{serviceError}</p>}
-                <p className="mt-2 text-xs text-rig-700/70">
+                <p className="mt-2 text-xs text-rig-700/80">
                   These are the services Sarah offers. Rename or remove any of them, or add your own. Tap
                   &ldquo;Save pricing&rdquo; at the bottom to keep your changes.
                 </p>
@@ -845,7 +845,7 @@ export default function PricingForm({
               <span className="text-sm font-normal text-rig-700">(~{example.duration} min)</span>
             </p>
           )}
-          <p className="mt-0.5 text-xs text-rig-700/60">
+          <p className="mt-0.5 text-xs text-rig-700/80">
             ${basePrice.toFixed(2)} base, plus whatever's selected above — this is exactly what Sarah would say
             on a real call with these answers.
           </p>

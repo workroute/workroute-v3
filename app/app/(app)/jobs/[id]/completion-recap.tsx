@@ -306,7 +306,7 @@ export default function CompletionRecap({
   return (
     <div className="rounded-lg border border-rig-900/10 bg-white p-4">
       <p className="font-display text-sm font-semibold text-rig-900">Job completion recap</p>
-      <p className="mt-1 text-xs text-rig-700/70">
+      <p className="mt-1 text-xs text-rig-700/80">
         Talk through what you did and what's needed — WorkRoute will turn it into a summary and total to send the
         customer.
       </p>
@@ -393,7 +393,7 @@ export default function CompletionRecap({
                 <>
                   <div className="mt-2 grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-rig-700/70">Date</label>
+                      <label className="text-xs text-rig-700/80">Date</label>
                       <input
                         type="date"
                         value={nextVisitDate}
@@ -405,7 +405,7 @@ export default function CompletionRecap({
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-rig-700/70">Time (optional)</label>
+                      <label className="text-xs text-rig-700/80">Time (optional)</label>
                       <input
                         type="time"
                         value={nextVisitTime}
@@ -438,7 +438,7 @@ export default function CompletionRecap({
             {photoPreview ? (
               <img src={photoPreview} alt="After photo" className="w-full rounded object-cover" />
             ) : (
-              <label className="flex cursor-pointer items-center justify-center rounded border border-dashed border-rig-700/25 bg-paper-100 py-4 text-sm text-rig-700/60 hover:bg-paper-100/70">
+              <label className="flex cursor-pointer items-center justify-center rounded border border-dashed border-rig-700/25 bg-paper-100 py-4 text-sm text-rig-700/80 hover:bg-paper-100/70">
                 {photoUploading ? "Uploading…" : "📷 Add a photo of the finished job"}
                 <input
                   type="file"

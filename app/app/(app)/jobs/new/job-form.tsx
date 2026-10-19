@@ -461,7 +461,7 @@ export default function JobForm({
       {/* Estimate */}
       <div className="space-y-4 border-t border-rig-900/10 pt-4">
         {pricingConfig && (
-          <p className="text-xs text-rig-700/60">
+          <p className="text-xs text-rig-700/80">
             Calculated from the job details above, using your {trade} pricing setup. Adjust
             below if this specific job is different.
           </p>
@@ -539,7 +539,7 @@ export default function JobForm({
             className="mt-3 h-40 w-full rounded object-cover"
           />
         )}
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           Timestamped automatically and filed under your business when saved.
         </p>
       </div>
@@ -570,7 +570,7 @@ export default function JobForm({
             Quote
           </button>
         </div>
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           {bookingChoice === "schedule" ? (
             "Will save as Scheduled for the date below."
           ) : bookingChoice === "quote" ? (
@@ -677,7 +677,7 @@ export default function JobForm({
                 ))}
               </div>
               {recurringFrequency && (
-                <p className="mt-1 text-xs text-rig-700/60">
+                <p className="mt-1 text-xs text-rig-700/80">
                   Books the next 5 {recurringFrequency.toLowerCase()} visits too, skipping any that clash with
                   something already on your schedule.
                 </p>

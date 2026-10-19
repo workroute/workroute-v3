@@ -60,7 +60,7 @@ export default function PronunciationForm({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-rig-700/70">
+      <p className="text-xs text-rig-700/80">
         Catch Sarah saying something wrong on a call — your business name, a suburb, anything? Add it here with a
         spelling that sounds right out loud, and she'll say it that way instead. This only changes how it's spoken,
         never how it's written in a text or invoice.
@@ -74,7 +74,7 @@ export default function PronunciationForm({
             className="field-input"
             placeholder="e.g. Woombye"
           />
-          <span className="text-rig-700/40">→</span>
+          <span className="text-rig-700/70">→</span>
           <input
             value={row.phonetic}
             onChange={(e) => updateRow(i, "phonetic", e.target.value)}
@@ -85,7 +85,7 @@ export default function PronunciationForm({
             type="button"
             onClick={() => removeRow(i)}
             aria-label="Remove"
-            className="shrink-0 rounded p-2 text-rig-700/50 hover:bg-rust-500/10 hover:text-rust-500"
+            className="shrink-0 rounded p-2 text-rig-700/70 hover:bg-rust-500/10 hover:text-rust-500"
           >
             ✕
           </button>

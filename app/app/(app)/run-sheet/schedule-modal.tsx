@@ -42,7 +42,7 @@ export default function ScheduleModal({
               onChange={(e) => setDate(e.target.value)}
               className="field-input"
             />
-            <p className="mt-1 text-xs text-rig-700/60">
+            <p className="mt-1 text-xs text-rig-700/80">
               {new Date(`${date}T00:00:00`).toLocaleDateString("en-AU", {
                 weekday: "long",
                 day: "numeric",

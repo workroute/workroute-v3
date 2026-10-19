@@ -138,7 +138,7 @@ function ConversationCard({ conversation }: { conversation: ConversationRow }) {
           </span>
           <div className="min-w-0">
             <p className="truncate font-display font-semibold text-rig-900">{conversation.customer_name}</p>
-            {conversation.job_label && <p className="truncate text-xs text-rig-700/70">{conversation.job_label}</p>}
+            {conversation.job_label && <p className="truncate text-xs text-rig-700/80">{conversation.job_label}</p>}
           </div>
         </div>
         {priority && (
@@ -153,7 +153,7 @@ function ConversationCard({ conversation }: { conversation: ConversationRow }) {
         {SENDER_PREFIX[last.sender]}
         {preview(last.body)}
       </p>
-      <p className="mt-1 pl-[46px] text-xs text-rig-700/50">{formatTimestamp(last.created_at)}</p>
+      <p className="mt-1 pl-[46px] text-xs text-rig-700/70">{formatTimestamp(last.created_at)}</p>
     </Link>
   );
 }

@@ -193,7 +193,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
               >
                 <span className="block text-[11px] uppercase tracking-wide opacity-70">{label}</span>
                 <span className="block text-sm font-semibold">{dayNum}</span>
-                <span className={`block text-[11px] ${selected ? "opacity-80" : "text-rig-700/60"}`}>
+                <span className={`block text-[11px] ${selected ? "opacity-80" : "text-rig-700/80"}`}>
                   {count > 0 ? count : "·"}
                 </span>
               </Link>
@@ -229,7 +229,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                   className="absolute inset-x-0 flex border-t border-rig-900/10"
                   style={{ top, height: SLOT_MINUTES * PX_PER_MINUTE }}
                 >
-                  <span className="shrink-0 pr-2 pt-1 text-right text-[11px] text-rig-700/60" style={{ width: gutter }}>
+                  <span className="shrink-0 pr-2 pt-1 text-right text-[11px] text-rig-700/80" style={{ width: gutter }}>
                     {friendlyTime(m)}
                   </span>
                   <Link
@@ -237,7 +237,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                     aria-label={`Add an appointment at ${friendlyTime(m)}${full ? " (slot is full)" : ""}`}
                     className="flex-1 hover:bg-amber-500/10"
                   >
-                    <span className="float-right pr-3 pt-1 text-xs text-rig-700/40">{full ? "full" : "+"}</span>
+                    <span className="float-right pr-3 pt-1 text-xs text-rig-700/70">{full ? "full" : "+"}</span>
                   </Link>
                 </div>
               );
@@ -279,7 +279,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
           </div>
         </div>
 
-        <p className="mt-3 text-xs text-rig-700/60">
+        <p className="mt-3 text-xs text-rig-700/80">
           Tap any empty slot to add someone. {chairs > 1 ? `Up to ${chairs} appointments can overlap. ` : ""}A slot
           marked "full" can still be booked, you'll be offered the nearest free times first.
         </p>

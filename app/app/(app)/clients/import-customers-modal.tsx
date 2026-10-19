@@ -225,7 +225,7 @@ export default function ImportCustomersModal({
       <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
         <div className="flex items-center justify-between">
           <p className="font-display font-semibold text-rig-900">Import customers</p>
-          <button type="button" onClick={onClose} className="text-rig-700/50 hover:text-rig-900" aria-label="Close">
+          <button type="button" onClick={onClose} className="text-rig-700/70 hover:text-rig-900" aria-label="Close">
             ✕
           </button>
         </div>
@@ -236,7 +236,7 @@ export default function ImportCustomersModal({
               Coming from another system (ServiceM8, Tradify, Fergus, Jobber, or anywhere else)? Export your customer
               list as a CSV file there first, then upload it here.
             </p>
-            <label className="mt-4 flex cursor-pointer items-center justify-center rounded border border-dashed border-rig-700/25 bg-paper-100 py-8 text-sm text-rig-700/60 hover:bg-paper-100/70">
+            <label className="mt-4 flex cursor-pointer items-center justify-center rounded border border-dashed border-rig-700/25 bg-paper-100 py-8 text-sm text-rig-700/80 hover:bg-paper-100/70">
               📄 Choose a CSV file
               <input type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
             </label>
@@ -276,7 +276,7 @@ export default function ImportCustomersModal({
 
             {dataRows.length > 0 && (
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-rig-700/60">Preview</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-rig-700/80">Preview</p>
                 <div className="mt-1 overflow-x-auto rounded border border-rig-700/20">
                   <table className="w-full text-left text-xs">
                     <thead>

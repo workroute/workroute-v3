@@ -48,7 +48,7 @@ export default function IntegrationsForm({
           className="field-input"
           placeholder="https://hooks.zapier.com/hooks/catch/..."
         />
-        <p className="mt-1 text-xs text-rig-700/60">
+        <p className="mt-1 text-xs text-rig-700/80">
           Create a Zap with a "Webhooks by Zapier" trigger (Catch Hook), paste the URL it gives you here,
           then connect the next step to Xero, MYOB, QuickBooks, a spreadsheet — whatever you like. Every
           time a job's completion recap is sent, WorkRoute automatically sends its details there — nothing

@@ -85,7 +85,7 @@ export default function MessengerThread({
       <p className="mb-3 font-mono text-xs uppercase tracking-widest text-steel-500">Messenger</p>
 
       {messages.length === 0 ? (
-        <p className="text-sm text-rig-700/60">No messages yet.</p>
+        <p className="text-sm text-rig-700/80">No messages yet.</p>
       ) : (
         <div className="mb-4 max-h-96 space-y-2 overflow-y-auto">
           {messages.map((m, i) => {
@@ -95,7 +95,7 @@ export default function MessengerThread({
               <div key={m.id}>
                 {showDivider && (
                   <div className="my-3 flex justify-center">
-                    <span className="rounded-full bg-paper-100 px-3 py-0.5 text-[10px] font-medium uppercase tracking-wide text-rig-700/50">
+                    <span className="rounded-full bg-paper-100 px-3 py-0.5 text-[10px] font-medium uppercase tracking-wide text-rig-700/70">
                       {dayLabel(m.created_at)}
                     </span>
                   </div>
@@ -108,7 +108,7 @@ export default function MessengerThread({
                   >
                     <p>{m.body}</p>
                     {m.sender === "ai" && (
-                      <p className="mt-1 text-[10px] uppercase tracking-wide text-rig-700/50">Auto-reply</p>
+                      <p className="mt-1 text-[10px] uppercase tracking-wide text-rig-700/70">Auto-reply</p>
                     )}
                   </div>
                 </div>
@@ -176,7 +176,7 @@ function KnowledgeReview({
   return (
     <div className="mb-4 rounded-lg border border-steel-500/20 bg-steel-500/5 p-3">
       <p className="text-xs font-medium text-rig-900">Save this as an example for the AI?</p>
-      <p className="mt-1 text-xs text-rig-700/70">
+      <p className="mt-1 text-xs text-rig-700/80">
         Helps it handle similar questions the same way next time.
       </p>
 
@@ -227,7 +227,7 @@ function KnowledgeReview({
             type="button"
             disabled={saving}
             onClick={onDone}
-            className="px-3 py-1.5 text-xs font-medium text-rig-700/60 hover:text-rig-700"
+            className="px-3 py-1.5 text-xs font-medium text-rig-700/80 hover:text-rig-700"
           >
             Not now
           </button>

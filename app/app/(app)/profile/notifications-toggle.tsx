@@ -52,7 +52,7 @@ export default function NotificationsToggle({ userId }: { userId: string }) {
       </p>
       <div className="mt-3">
         {permission === "denied" && (
-          <p className="text-sm text-rig-700/60">
+          <p className="text-sm text-rig-700/80">
             Notifications are blocked — enable them in your browser settings.
           </p>
         )}
@@ -63,7 +63,7 @@ export default function NotificationsToggle({ userId }: { userId: string }) {
               type="button"
               onClick={handleDisable}
               disabled={busy}
-              className="text-sm text-rig-700/60 underline"
+              className="text-sm text-rig-700/80 underline"
             >
               {busy ? "Disabling…" : "Disable"}
             </button>

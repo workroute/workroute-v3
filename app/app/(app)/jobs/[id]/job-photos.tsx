@@ -78,13 +78,13 @@ function Photo({
         <>
           <img src={url} alt={label} className="w-full rounded object-cover" />
           {takenAt && (
-            <p className="mt-1 text-xs text-rig-700/60">
+            <p className="mt-1 text-xs text-rig-700/80">
               Taken {new Date(takenAt).toLocaleString("en-AU", { timeZone: "Australia/Brisbane" })}
             </p>
           )}
         </>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center rounded border border-dashed border-rig-700/25 bg-paper-100 py-6 text-sm text-rig-700/60 hover:bg-paper-100/70">
+        <label className="flex cursor-pointer items-center justify-center rounded border border-dashed border-rig-700/25 bg-paper-100 py-6 text-sm text-rig-700/80 hover:bg-paper-100/70">
           {uploading ? "Uploading…" : `📷 Add ${label.toLowerCase()}`}
           <input
             type="file"

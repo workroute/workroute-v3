@@ -67,7 +67,7 @@ export default function JobCard({
               {...listeners}
               type="button"
               aria-label="Drag to reorder"
-              className="mt-0.5 cursor-grab touch-none px-1 text-rig-700/40 hover:text-rig-700 active:cursor-grabbing"
+              className="mt-0.5 cursor-grab touch-none px-1 text-rig-700/70 hover:text-rig-700 active:cursor-grabbing"
             >
               ⠿
             </button>

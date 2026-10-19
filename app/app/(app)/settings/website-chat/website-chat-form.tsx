@@ -51,7 +51,7 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
     <div className="space-y-6">
       <div>
         <p className="font-display font-semibold text-rig-900">Your embed snippet</p>
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           Paste this once into your website's HTML (most site builders have a spot for "custom code" or "header
           scripts") — that's the whole setup, nothing else to configure.
         </p>
@@ -65,7 +65,7 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
 
       <div className="border-t border-rig-900/10 pt-6">
         <p className="font-display font-semibold text-rig-900">Your booking page</p>
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           A direct link customers can use to book themselves in — no call or chat needed. This one's just a plain
           web address, not code, so it goes wherever you'd normally share a link, not inside your website's code
           like the snippet above.
@@ -76,7 +76,7 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
             {bookingCopyStatus === "copied" ? "Copied!" : "Copy link"}
           </button>
         </div>
-        <ul className="mt-3 space-y-1.5 text-xs text-rig-700/70">
+        <ul className="mt-3 space-y-1.5 text-xs text-rig-700/80">
           <li>
             <b className="text-rig-900">Google Business Profile</b> — there's usually a "booking link" or "website"
             field, perfect spot for it.
@@ -101,7 +101,7 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
 
       <div className="border-t border-rig-900/10 pt-6">
         <p className="font-display font-semibold text-rig-900">Answer Facebook and Instagram messages</p>
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           When someone messages your Facebook page or Instagram, you can have it reply instantly with your booking
           link, so they can book themselves in even when you&apos;re on a job. You set this up once, inside Facebook
           or Instagram, using their own automatic reply setting. Here&apos;s a reply ready to paste:
@@ -110,7 +110,7 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
         <button type="button" onClick={handleCopyReply} className="btn-secondary mt-3 text-xs">
           {replyCopyStatus === "copied" ? "Copied!" : "Copy this reply"}
         </button>
-        <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-xs text-rig-700/70">
+        <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-xs text-rig-700/80">
           <li>
             <b className="text-rig-900">Facebook:</b> open your business page&apos;s inbox (in the Facebook or Meta
             Business Suite app), find <b className="text-rig-900">Automated responses</b> or{" "}
@@ -131,7 +131,7 @@ export default function WebsiteChatForm({ widgetKey }: { widgetKey: string }) {
 
       <div className="border-t border-rig-900/10 pt-6">
         <p className="font-display font-semibold text-rig-900">Try it now</p>
-        <p className="mt-1 text-xs text-rig-700/70">
+        <p className="mt-1 text-xs text-rig-700/80">
           This is exactly what your website visitors will see — chat with your own Sarah below before adding the
           snippet to your site.
         </p>

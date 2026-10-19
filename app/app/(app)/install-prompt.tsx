@@ -52,7 +52,7 @@ export default function InstallPrompt() {
         )}
         <button
           onClick={dismiss}
-          className="rounded p-1 text-rig-700/60 hover:text-rig-700"
+          className="rounded p-1 text-rig-700/80 hover:text-rig-700"
           aria-label="Dismiss"
         >
           ✕

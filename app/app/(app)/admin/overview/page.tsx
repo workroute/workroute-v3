@@ -229,7 +229,7 @@ export default async function OwnerOverviewPage() {
 
         <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Needs you</h2>
         {needsYou.length === 0 ? (
-          <p className="mt-3 rounded-lg bg-white p-4 text-sm text-rig-700/70 shadow-sm">Nothing waiting on you right now.</p>
+          <p className="mt-3 rounded-lg bg-white p-4 text-sm text-rig-700/80 shadow-sm">Nothing waiting on you right now.</p>
         ) : (
           <div className="mt-3 space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
             {needsYou.map((item) => (
@@ -240,7 +240,7 @@ export default async function OwnerOverviewPage() {
           </div>
         )}
 
-        <p className="mt-2 text-xs text-rig-700/70">
+        <p className="mt-2 text-xs text-rig-700/80">
           {spareError ? (
             <>Spare numbers aren&apos;t set up yet. Run supabase/migrations/0045_spare_phone_numbers.sql in Supabase.</>
           ) : (
@@ -268,7 +268,7 @@ export default async function OwnerOverviewPage() {
                 <div key={label}>
                   <p className="font-mono text-xs uppercase tracking-widest text-steel-500">{label}</p>
                   {t.calls === 0 ? (
-                    <p className="mt-1 text-sm text-rig-700/60">No calls tracked yet.</p>
+                    <p className="mt-1 text-sm text-rig-700/80">No calls tracked yet.</p>
                   ) : (
                     <>
                       <p className="mt-1 text-sm text-rig-700">
@@ -287,7 +287,7 @@ export default async function OwnerOverviewPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-3 border-t border-rig-900/5 pt-3 text-xs text-rig-700/70">
+            <p className="mt-3 border-t border-rig-900/5 pt-3 text-xs text-rig-700/80">
               US dollars. The Vapi figure is exact (platform, speech recognition and AI model). The all-in
               estimate adds ElevenLabs voice (about ${COST_ESTIMATES.elevenLabsUsdPer1kChars.toFixed(2)} per 1,000
               characters spoken) and the phone line (about ${COST_ESTIMATES.telephonyUsdPerMinute.toFixed(2)} a
@@ -330,7 +330,7 @@ export default async function OwnerOverviewPage() {
               Website leads aren&apos;t set up yet. Run supabase/migrations/0037_workroute_sales_leads.sql in Supabase.
             </p>
           ) : leads.length === 0 ? (
-            <p className="rounded-lg border border-rig-900/10 bg-white p-4 text-center text-sm text-rig-700/60 shadow-sm">
+            <p className="rounded-lg border border-rig-900/10 bg-white p-4 text-center text-sm text-rig-700/80 shadow-sm">
               No website leads yet.
             </p>
           ) : (
@@ -371,7 +371,7 @@ export default async function OwnerOverviewPage() {
                         : "Wants to hear from you"}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-rig-700/70">
+                <p className="mt-2 text-xs text-rig-700/80">
                   Chatted {formatDate(lead.created_at)}
                   {lead.trial_link_sent_at && ` · link emailed ${formatDate(lead.trial_link_sent_at)}`}
                   {lead.notes && ` · ${lead.notes}`}
@@ -384,7 +384,7 @@ export default async function OwnerOverviewPage() {
         <h2 className="mt-8 font-display text-lg font-semibold text-rig-900">Businesses</h2>
         <div className="mt-3 space-y-3">
           {stats.length === 0 ? (
-            <p className="rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/60 shadow-sm">
+            <p className="rounded-lg border border-rig-900/10 bg-white p-6 text-center text-sm text-rig-700/80 shadow-sm">
               No businesses signed up yet.
             </p>
           ) : (
@@ -393,7 +393,7 @@ export default async function OwnerOverviewPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-display font-semibold text-rig-900">{b.business_name}</p>
-                    <p className="text-xs text-rig-700/70">
+                    <p className="text-xs text-rig-700/80">
                       {b.trade} · {b.first_name ?? "no name"} · signed up{" "}
                       {new Date(b.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
