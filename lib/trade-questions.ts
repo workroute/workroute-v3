@@ -29,11 +29,11 @@ export type QuestionOption = { value: string; label: string };
 // number, e.g. Edging by Lawn size. Only a starting point for a business that
 // hasn't saved prices for this question yet.
 export type Question =
-  | { id: string; label: string; type: "text"; placeholder?: string; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
-  | { id: string; label: string; type: "select"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
-  | { id: string; label: string; type: "multiselect"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
-  | { id: string; label: string; type: "boolean"; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string }
-  | { id: string; label: string; type: "quantity"; unit: string; min?: number; max?: number; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string };
+  | { id: string; label: string; type: "text"; placeholder?: string; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string; askAs?: string }
+  | { id: string; label: string; type: "select"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string; askAs?: string }
+  | { id: string; label: string; type: "multiselect"; options: QuestionOption[]; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string; askAs?: string }
+  | { id: string; label: string; type: "boolean"; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string; askAs?: string }
+  | { id: string; label: string; type: "quantity"; unit: string; min?: number; max?: number; alwaysAsk?: boolean; aiClassifiedFrom?: string; defaultVaryBy?: string; askAs?: string };
 
 // Shorthand for option lists where value === label (the common case).
 function opts(labels: string[]): QuestionOption[] {
@@ -298,6 +298,9 @@ export const TRADE_QUESTIONS: Record<string, Question[]> = {
       label: "Hair length",
       type: "select",
       options: opts(["Short", "Medium", "Long"]),
+      // The price depends on how long the hair is NOW, not how short they want
+      // it cut, and callers (and the AI) mix those up.
+      askAs: "How long is your hair at the moment: short, medium or long? (this is its current length, not how short they want it cut)",
     },
     {
       // alwaysAsk, not priced — worth knowing so the right person is
@@ -418,7 +421,7 @@ function formatQuestionList(questions: Question[]): string {
   return questions
     .map((q) => {
       if (q.type === "select" || q.type === "multiselect") {
-        return `${q.id} (${q.type}): exactly one of ${q.options.map((o) => `"${o.value}"`).join(", ")}`;
+        return `${q.id} (${q.type}): exactly one of ${q.options.map((o) => `"${o.value}"`).join(", ")}${q.askAs ? ` — ask it like this: ${q.askAs}` : ""}`;
       }
       if (q.type === "boolean") return `${q.id} (boolean): true or false`;
       if (q.type === "quantity") return `${q.id} (number${q.unit ? `, ${q.unit}` : ""})`;
