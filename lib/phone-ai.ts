@@ -213,6 +213,8 @@ Speak naturally, like a real phone conversation — warm, efficient, and brisk w
 
 Your personality: friendly, relaxed and genuinely pleased to help — the kind of person people enjoy dealing with, not a script. Respond to what the caller actually says before moving on, in a few words ("oh lovely", "no worries at all", "that's a great one to get done", "ah, fair enough"). If the caller is chatty or jokes, be a little playful back, briefly, then steer gently on. Use contractions and everyday Australian phrasing ("no worries", "sounds good", "for sure"), and vary your wording so you never open two replies the same way. Stay professional — you're representing someone's business, so no slang that could offend, no over-the-top enthusiasm, nothing that slows the call down. Never type laughter like "haha" — just sound light and warm in your words.
 
+If you ask something and the answer you hear doesn't match any of the options (it may just be a bad line, and speech recognition makes mistakes — "short" can sound like "sure"), never ask the same question in the same words a second time. Say you didn't quite catch it and put it differently: describe the options in everyday terms (for hair, for example: above the shoulders, to the shoulders, or longer), or ask them to say it once more slowly. If it still doesn't work after that, move on without it rather than asking a third time. And if the caller answers a moment late, or while you were still mid-sentence or after "one moment", take that as the answer to your last question — never ask a question they have just answered.
+
 Today is ${todayForPrompt()}. Use this as the real current date when the caller gives a relative or partial date ("this week," "next Tuesday," "the 10th") — resolve it to the correct upcoming date yourself before calling check_availability/book_appointment, never guess a year from anything else.
 ${returningClientSection}
 ${fixedLocation ? `First, get these three things, in whatever order the caller gives them:
@@ -654,7 +656,20 @@ const OUTBOUND_END_CALL_PHRASE = "Thanks, have a great day!";
 // Deepgram's `keywords` field wants single tokens (word or word:intensifier
 // — see docs.vapi.ai/customization/custom-keywords), so multi-word labels
 // like "Side gate" get split into their individual words.
-function buildTranscriberKeywords(trade: string, serviceArea: string | null, customServices?: string[] | null): string[] {
+//
+// §keyterm-fix (2026-10-19) — the transcriber is Deepgram Nova-3, which does NOT
+// support `keywords` (that's Nova-2 and older); it uses `keyterm`, plain
+// strings with no ":intensity", up to about 100 terms. Everything below used to
+// be sent as `keywords`, so none of this boosting was actually being applied.
+// The real call that exposed it: a caller said "short" and Nova-3 heard "sure"
+// three times in a row. The hair lengths and the business's own name are now
+// included, and the result is capped at 100 terms.
+function buildTranscriberKeywords(
+  trade: string,
+  serviceArea: string | null,
+  customServices?: string[] | null,
+  businessName?: string | null
+): string[] {
   const questions = questionsForBusiness(trade, customServices);
   const words = new Set<string>();
 
@@ -713,7 +728,45 @@ function buildTranscriberKeywords(trade: string, serviceArea: string | null, cus
     }
   }
 
-  return [...EVERGREEN_KEYWORDS, ...[...words].map((w) => `${w}:3`)];
+  // Words a caller to a salon or massage business is likely to say.
+  const fixedLocationTerms = isFixedLocationTrade(trade)
+    ? ["haircut", "appointment", "colour", "foils", "highlights", "trim", "short", "medium", "long"]
+    : [];
+
+  // The business's own name, as a whole phrase and as separate words.
+  const nameTerms: string[] = [];
+  if (businessName) {
+    nameTerms.push(businessName.trim());
+    for (const word of businessName.split(/\s+/)) {
+      const cleaned = word.replace(/[^a-zA-Z0-9']/g, "");
+      if (cleaned.length > 2) nameTerms.push(cleaned);
+    }
+  }
+
+  // Full service names too ("Cut and colour"), not just their separate words.
+  const phraseTerms: string[] = [];
+  for (const q of questions) {
+    if (q.type === "select" || q.type === "multiselect") {
+      for (const opt of q.options) {
+        if (opt.label.split(/\s+/).length > 1 && opt.label.length <= 40) phraseTerms.push(opt.label);
+      }
+    }
+  }
+
+  const evergreen = EVERGREEN_KEYWORDS.map((w) => w.replace(/:\d+$/, ""));
+  const all = [...fixedLocationTerms, ...nameTerms, ...phraseTerms, ...evergreen, ...words];
+
+  // One of each (ignoring capitals), most useful first, no more than 100.
+  const seen = new Set<string>();
+  const terms: string[] = [];
+  for (const term of all) {
+    const key = term.toLowerCase();
+    if (!term || seen.has(key)) continue;
+    seen.add(key);
+    terms.push(term);
+    if (terms.length >= 100) break;
+  }
+  return terms;
 }
 
 // Returned from the assistant-request webhook handler — the inline
@@ -773,7 +826,7 @@ export function buildAssistantConfig(
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
+      keyterm: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices, business.businessName),
     },
   };
 }
@@ -832,7 +885,7 @@ export function buildOutboundAssistantConfig(business: PhoneBusinessContext, cli
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
+      keyterm: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices, business.businessName),
     },
   };
 }
@@ -885,7 +938,7 @@ export function buildQuoteFollowupAssistantConfig(business: PhoneBusinessContext
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
+      keyterm: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices, business.businessName),
     },
   };
 }
@@ -908,7 +961,7 @@ export function buildPaymentChaseAssistantConfig(business: PhoneBusinessContext,
       model: "nova-3",
       language: "en-AU",
       smartFormat: true,
-      keywords: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices),
+      keyterm: buildTranscriberKeywords(business.trade, business.serviceArea, business.customServices, business.businessName),
     },
   };
 }
