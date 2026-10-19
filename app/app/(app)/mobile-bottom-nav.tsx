@@ -36,7 +36,7 @@ export default function MobileBottomNav({
             className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-rig-700"
           >
             <Icon />
-            <span className="text-[11px] font-medium">{label}</span>
+            <span className="text-[11px] font-medium">{showAppointments && href === "/app/run-sheet" ? "Today" : label}</span>
             {badge !== null && (
               <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-amber-500 px-1.5 text-[10px] font-semibold text-rig-950">
                 {badge}

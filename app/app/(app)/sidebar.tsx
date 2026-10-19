@@ -65,7 +65,7 @@ export default function Sidebar({
             >
               <span className="flex items-center gap-3">
                 <Icon />
-                {label}
+                {showAppointments && href === "/app/run-sheet" ? "Today" : label}
               </span>
               {badge !== null && (
                 <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-rig-950">
