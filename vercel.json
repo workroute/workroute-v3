@@ -24,5 +24,8 @@
       "path": "/api/cron/quote-followup",
       "schedule": "0 4 * * *"
     }
+  ],
+  "regions": [
+    "hnd1"
   ]
 }

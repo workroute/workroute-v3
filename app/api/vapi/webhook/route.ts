@@ -179,6 +179,9 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
   // call: it read as "the AI won't answer until I speak"). The capture
   // upsert still has to wait for matchedClient's id, so it stays after —
   // but that's now the only remaining sequential step, not three.
+  // The pricing config doesn't depend on the client match, so it loads at the
+  // same time as it instead of after it.
+  const pricingPromise = loadTradePricingConfig(supabase, profile.user_id, profile.trade).catch(() => null);
   let matchedClient = null;
   try {
     const [client] = await Promise.all([
@@ -203,7 +206,7 @@ async function handleAssistantRequest(supabase: SupabaseClient, message: any, ap
   // wired into pricing get asked live on the call (see systemPrompt in
   // lib/phone-ai.ts for why: asking the full generic question set regardless
   // of whether it affects price is what made an earlier version slow).
-  const pricing = await loadTradePricingConfig(supabase, profile.user_id, profile.trade);
+  const pricing = await pricingPromise;
   const pricingQuestionIds = pricing ? Object.keys(pricing.questions) : [];
 
   return NextResponse.json({ assistant: buildAssistantConfig(business, matchedClient, pricingQuestionIds) });
