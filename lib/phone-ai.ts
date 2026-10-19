@@ -234,7 +234,7 @@ ${
     const pref = staffPreference(business.trade);
     const names = business.staffNames ?? [];
     if (!pref || names.length === 0) return "";
-    return `Clients often like to see the same ${pref.role}. At some point before offering a time, ask whether they'd like a particular ${pref.role} — the team is: ${names.join(", ")} — or no preference. Call update_job_draft with trade_answers.${pref.questionId} set to exactly one name from that list, or "No preference". Names are easy to mishear: only ever record a name from that list, and if you're not sure which one they said, ask them to repeat it. This only records who they'd like — don't promise that person will definitely be free at the time; the team will confirm.\n\n`;
+    return `Clients often like to see the same ${pref.role}, but plenty forget who it was last time. At some point before offering a time, ask by naming everyone out loud, for example "Would you like to see ${names.join(", ")}, or are you happy with whoever's free?" Say the actual names every time, and don't ask a yes-or-no question like "do you have a preference?". Call update_job_draft with trade_answers.${pref.questionId} set to exactly one name from that list, or "No preference". Names are easy to mishear: only ever record a name from that list, and if you're not sure which one they said, ask them to repeat it. This only records who they'd like — don't promise that person will definitely be free at the time; the team will confirm.\n\n`;
   })()
 }A name doesn't need a stop-and-check ("is that Mark Smith?") every time — just naturally use their name in your next sentence ("Thanks, Mark — what's the best number for you?"); if you misheard it they'll correct you.
 
