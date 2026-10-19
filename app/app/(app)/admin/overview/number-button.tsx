@@ -27,6 +27,9 @@ export default function NumberButton({ businessId, hasNumber }: { businessId: st
       setError(data.error ?? "Failed.");
       return;
     }
+    // Back to normal straight away, so the button doesn't sit on "Working…"
+    // while the page refreshes.
+    setStatus("idle");
     router.refresh();
   }
 
