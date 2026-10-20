@@ -14,9 +14,12 @@ const CANONICAL_HOST = "app.workroute.com.au";
 // other path (login, the app, the API) is sent to the app address so sessions
 // never end up split across two domains.
 const MARKETING_HOSTS = new Set(["workroute.com.au", "www.workroute.com.au"]);
+const REEL_HOSTS = new Set(["reelautomate.com", "www.reelautomate.com"]);
 const MARKETING_EXACT = new Set([
   "/",
   "/missed-calls",
+  "/reelautomate",
+  "/reelautomate-logo.png",
   "/guides",
   "/contact",
   "/privacy-policy",
@@ -58,6 +61,16 @@ export async function middleware(request: NextRequest) {
     .trim()
     .toLowerCase()
     .replace(/:\d+$/, "");
+
+  // ReelAutomate has its own domain. It is a single public page, so its root
+  // serves that page and anything else goes back to the root.
+  if (REEL_HOSTS.has(requestHost)) {
+    const path = request.nextUrl.pathname;
+    if (requestHost.startsWith("www.")) return NextResponse.redirect(new URL(path, "https://reelautomate.com"), 308);
+    if (path === "/") return NextResponse.rewrite(new URL("/reelautomate", request.url));
+    if (path === "/reelautomate-logo.png" || path.startsWith("/_next/") || path === "/robots.txt") return NextResponse.next();
+    return NextResponse.redirect(new URL("/", request.url), 307);
+  }
 
   if (MARKETING_HOSTS.has(requestHost)) {
     if (isMarketingPath(request.nextUrl.pathname)) return NextResponse.next();
