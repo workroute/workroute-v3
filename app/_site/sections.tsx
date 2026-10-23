@@ -3,6 +3,7 @@ import Script from "next/script";
 import { WORKROUTE_SALES_WIDGET_KEY } from "@/lib/workroute-sales-ai";
 import { FAIR_USE_CALLS_PER_MONTH } from "@/lib/fair-use-config";
 import { DEMO_PHONE_DISPLAY, DEMO_PHONE_TEL, Icon, LOGIN_HREF, Logo, SIGNUP_HREF, SectionHeading } from "./ui";
+import BusRouteLink from "./BusRouteLink";
 
 // Sections shared by the homepage and every /for/<trade> page, so they can't
 // drift apart.
@@ -241,7 +242,7 @@ export function SiteFooter() {
           <Link href="/#faq" className="block py-2 hover:text-white">FAQ</Link>
           <a href={`tel:${DEMO_PHONE_TEL}`} className="block py-2 hover:text-white">Ring Sarah: {DEMO_PHONE_DISPLAY}</a>
           <a href="mailto:steve@workroute.com.au" className="block py-2 hover:text-white">steve@workroute.com.au</a>
-          <a href="https://bus-runs.vercel.app" className="block py-2 hover:text-white">Bus Route</a>
+          <BusRouteLink />
           <Link href="/guides" className="block py-2 hover:text-white">Guides</Link>
           <Link href="/contact" className="block py-2 hover:text-white">Contact</Link>
           <Link href="/privacy-policy" className="block py-2 hover:text-white">Privacy Policy</Link>
