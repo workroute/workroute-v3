@@ -9,6 +9,7 @@ import {
   WORKROUTE_MONTHLY_PRICE,
   type MissedCallInputs,
 } from "./missed-call-cost";
+import { SETUP_FIELDS, type SetupAnswers } from "./setup-questionnaire";
 
 // Sarah-narrated setup walkthrough (unlisted on YouTube).
 const WELCOME_VIDEO_URL = "https://www.youtube.com/watch?v=4YctnKvkkgY";
@@ -242,6 +243,45 @@ export async function sendSalesLeadEmail(
           ${rows}
           ${chat ? `<h2 style="font-size: 15px; margin: 24px 0 8px;">The chat so far</h2>
           <div style="font-size: 14px; line-height: 1.5; color: #3A4149;">${chat}</div>` : ""}
+        </div>
+      `,
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Couldn't reach Resend." };
+  }
+}
+
+// §setup-questionnaire — a tradie's answers from app/setup, laid out in the
+// order of the Settings screens so the owner can copy them across. Visitor-typed
+// text, so everything is escaped.
+export async function sendSetupAnswersEmail(answers: SetupAnswers): Promise<{ ok: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { ok: false, error: "Email isn't configured yet — missing RESEND_API_KEY." };
+  }
+
+  const rows = SETUP_FIELDS.map((field) => {
+    const value = answers[field.key];
+    return `<p style="margin: 14px 0 0; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: #6B7280; font-weight: 600;">${escapeHtml(field.label.replace(/\s*\(optional\)\s*$/i, ""))}</p>
+      <p style="margin: 2px 0 0; font-size: 15px; white-space: pre-wrap;">${value ? escapeHtml(value) : "<em style=\"color: #9CA3AF;\">(left blank)</em>"}</p>`;
+  }).join("");
+
+  const resend = new Resend(apiKey);
+
+  try {
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "WorkRoute <onboarding@resend.dev>",
+      to: process.env.SALES_LEAD_EMAIL || "steve@workroute.com.au",
+      replyTo: answers.email || undefined,
+      subject: `Setup answers: ${answers.business} (${answers.trade || "trade not given"})`,
+      html: `
+        <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1C1F26;">
+          <p style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #F2A900; font-weight: 600;">WorkRoute setup questionnaire</p>
+          <h1 style="font-size: 20px; margin: 8px 0 4px;">${escapeHtml(answers.name)} from ${escapeHtml(answers.business)} sent their setup answers</h1>
+          <p style="margin: 0; font-size: 14px; color: #3A4149;">Enter these in their Settings once they have signed up, then ring their new number to test it with them.</p>
+          ${rows}
         </div>
       `,
     });
