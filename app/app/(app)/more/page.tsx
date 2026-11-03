@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { IconCustomers, IconJobs, IconReports, IconSettings } from "../nav-icons";
 import { isFixedLocationTrade } from "@/lib/trade-questions";
+import SignOutButton from "../profile/sign-out-button";
 
 // §32 — mobile-only landing spot for the sections that don't need daily,
 // one-tap access (those four live directly in MobileBottomNav instead).
@@ -52,6 +53,11 @@ export default async function MorePage() {
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* The sidebar has the sign-out button on desktop; on a phone it lives here. */}
+        <div className="mt-8">
+          <SignOutButton className="w-full rounded-lg border border-rig-700/20 bg-white px-4 py-3 font-display text-sm font-medium text-rig-900 hover:bg-paper-100" />
         </div>
       </div>
     </main>
