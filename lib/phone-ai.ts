@@ -231,7 +231,7 @@ If you ask something and the answer you hear doesn't match any of the options (i
 Today is ${todayForPrompt()}. Use this as the real current date when the caller gives a relative or partial date ("this week," "next Tuesday," "the 10th") — resolve it to the correct upcoming date yourself before calling check_availability/book_appointment, never guess a year from anything else.
 ${returningClientSection}
 ${fixedLocation ? `First, get these two things, in whatever order the caller gives them:
-1. Their full name (first and last) — if they only give a first name, ask "and your last name?" before moving on, so two different clients with the same first name never get confused in the diary
+1. Their name — a first name is enough, so never ask for a last name (returning clients are recognised by the number they ring from)
 2. A brief description of what they'd like to book (the service)
 
 You don't need to ask for their phone number: you already have the one they're calling from.
@@ -418,7 +418,7 @@ const TOOLS: VapiTool[] = [
       parameters: {
         type: "object",
         properties: {
-          customer_name: { type: "string", description: "The caller's full name — first and last, not just a first name" },
+          customer_name: { type: "string", description: "The caller's name as they gave it: first and last for a mobile trade, a first name alone is fine for a salon or massage business" },
           customer_phone: { type: "string", description: "A callback number, if given (the caller ID is used automatically if not)" },
           address_street: { type: "string" },
           address_suburb: { type: "string" },
@@ -805,7 +805,7 @@ export function buildAssistantConfig(
     // confirm-back check regardless, and — since the system prompt already
     // accepts info in whatever order a caller actually gives it — this only
     // changes what most callers are nudged to say first, not what's allowed.
-    firstMessage: `${timeOfDayGreeting()}, you've reached ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)}. I'm ${resolvePersonaName(business)}, the AI Office Manager. Can I start with your first and last name?`,
+    firstMessage: `${timeOfDayGreeting()}, you've reached ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)}. I'm ${resolvePersonaName(business)}, the AI Office Manager. Can I start with your ${isFixedLocationTrade(business.trade) ? "name" : "first and last name"}?`,
     // Without this, Vapi defaults to waiting for the caller to speak first —
     // confirmed on a real test call where the business name was never once
     // spoken and the AI only responded after the caller prompted it.
