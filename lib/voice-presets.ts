@@ -14,9 +14,9 @@ export type VoicePreset = {
 
 export const VOICE_PRESETS: VoicePreset[] = [
   {
-    id: "emma",
+    id: "sarah",
     voiceId: "56bWURjYFHyYyVf490Dp",
-    name: "Emma",
+    name: "Sarah",
     gender: "female",
     description: "Warm and clear — the current default.",
   },

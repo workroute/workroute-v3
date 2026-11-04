@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { VOICE_PRESETS, findVoicePreset } from "@/lib/voice-presets";
 
-const DEFAULT_PRESET = VOICE_PRESETS[0]; // Emma — matches lib/phone-ai.ts's DEFAULT_VOICE/DEFAULT_PERSONA_NAME
+const DEFAULT_PRESET = VOICE_PRESETS[0]; // Sarah — matches lib/phone-ai.ts's DEFAULT_VOICE/DEFAULT_PERSONA_NAME
 
 export default function VoiceForm({
   userId,
@@ -135,7 +135,7 @@ export default function VoiceForm({
             setStatus("idle");
           }}
           className="field-input"
-          placeholder="Emma"
+          placeholder="Sarah"
         />
         <p className="mt-1 text-xs text-rig-700/80">
           E.g. "Hi, it's {personaName || "…"}, the AI Office Manager for your business."

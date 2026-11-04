@@ -578,11 +578,11 @@ const DEFAULT_VOICE = {
   useSpeakerBoost: true,
 };
 
-// §voice-picker — matches DEFAULT_VOICE's voiceId (Emma). A business that
+// §voice-picker — matches DEFAULT_VOICE's voiceId (the "Sarah" preset). A business that
 // hasn't chosen a voice yet gets this pairing; one that has gets their own
 // voiceId/personaName instead of DEFAULT_VOICE wholesale — see
 // resolveVoice below, which is the only place that decides this per call.
-export const DEFAULT_PERSONA_NAME = "Emma";
+export const DEFAULT_PERSONA_NAME = "Sarah";
 
 export function resolveVoice(business: PhoneBusinessContext) {
   return business.voiceId ? { ...DEFAULT_VOICE, voiceId: business.voiceId } : DEFAULT_VOICE;
