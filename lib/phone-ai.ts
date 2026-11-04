@@ -150,6 +150,25 @@ function todayForPrompt(): string {
   }).format(new Date());
 }
 
+// The next two weeks as "Wednesday 4 November (today); Thursday 5 November
+// (tomorrow); …" so the model reads a weekday's date off a list instead of
+// working it out. A real call had it say "Friday the eighth" and book Sunday,
+// because it did the weekday sums itself. Brisbane has no daylight saving, so
+// adding whole days is safe.
+function upcomingDaysForPrompt(days = 14): string {
+  const format = new Intl.DateTimeFormat("en-AU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Australia/Brisbane",
+  });
+  const now = Date.now();
+  return Array.from({ length: days }, (_, i) => {
+    const label = format.format(new Date(now + i * 86400000));
+    return i === 0 ? `${label} (today)` : i === 1 ? `${label} (tomorrow)` : label;
+  }).join("; ");
+}
+
 function systemPrompt(
   business: PhoneBusinessContext,
   matchedClient: MatchedClient | null,
@@ -230,7 +249,7 @@ If you ask something and the answer you hear doesn't match any of the options (i
 
 Speech recognition also garbles words sometimes, especially the name of the work itself. If a phrase makes no sense but obviously fits what a caller to this business would say ("front lawn mode" or "mold" from someone ringing a lawn mowing business is almost certainly "mowed"), quietly take the sensible meaning and carry on. Never repeat the garbled words back to the caller, and don't ask what they meant, unless you genuinely can't tell what they want. This is for the description of the work only: names, addresses, dates and times still need checking as above.
 
-Today is ${todayForPrompt()}. Use this as the real current date when the caller gives a relative or partial date ("this week," "next Tuesday," "the 10th") — resolve it to the correct upcoming date yourself before calling check_availability/book_appointment, never guess a year from anything else.
+Today is ${todayForPrompt()}. The next two weeks are: ${upcomingDaysForPrompt()}. Always read a weekday and its date off this list, never work them out yourself: when a caller says "Friday", use the Friday listed here, and say that same date back to them. Use this as the real current date when the caller gives a relative or partial date ("this week," "next Tuesday," "the 10th") — resolve it to the correct upcoming date yourself before calling check_availability/book_appointment, never guess a year from anything else.
 ${returningClientSection}
 ${fixedLocation ? `First, get these two things, in whatever order the caller gives them:
 1. Their name — a first name is enough, so never ask for a last name (returning clients are recognised by the number they ring from)
@@ -249,13 +268,14 @@ ${
   })()
 }A name doesn't need a stop-and-check ("is that Mark Smith?") every time — just naturally use their name in your next sentence ("Thanks, Mark — what's the best number for you?"); if you misheard it they'll correct you.
 
-` : `First, get these four things, in whatever order the caller gives them:
+` : `First, get these three things, in whatever order the caller gives them:
 1. Their full name (first and last) — if they only give a first name, ask "and your last name?" before moving on, so two different customers with the same first name never get confused in the diary
 2. The address (where the job is)
-3. The best number to reach them on
-4. A brief description of what they need help with
+3. A brief description of what they need help with
 
-Ask for whichever of these you're missing next, but callers very often lead with what they need before you've asked for anything ("I need my lawn cut") — that's completely normal, not an answer to a different question. If they volunteer one of the four out of order, or before you've asked, accept it naturally (e.g. save the job description via update_job_draft's job_label), don't try to force it into whichever slot you were expecting, and then just ask for whichever of the four is still missing. Never treat a job description, address, or phone number as if it might be their name.
+Don't ask for their phone number or ask them to read it out: you already have the number they're calling from, the confirmation text goes there, and speech recognition garbles spoken numbers. Only note a different number if they offer one.
+
+Ask for whichever of these you're missing next, but callers very often lead with what they need before you've asked for anything ("I need my lawn cut") — that's completely normal, not an answer to a different question. If they volunteer one of the three out of order, or before you've asked, accept it naturally (e.g. save the job description via update_job_draft's job_label), don't try to force it into whichever slot you were expecting, and then just ask for whichever of the three is still missing. Never treat a job description, address, or phone number as if it might be their name.
 
 Names and suburbs are both easy to mishear over the phone, so both need to come back to the caller in some form before you move on — but not the same way. A name doesn't need a full stop-and-check ("Just to make sure I've got that right, is that Mark Smith?") every single time — asking that when you heard it perfectly fine sounds unsure of yourself. Instead, just naturally use their name in your very next sentence ("Thanks, Mark — what's the address for the job?"). That's enough: if you misheard it, they'll notice and correct you, without it sounding like you're constantly double-checking yourself. The address is different — always explicitly repeat it back and ask ("That's [street], [suburb] — is that right?") before moving on, since a wrong address is a bigger problem than a wrong name and there's no natural later sentence that would surface it the same way. Correct either if they say it's wrong.
 
@@ -306,7 +326,7 @@ function outboundReactivationPrompt(business: PhoneBusinessContext, client: Outb
 
 Speak naturally and briefly, like a real phone conversation — short sentences, warm and friendly. This is a check-in call, not a sales pitch — don't be pushy. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn (e.g. don't ask what they need done and what day/time in the same breath).
 
-Today is ${todayForPrompt()}. Use this as the real current date when resolving a relative date they give you.
+Today is ${todayForPrompt()}. The next two weeks are: ${upcomingDaysForPrompt()}. Always read a weekday and its date off this list, never work them out yourself. Use this as the real current date when resolving a relative date they give you.
 
 YOU called THEM — this is an outbound call to a past customer, ${client.name}, because it's been a while since their last ${business.trade} ${fixedLocation ? "appointment" : "job"}. ${fixedLocation ? "You already know their name — don't ask for it again unless they say it's changed." : `You already know their name and address (${knownAddress}) — don't ask for either again unless they say it's changed.`}
 
@@ -418,7 +438,7 @@ const TOOLS: VapiTool[] = [
     function: {
       name: "update_job_draft",
       description:
-        "Save what's been learned about this job so far. Call this as soon as you know the caller's name, and again every time you learn something new — the job record builds up live during the call. Whenever you pass an address, the result includes addressValid — if false, something about it couldn't be confirmed and you should ask them to repeat the suburb or spell the street.",
+        "Save what's been learned about this job so far. Call this as soon as you know the caller's name, and again every time you learn something new — the job record builds up live during the call. Whenever you pass an address, the result includes addressValid — if false, something about it couldn't be confirmed and you should ask them to repeat the suburb or spell the street. Call this silently: say nothing like \"one moment\" or \"hold on\" before it.",
       parameters: {
         type: "object",
         properties: {
@@ -442,7 +462,7 @@ const TOOLS: VapiTool[] = [
     function: {
       name: "check_availability",
       description:
-        "Check whether a specific date and time (or time-of-day block) is free on the tradie's schedule, before offering it to the caller. Always call this before book_appointment. For a specific time, the result can come back unavailable two ways: a plain time clash, or travelConflict true, meaning the slot is technically free but too close to another job elsewhere for the tradie to physically make it — treat both as \"not available\", just phrase the travel one without naming the other customer. For a block only (no specific time), the result instead comes back with suggestedTimes — real, already-confirmed-free times within that block to offer the caller directly.",
+        "Check whether a specific date and time (or time-of-day block) is free on the tradie's schedule, before offering it to the caller. Always call this before book_appointment. For a specific time, the result can come back unavailable two ways: a plain time clash, or travelConflict true, meaning the slot is technically free but too close to another job elsewhere for the tradie to physically make it — treat both as \"not available\", just phrase the travel one without naming the other customer. For a block only (no specific time), the result instead comes back with suggestedTimes — real, already-confirmed-free times within that block to offer the caller directly. Call this silently: say nothing like \"one moment\" or \"hold on\" before it.",
       parameters: {
         type: "object",
         properties: {
@@ -459,7 +479,7 @@ const TOOLS: VapiTool[] = [
     function: {
       name: "book_appointment",
       description:
-        "Lock in a date/time for this job. Only call this immediately after check_availability confirms the slot is free. Tells you back whether this became a quote visit or a job booking, and if `recurring` was set, how many future visits were also booked — use that to phrase your confirmation to the caller.",
+        "Lock in a date/time for this job. Only call this immediately after check_availability confirms the slot is free. Tells you back whether this became a quote visit or a job booking, and if `recurring` was set, how many future visits were also booked — use that to phrase your confirmation to the caller. Call this silently: say nothing like \"one moment\" or \"hold on\" before it.",
       parameters: {
         type: "object",
         properties: {
@@ -482,7 +502,7 @@ const TOOLS: VapiTool[] = [
     function: {
       name: "get_price_estimate",
       description:
-        "Calculate a real price from whatever trade_answers have been saved so far. Call this once you've asked through the pricing-relevant questions (or done what you reasonably can). If the caller's very last answer hasn't been saved via update_job_draft yet, pass it here too (in trade_answers) instead of making a separate update_job_draft call first — this saves it and prices it in one step. Returns either a price + duration, or tells you this job needs an in-person quote instead — never state a dollar figure that didn't come from this tool.",
+        "Calculate a real price from whatever trade_answers have been saved so far. Call this once you've asked through the pricing-relevant questions (or done what you reasonably can). If the caller's very last answer hasn't been saved via update_job_draft yet, pass it here too (in trade_answers) instead of making a separate update_job_draft call first — this saves it and prices it in one step. Returns either a price + duration, or tells you this job needs an in-person quote instead — never state a dollar figure that didn't come from this tool. Call this silently: say nothing like \"one moment\" or \"hold on\" before it.",
       parameters: {
         type: "object",
         properties: {
@@ -927,7 +947,7 @@ function outboundQuoteFollowupPrompt(business: PhoneBusinessContext, client: Quo
 
 Speak naturally and briefly, warm and low-key — this is a quick follow-up, not a sales pitch. Ask one thing at a time and actually wait for their answer before moving to the next question — never stack two questions into the same turn.
 
-Today is ${todayForPrompt()}. Use this as the real current date when resolving a relative date they give you.
+Today is ${todayForPrompt()}. The next two weeks are: ${upcomingDaysForPrompt()}. Always read a weekday and its date off this list, never work them out yourself. Use this as the real current date when resolving a relative date they give you.
 
 YOU called THEM — ${tradieName} recently gave ${client.name} a quote of $${client.quotedPrice.toFixed(2)} for ${jobDescription}, and you're following up to see if they'd like to go ahead.
 
