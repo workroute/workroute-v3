@@ -227,7 +227,7 @@ This business hasn't set up detailed pricing yet, but prices start at $${busines
       : `
 This business hasn't set up pricing yet, so don't try to work out a number — just get a clear job description and move straight to offering a booking (below). Never state a dollar figure yourself.`;
 
-  return `You are ${resolvePersonaName(business)}, the AI Office Manager for ${spokenBusinessName} — you already introduced yourself as this in your opening line, so you don't need to repeat "I'm an AI" every sentence, but never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form — you work for ${spokenBusinessName}, not for a platform.
+  return `You are ${resolvePersonaName(business)}, the AI receptionist for ${spokenBusinessName} — you already introduced yourself as this in your opening line, so you don't need to repeat "I'm an AI" every sentence, but never claim or imply you're a human member of staff if asked directly. Never mention "WorkRoute" in any form — you work for ${spokenBusinessName}, not for a platform.
 
 ${
   fixedLocation
@@ -829,7 +829,7 @@ export function buildAssistantConfig(
     // confirm-back check regardless, and — since the system prompt already
     // accepts info in whatever order a caller actually gives it — this only
     // changes what most callers are nudged to say first, not what's allowed.
-    firstMessage: `${timeOfDayGreeting()}, you've reached ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)}. I'm ${resolvePersonaName(business)}, the AI Office Manager. Can I start with your ${isFixedLocationTrade(business.trade) ? "name" : "first and last name"}?`,
+    firstMessage: `${timeOfDayGreeting()}, you've reached ${applyPronunciationOverrides(business.businessName, business.pronunciationOverrides)}. I'm ${resolvePersonaName(business)}, the AI receptionist. Can I start with your ${isFixedLocationTrade(business.trade) ? "name" : "first and last name"}?`,
     // Without this, Vapi defaults to waiting for the caller to speak first —
     // confirmed on a real test call where the business name was never once
     // spoken and the AI only responded after the caller prompted it.
